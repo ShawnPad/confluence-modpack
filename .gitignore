@@ -1,0 +1,6 @@
+.run/
+dist/
+mods/*.jar
+*.log
+__pycache__/
+.pytest_cache/
