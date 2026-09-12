@@ -54,43 +54,43 @@ hash = "c28d10a5b8d9952b250dbd4d10a7ba708f26d2229b51fea2705d7d77b880f908"
 
 [[files]]
 file = "kubejs/assets/kubejs/textures/block/glacio_ore.png"
-hash = "f1ec6d1d9b2a83a43505db83e6c30fafdf58eefed5e7030b35f70deae2b62d96"
+hash = "c97452889078e204441563e53f32dcddea2bc8589554cea7f2d14702bff074c5"
 
 [[files]]
 file = "kubejs/assets/kubejs/textures/block/mercury_ore.png"
-hash = "3ffad453fcff871b72cb337ac0d3970517ac387e2aad0d163a2cb94f2623e9b4"
+hash = "625498360e9908ebba631d4fe00de92726083609c372d6d2d94be785bd883e24"
 
 [[files]]
 file = "kubejs/assets/kubejs/textures/item/astral_focus.png"
-hash = "63db0acebb09254a33a02e4d419d3dc899b7857b363df4552556939db9afcfa9"
+hash = "ef456c99dc38a1bd628eb4dc303ed97bfb12ad54983c5d58e915628a647b76cd"
 
 [[files]]
 file = "kubejs/assets/kubejs/textures/item/coin.png"
-hash = "0fd977bd8eb8774c247fdc9859c3feaea73a00f7c2fa103088e28d326585b250"
+hash = "03b7c8ca06defcfc3e9073e6d8ab2857e83d4e37d84dc8a11cfe4e26e9dcedbc"
 
 [[files]]
 file = "kubejs/assets/kubejs/textures/item/confluence_catalyst.png"
-hash = "a72168960dba99c69fd01e510a888468d3af76107198bef8316a8e2fa97d381e"
+hash = "f33ca7f935a538f6d376d999c029af9556addcf5d55582b0c3ac911f116cb1e0"
 
 [[files]]
 file = "kubejs/assets/kubejs/textures/item/end_focus.png"
-hash = "fab6e5ab327f519d8fac3fcfcc18627c948563c00e969e6b85640707c2016488"
+hash = "c96cc2cf16957b2f2be1fd4342d2f128c8942c0862e8fef95d155ff73904e730"
 
 [[files]]
 file = "kubejs/assets/kubejs/textures/item/glacio_shard.png"
-hash = "52c824c62110bbddfb9e6b0c773c3e8b7e327845cc2c2b41f836b0952f2ed2e4"
+hash = "a7e506730ebb1f57b1dc1a34b7a2649c85f88d874b22745c01ca8b2a0d3d3670"
 
 [[files]]
 file = "kubejs/assets/kubejs/textures/item/mercury_shard.png"
-hash = "7f402537551bb797d56aa38315e7e41e7ac178e2803c90484b43722a36643182"
+hash = "a76ea454b1a0dacaccf72bbd3f8d10dfed8e40c42b06c32a2bb410595518fc18"
 
 [[files]]
 file = "kubejs/assets/kubejs/textures/item/other_key.png"
-hash = "14c6e65b795ec5e5f6e46d78c904d02f6d1d31a9ca6cc4c02587701316dfa68e"
+hash = "8b00dcd1fd7b181446d4e1364ee38c32339d725c8ec77f257fb1b9d56498a8bc"
 
 [[files]]
 file = "kubejs/assets/kubejs/textures/item/twilight_key.png"
-hash = "09d4d5f62f02477db143d190b0b977cca9be9991065e245dcd52a5a1fe35b5d3"
+hash = "fdae7162b06cad22e0cd0aa4bace8149a8350d81b02a2dc70af9472a455ee0f7"
 
 [[files]]
 file = "kubejs/client_scripts/jei.js"
