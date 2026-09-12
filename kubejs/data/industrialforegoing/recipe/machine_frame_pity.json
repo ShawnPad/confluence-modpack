@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "O": { "tag": "c:ingots/osmium" },
+    "E": { "item": "powah:steel_energized" },
+    "R": { "tag": "c:storage_blocks/redstone" }
+  },
+  "pattern": ["OEO", "ERE", "OEO"],
+  "result": { "count": 1, "id": "industrialforegoing:machine_frame_pity" }
+}

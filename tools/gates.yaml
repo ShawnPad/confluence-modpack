@@ -1,4 +1,10 @@
-# id: the confluence:<tier>/<name> recipe id that must exist
-# removed: ids that must no longer exist
-gates: []
-removed: []
+gates:
+  - confluence:tier1/flint_and_steel
+  - confluence:tier1/metallurgic_infuser
+  - confluence:tier1/enchanting_apparatus
+removed:
+  - minecraft:flint_and_steel
+  - mekanism:metallurgic_infuser
+  - ars_nouveau:enchanting_apparatus
+  - minecraft:fire_charge
+  - ars_nouveau:fire_essence_to_charge
