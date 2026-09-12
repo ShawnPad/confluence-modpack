@@ -1,6 +1,6 @@
 """Render art/grids/<id>.txt through art/palette.gpl into the pack's texture folders.
 
-A grid file is the orchestrator's drafting source (art/STYLE.md, art/CONTRIBUTING.md). Legend lines `X name`
+A grid file is the maintainer's drafting source (art/STYLE.md, art/CONTRIBUTING.md). Legend lines `X name`
 map one character to a palette colour name (or `transparent`); the sixteen 16-character rows are the pixels;
 `#` starts a comment. The PNG in kubejs/assets is canonical once it exists: this script never overwrites one
 unless told to with --force <id>, so an artist's edit is safe from a re-run.

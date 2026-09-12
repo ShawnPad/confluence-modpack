@@ -1,0 +1,100 @@
+{
+  "families": {
+    "single": "One-offs",
+    "keys":   "Keys - the two dimension keys the pack adds (the other tiers reuse existing items); each is used up opening its dimension",
+    "foci":   "Foci - Ars Nouveau Enchanting Apparatus products that gate the Other key and the catalyst",
+    "shards": "Shards - drops of the two planet ores, the Astral Focus inputs",
+    "ores":   "Ores - the two pack blocks, one on Mercury and one on Glacio"
+  },
+  "textures": {
+    "coin": {
+      "display": "Confluence Coin",
+      "family": "single",
+      "role": "The questbook currency, in the game today. Every quest pays a few; the Coin Shop chapter sells repeatable reward bags for them.",
+      "earned": "Quest rewards, a few per quest; the reward bags can drop some too.",
+      "consumed": "Coin Shop bag quests: 16 coins for a Common bag, 48 for an Uncommon bag. Rare bags arrive in v0.2, Epic and Legendary in v0.3.",
+      "notes": "Stack of 64, so it must read at 16 px next to a number. One dark C in the centre; keep it plain. Also the Coin Shop chapter icon."
+    },
+    "twilight_key": {
+      "display": "Twilight Key",
+      "family": "keys",
+      "role": "In the game today (tier 2). The only thing that opens a Twilight Forest portal in this pack; the diamond trigger is disabled. Thrown into the water pool like the vanilla diamond, one key per portal.",
+      "earned": "Crafted from a netherite ingot, Aether zanite, a Mekanism advanced control circuit, an Ars Nouveau essence and a Cataclysm Monstrous Horn.",
+      "consumed": "The portal pool (one per portal).",
+      "notes": "Green ramp = Twilight Forest. The bow's ring and the two teeth are the silhouette the Other key must keep.",
+      "node": "D2.1"
+    },
+    "other_key": {
+      "display": "Key to The Other",
+      "family": "keys",
+      "role": "Will be consumed at an Allthemodium Teleport Pad placed in the Nether to reach The Other, the tier-5 dimension (v0.3).",
+      "earned": "Planned recipe (v0.3): a Vibranium ingot, a dragon egg, essence of the bees, an IF Advanced Machine Frame and an End Focus.",
+      "consumed": "The Teleport Pad, once.",
+      "notes": "Purple ramp = The Other. Same pixels as the Twilight key with the ramp swapped; change both keys together.",
+      "node": "D5.1"
+    },
+    "end_focus": {
+      "display": "End Focus",
+      "family": "foci",
+      "role": "The tier-4 magic composite: an Enchanting Apparatus product that will be an input of the Other key (v0.2).",
+      "earned": "Planned Enchanting Apparatus recipe (v0.2): four Ars essences, dragon's breath, a Gauntlet of Guard, a Ritual of Binding charm, a source gem block, a Planarium.",
+      "consumed": "The Other key recipe (v0.3).",
+      "notes": "Dark purple gem (purple base / dark / deep) in a neutral frame. The frame is shared with the Astral Focus.",
+      "node": "M4.2"
+    },
+    "astral_focus": {
+      "display": "Astral Focus",
+      "family": "foci",
+      "role": "The last focus: the magic-side input of the Confluence Catalyst, and the reason the two planet ores exist (v0.3).",
+      "earned": "Planned Enchanting Apparatus recipe (v0.3): Etrium, a divine soulshard, a Mercury shard and a Glacio shard.",
+      "consumed": "The Confluence Catalyst recipe (v1.0).",
+      "notes": "Pale gold gem in the same frame as the End Focus. Should look like the end focus's bright sibling.",
+      "node": "M6.1"
+    },
+    "confluence_catalyst": {
+      "display": "Confluence Catalyst",
+      "family": "single",
+      "role": "The pack's final item, to be made at the Ars Nouveau Enchanting Apparatus; every mod's creative-tier item will be rewritten to consume one (v1.0).",
+      "earned": "Planned recipe (v1.0): Etrium, the three Allthemodium alloys, a dragon egg, an Astral Focus, an AE2 wireless receiver and an AE2 crafting unit.",
+      "consumed": "Every creative-tier recipe (v1.0).",
+      "notes": "The signature texture and the pack's logo-in-waiting: three streams (ice = tech, purple = magic, green = exploration) meeting in an ember core. The only texture allowed four ramps. Spend your effort here first.",
+      "node": "X7.1"
+    },
+    "mercury_shard": {
+      "display": "Mercury Shard",
+      "family": "shards",
+      "role": "Dropped by Mercury Ore (the block already drops it); one of the two Astral Focus inputs, and nothing else will make it.",
+      "earned": "Mining Mercury Ore on Mercury (Ad Astra) once the ore is placed there (v0.3).",
+      "consumed": "The Astral Focus recipe (v0.3).",
+      "notes": "Ember ramp. Same crystal as the Glacio shard; change both together.",
+      "node": "D6.7"
+    },
+    "glacio_shard": {
+      "display": "Glacio Shard",
+      "family": "shards",
+      "role": "Dropped by Glacio Ore (the block already drops it); the other Astral Focus input, and nothing else will make it.",
+      "earned": "Mining Glacio Ore on Glacio (Ad Astra) once the ore is placed there (v0.3).",
+      "consumed": "The Astral Focus recipe (v0.3).",
+      "notes": "Ice ramp. Same crystal as the Mercury shard; change both together.",
+      "node": "D6.8"
+    },
+    "mercury_ore": {
+      "display": "Mercury Ore",
+      "family": "ores",
+      "role": "Pack block that will generate only in Mercury's one biome, buried in small veins (v0.3; not placed yet). Drops Mercury Shards.",
+      "earned": "Worldgen on Mercury (v0.3).",
+      "consumed": "Mined for shards.",
+      "notes": "Fully opaque, tiles on all four edges (check the corners against each other). Neutral stone base, ember flecks each with their own outline. Same base as Glacio Ore.",
+      "node": "D6.7"
+    },
+    "glacio_ore": {
+      "display": "Glacio Ore",
+      "family": "ores",
+      "role": "Pack block that will generate only in Glacio's two biomes, buried in small veins (v0.3; not placed yet). Drops Glacio Shards.",
+      "earned": "Worldgen on Glacio (v0.3).",
+      "consumed": "Mined for shards.",
+      "notes": "Fully opaque, tiles. Same base as Mercury Ore, ice flecks.",
+      "node": "D6.8"
+    }
+  }
+}

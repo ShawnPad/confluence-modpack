@@ -2,7 +2,7 @@
 
 The pack's own items and blocks (eight items, two ore blocks; `art/TEXTURES.md` says what each one is) share
 one look: **bold modpack icons**. Dark outline, saturated fills, high contrast; they should read at a glance in
-the questbook and stand out in a chest. Not vanilla-faithful on purpose (design decision D75).
+the questbook and stand out in a chest. Not vanilla-faithful on purpose (the maintainer's decision, D75 in the project's design log).
 
 ## Rules
 
@@ -22,12 +22,18 @@ the questbook and stand out in a chest. Not vanilla-faithful on purpose (design 
    texture that uses colours outside the palette is not.
 6. **Families share a silhouette** so the set reads as one pack:
    - keys `twilight_key` / `other_key`: one key shape (ring bow, shaft, two teeth); green vs purple ramp.
+     ![twilight_key](preview/x8/twilight_key.png) ![other_key](preview/x8/other_key.png)
    - foci `end_focus` / `astral_focus`: one octagonal gem in an octagonal neutral frame; dark purple vs gold gem.
+     ![end_focus](preview/x8/end_focus.png) ![astral_focus](preview/x8/astral_focus.png)
    - shards `mercury_shard` / `glacio_shard`: one tall crystal; ember vs ice ramp.
+     ![mercury_shard](preview/x8/mercury_shard.png) ![glacio_shard](preview/x8/glacio_shard.png)
    - ores `mercury_ore` / `glacio_ore`: one stone base (neutral ramp); ember vs ice flecks.
+     ![mercury_ore](preview/x8/mercury_ore.png) ![glacio_ore](preview/x8/glacio_ore.png)
    - `coin`: a gold disc with one dark "C" in the centre, nothing else.
+     ![coin](preview/x8/coin.png)
    - `confluence_catalyst`: the signature piece. Three streams (ice = tech, purple = magic, green = exploration)
      converge from the top corners and the bottom onto an ember core. The only texture with four ramps.
+     ![confluence_catalyst](preview/x8/confluence_catalyst.png)
 
 ## Palette
 

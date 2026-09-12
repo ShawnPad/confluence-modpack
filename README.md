@@ -28,4 +28,4 @@ so a server restart is all it takes to pick up a pushed change. Pin: NeoForge 21
 
 ## Repository layout
 
-`pack.toml` / `index.toml` (packwiz manifest), `mods/*.pw.toml`, `kubejs/` (recipes, gates, worldgen, tag checks), `config/ftbquests/` (questbook), `config/*.toml`, `tools/` (headless test harness and checkers; not shipped to clients).
+`pack.toml` / `index.toml` (packwiz manifest), `mods/*.pw.toml`, `kubejs/` (recipes, gates, worldgen, tag checks), `config/ftbquests/` (questbook), `config/*.toml`, `tools/` (headless test harness and checkers; not shipped to clients), `art/` (palette, style sheet, texture briefs and the maintainer's drafting grids; not shipped; see `art/CONTRIBUTING.md`).
