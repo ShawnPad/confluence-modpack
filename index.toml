@@ -61,6 +61,10 @@ file = "kubejs/client_scripts/tooltips.js"
 hash = "918183357ec86103fcf8074a00191974a73f7b9b8cf65a9867b19d5f216e3738"
 
 [[files]]
+file = "kubejs/server_scripts/dump.js"
+hash = "7e90242e851896b19c54798f56ca01ecda30fa579d8c12ddcc52a24e67cdceae"
+
+[[files]]
 file = "kubejs/server_scripts/lib/gates.js"
 hash = "9c35d42ba3cad1b0d47dcbbc8edb9f9902c633c758dbcbad9c11a79b375dc983"
 
@@ -70,7 +74,7 @@ hash = "93a41e4dc631098030bf6d91f512a1b41247098b16c9b5542b87f5ccc2a15bc9"
 
 [[files]]
 file = "kubejs/startup_scripts/items.js"
-hash = "2ba1d6ca4fe65cc0eb046c49777b5b892650d79b6baf81508a79c6b54fc84565"
+hash = "ab15a1b8804bb4ed0f06fdee3284e8aaf2905515c233f11f8368d66a57435919"
 
 [[files]]
 file = "mods/ad-astra.pw.toml"
