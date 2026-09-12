@@ -49,4 +49,6 @@ The stone base of the ores is neutral 2 / 3 / 4. Frames (the foci) are neutral 2
   canonical; `tools/gen_textures.py` only fills in missing files.
 - Briefs, one per texture, with 8× renders: `art/TEXTURES.md`.
 - How to contribute: `art/CONTRIBUTING.md`.
-- The check every PR must pass: `python3 tools/check_textures.py` (rules 1–3 above, mechanically).
+- The check every PR must pass: `python3 tools/check_textures.py`. It covers rule 1 and the mechanical halves
+  of rules 2–3 (empty canvas border for items, fully opaque blocks); the outline ring, the silhouette size
+  and the fleck rings are judged on the preview sheet.
