@@ -1,0 +1,18 @@
+chapter: cataclysm
+title: Cataclysm
+group: 0C0F1A0000000002
+order: 11
+icon: cataclysm:monstrous_horn
+quests:
+  - node: CATA.1
+    title: Netherite Monstrosity
+    task: kill:cataclysm:netherite_monstrosity:1
+    deps: [D1.1]
+    coins: 10
+    desc: "The Netherite Monstrosity is the boss of L_Ender's Cataclysm Soul Forge, and that structure generates only in the Nether. Kill it once."
+  - node: D1.3
+    title: Monstrous Horn
+    task: item:cataclysm:monstrous_horn
+    deps: [D1.1, CATA.1]
+    coins: 10
+    desc: "The Monstrous Horn is the Netherite Monstrosity's drop and the Twilight key recipe needs one, so this boss is on the critical path."

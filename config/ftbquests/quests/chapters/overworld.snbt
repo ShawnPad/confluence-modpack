@@ -1,0 +1,101 @@
+{
+	default_hide_dependency_lines: false
+	default_quest_shape: "rsquare"
+	filename: "overworld"
+	group: "0C0F1A0000000001"
+	icon: { id: "minecraft:diamond_pickaxe" }
+	id: "1FAA98FF40CC82E1"
+	images: [ ]
+	order_index: 1
+	progression_mode: "flexible"
+	quest_links: [ ]
+	quests: [
+		{
+			id: "78F1F403F58EBB37"
+			rewards: [{ id: "28D28357D5F0B3FB" item: { count: 3, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "721766E31B52FA8F" item: { count: 1, id: "minecraft:diamond_pickaxe" } type: "item" }]
+			x: 0.0d
+			y: 0.0d
+		}
+		{
+			id: "5E1B6F2BBDE03DD1"
+			rewards: [{ id: "602BE25E4916DD02" item: { count: 3, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "440202B685260729" item: { count: 1, id: "industrialforegoing:pitiful_generator" } type: "item" }]
+			x: 0.0d
+			y: 2.0d
+		}
+		{
+			dependencies: ["5E1B6F2BBDE03DD1"]
+			id: "027FE16448966127"
+			rewards: [{ id: "5D277F0BD79726A3" item: { count: 3, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "7EB6FC052046610D" item: { count: 1, id: "mekanismgenerators:heat_generator" } type: "item" }]
+			x: 2.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["5E1B6F2BBDE03DD1"]
+			id: "7497F7C8118F3795"
+			rewards: [{ id: "0173A054D9EB69C2" item: { count: 3, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "4EFA664EDAE9066D" item: { count: 1, id: "powah:energizing_orb" } type: "item" }]
+			x: 2.0d
+			y: 2.0d
+		}
+		{
+			dependencies: ["027FE16448966127", "7497F7C8118F3795"]
+			id: "0BA58716C453F0A7"
+			rewards: [{ id: "5A4AF3BDF5D963A5" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "070D0F24A849DEE8" item: { count: 1, id: "industrialforegoing:machine_frame_pity" } type: "item" }]
+			x: 4.0d
+			y: 0.0d
+		}
+		{
+			id: "53D85380B599D907"
+			rewards: [{ id: "0B19B3EAEA351F14" item: { count: 3, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "4F38EDAB8F8559F5" item: { count: 1, id: "ars_nouveau:source_gem" } type: "item" }]
+			x: 0.0d
+			y: 4.0d
+		}
+		{
+			id: "2053A3F99454EF66"
+			rewards: [{ id: "027570FA1D16249F" item: { count: 3, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "42C21D08611B511C" item: { count: 1, id: "irons_spellbooks:arcane_essence" } type: "item" }]
+			x: 0.0d
+			y: 6.0d
+		}
+		{
+			id: "626CBAD11FDF4B21"
+			rewards: [{ id: "5E843C0FE318612A" item: { count: 3, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "1E0B62AA1FA0BAD3" type: "checkmark" }]
+			x: 0.0d
+			y: 8.0d
+		}
+		{
+			id: "0F93A60BDE37286C"
+			rewards: [{ id: "0ED20C0F35A1EDD4" item: { count: 3, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "30ED1AEFC0D65883" item: { count: 1, id: "minecraft:sculk" } type: "item" }]
+			x: 0.0d
+			y: 10.0d
+		}
+		{
+			id: "42D307D4117DBAA3"
+			rewards: [{ id: "1366E2691C7B3AF6" item: { count: 3, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "40CF623A45B6FCC2" item: { count: 1, id: "functionalstorage:storage_controller" } type: "item" }]
+			x: 0.0d
+			y: 12.0d
+		}
+		{
+			id: "6F0DAEEA9F65E32D"
+			rewards: [{ id: "4E21339BB59873A5" item: { count: 3, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "79DB12FCC27F29C2" item: { count: 1, id: "sophisticatedstorage:chest" } type: "item" }]
+			x: 0.0d
+			y: 14.0d
+		}
+		{
+			id: "04D3B6995483A2C4"
+			rewards: [{ id: "4E3C54B7A9174F60" item: { count: 3, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "40C91823D7BD9069" type: "checkmark" }]
+			x: 0.0d
+			y: 16.0d
+		}
+	]
+}

@@ -1,0 +1,8 @@
+{
+	quest.6091B4F5B7C86DA3.title: "How gates work"
+	quest.6091B4F5B7C86DA3.quest_desc: ["[INTRO.1]", "This pack locks things in exactly three ways: a rewritten crafting recipe, a dimension you cannot enter yet, and a KubeJS script check. Finishing a quest never unlocks anything by itself - the quests only mirror those locks so you can see every one coming."]
+	quest.57D77E9BA6AEBD0A.title: "The ladder"
+	quest.57D77E9BA6AEBD0A.quest_desc: ["[INTRO.2]", "Seven tiers in order: Overworld, Nether, Twilight Forest, Undergarden, The End, The Other, then Ad Astra space, with one catalyst above them. Each tier ore lives in its own dimension, and the side trips - the Aether, Otherside, Bumblezone and the L_Ender's Cataclysm bosses - are required because the next key recipe eats something only they drop."]
+	quest.1890D81D0709C89F.title: "Keys and the catalyst"
+	quest.1890D81D0709C89F.quest_desc: ["[INTRO.3]", "One key item opens each tier: flint and steel, the Twilight key, the Undergarden catalyst, the eye of ender, the Other key, then the Ad Astra NASA Workbench. Each one is rewritten to need products from the tiers below it, tech and magic both, and the last craft of all is the Confluence catalyst at the Ars Nouveau Enchanting Apparatus."]
+}

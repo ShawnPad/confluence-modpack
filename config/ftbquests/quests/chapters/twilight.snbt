@@ -1,0 +1,139 @@
+{
+	default_hide_dependency_lines: false
+	default_quest_shape: "rsquare"
+	filename: "twilight"
+	group: "0C0F1A0000000001"
+	icon: { id: "twilightforest:knightmetal_ingot" }
+	id: "4245286CDF0A5D04"
+	images: [ ]
+	order_index: 3
+	progression_mode: "flexible"
+	quest_links: [ ]
+	quests: [
+		{
+			dependencies: ["412E53F722A070FB", "04517156F533E86B", "46F3EB94FA4C484A", "72EBE60DB9DAB561", "51B7CA5D3BD490D1"]
+			id: "2EC979265124AB1E"
+			rewards: [{ id: "3972393F140C2018" item: { count: 15, id: "kubejs:coin" } type: "item" }, { id: "0B5817453AA98832" table_id: 868942939919745026L type: "loot" }]
+			tasks: [{ id: "3B0EE7FDB11717FD" item: { count: 1, id: "kubejs:twilight_key" } type: "item" }]
+			x: 0.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["2EC979265124AB1E", "412E53F722A070FB"]
+			id: "34C4DC4DF5B82831"
+			rewards: [{ id: "05372C6DC66F33D4" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "68E51FE555AEDBCF" item: { count: 1, id: "allthemodium:raw_allthemodium" } type: "item" }]
+			x: 2.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["34C4DC4DF5B82831", "412E53F722A070FB"]
+			id: "102CA469468F8E1A"
+			rewards: [{ id: "278D77BAEA9A77D2" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "34D9F0A1B78C8A52" item: { count: 1, id: "allthemodium:allthemodium_upgrade_smithing_template" } type: "item" }]
+			x: 4.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["2EC979265124AB1E"]
+			id: "41A5B57830B98089"
+			rewards: [{ id: "521C716C74E6D9D4" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "3ADA58522410DC00" item: { count: 1, id: "twilightforest:knightmetal_ingot" } type: "item" }]
+			x: 2.0d
+			y: 2.0d
+		}
+		{
+			dependencies: ["34C4DC4DF5B82831"]
+			id: "40CBD13E78A1F42C"
+			rewards: [{ id: "4AD271E5EFF915D1" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "4483D8077F421489" item: { count: 1, id: "allthemodium:teleport_pad" } type: "item" }]
+			x: 4.0d
+			y: 2.0d
+		}
+		{
+			dependencies: ["0BA58716C453F0A7", "46F3EB94FA4C484A"]
+			id: "315020D6830FCDD8"
+			rewards: [{ id: "1B64988FB60C0070" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "1ED43E3C8B415563" item: { count: 1, id: "industrialforegoing:dissolution_chamber" } type: "item" }]
+			x: 0.0d
+			y: 2.0d
+		}
+		{
+			dependencies: ["0BA58716C453F0A7", "315020D6830FCDD8", "72EBE60DB9DAB561"]
+			id: "14BD76FC2D6209A3"
+			rewards: [{ id: "7369A912FCE8C7C5" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "50A4810EB903BE53" item: { count: 1, id: "industrialforegoing:machine_frame_simple" } type: "item" }]
+			x: 2.0d
+			y: 4.0d
+		}
+		{
+			dependencies: ["14BD76FC2D6209A3"]
+			id: "2C69CB63F838AE13"
+			rewards: [{ id: "7B36B3A5A2EC62C0" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "23537099A6247489" item: { count: 1, id: "irons_spellbooks:arcane_anvil" } type: "item" }]
+			x: 4.0d
+			y: 4.0d
+		}
+		{
+			dependencies: ["53D85380B599D907"]
+			id: "12BBBE8926B9593C"
+			rewards: [{ id: "7ECFBEB0367ABC7A" item: { count: 3, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "565BF0FAE7A944A3" item: { count: 1, id: "ars_nouveau:source_gem_block" } type: "item" }]
+			x: 0.0d
+			y: 4.0d
+		}
+		{
+			dependencies: ["14BD76FC2D6209A3", "72EBE60DB9DAB561", "3C45360E65089FB8", "6F0DAEEA9F65E32D"]
+			id: "03A64F0DB6424DEE"
+			rewards: [{ id: "2D725728A8C30086" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "28C496A4E8FF4CBA" item: { count: 1, id: "toms_storage:storage_terminal" } type: "item" }]
+			x: 4.0d
+			y: 6.0d
+		}
+		{
+			dependencies: ["7497F7C8118F3795", "40CBD13E78A1F42C"]
+			id: "3C76069F96AE065B"
+			rewards: [{ id: "039A3CDB41A7FC28" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "66034B1632887B83" item: { count: 1, id: "powah:crystal_spirited" } type: "item" }]
+			x: 6.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["027FE16448966127"]
+			id: "4CAFF05242DE1ACD"
+			rewards: [{ id: "1178CE84BE441DD2" item: { count: 3, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "69D3144EF74DBFEC" type: "checkmark" }]
+			x: 0.0d
+			y: 6.0d
+		}
+		{
+			id: "0F7A3CFCC14D5B59"
+			rewards: [{ id: "14E26E91BE4CA8EC" item: { count: 3, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "0E6ED9CB23ABAF3C" type: "checkmark" }]
+			x: 0.0d
+			y: 8.0d
+		}
+		{
+			id: "5749A4B5622ACD78"
+			rewards: [{ id: "7DB70F660E568040" item: { count: 3, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "57C66F4070E08387" type: "checkmark" }]
+			x: 0.0d
+			y: 10.0d
+		}
+		{
+			dependencies: ["14BD76FC2D6209A3"]
+			id: "068239C7E8C67F4C"
+			rewards: [{ id: "3B5B31042F937018" item: { count: 3, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "5285C828C05D4155" type: "checkmark" }]
+			x: 4.0d
+			y: 8.0d
+		}
+		{
+			id: "68B9330B6BC20CF4"
+			rewards: [{ id: "0182417BE845DBAD" item: { count: 3, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "687D33EAA6FB561D" type: "checkmark" }]
+			x: 0.0d
+			y: 12.0d
+		}
+	]
+}

@@ -9,6 +9,7 @@ quests:
     task: item:minecraft:flint_and_steel
     deps: [T0.2, M0.1]
     coins: 10
+    bag: common_bag
     desc: "Flint and steel now needs an osmium ingot from Mekanism and a source gem from Ars Nouveau. That is the tier-1 gate: no Nether without one machine and one spell."
   - node: X1.1
     title: Netherite
@@ -20,12 +21,6 @@ quests:
     task: item:minecraft:nether_star
     deps: [D1.1]
     desc: "A Wither. Ether gas needs one much later."
-  - node: D1.3
-    title: Monstrous Horn
-    task: item:cataclysm:monstrous_horn
-    deps: [D1.1]
-    coins: 10
-    desc: "Cataclysm's Netherite Monstrosity guards the Soul Forge. Its horn is a Twilight key input. See the Cataclysm chapter."
   - node: T1.1
     title: Metallurgic Infuser
     task: item:mekanism:metallurgic_infuser

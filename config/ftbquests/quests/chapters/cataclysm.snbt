@@ -1,0 +1,30 @@
+{
+	default_hide_dependency_lines: false
+	default_quest_shape: "rsquare"
+	filename: "cataclysm"
+	group: "0C0F1A0000000002"
+	icon: { id: "cataclysm:monstrous_horn" }
+	id: "43F8183D98ACEECD"
+	images: [ ]
+	order_index: 11
+	progression_mode: "flexible"
+	quest_links: [ ]
+	quests: [
+		{
+			dependencies: ["7402B74889DEA9C1"]
+			id: "426E087DF5AC9F9E"
+			rewards: [{ id: "6EE1AD94E065590F" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ entity: "cataclysm:netherite_monstrosity" id: "1C09A2F0400A7077" type: "kill" value: 1L }]
+			x: 0.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["7402B74889DEA9C1", "426E087DF5AC9F9E"]
+			id: "51B7CA5D3BD490D1"
+			rewards: [{ id: "4A37147C3251D75C" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "5FCDD39957549F52" item: { count: 1, id: "cataclysm:monstrous_horn" } type: "item" }]
+			x: 2.0d
+			y: 0.0d
+		}
+	]
+}

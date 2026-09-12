@@ -1,0 +1,18 @@
+{
+	quest.7402B74889DEA9C1.title: "Nether Key"
+	quest.7402B74889DEA9C1.quest_desc: ["[D1.1]", "Flint and steel now needs an osmium ingot from Mekanism and a source gem from Ars Nouveau. That is the tier-1 gate: no Nether without one machine and one spell."]
+	quest.412E53F722A070FB.title: "Netherite"
+	quest.412E53F722A070FB.quest_desc: ["[X1.1]", "Ancient debris is the only source. It feeds the Twilight key."]
+	quest.7E28C2FF2CEBAE0A.title: "Nether Star"
+	quest.7E28C2FF2CEBAE0A.quest_desc: ["[X1.2]", "A Wither. Ether gas needs one much later."]
+	quest.507D016CAAF0609B.title: "Metallurgic Infuser"
+	quest.507D016CAAF0609B.quest_desc: ["[T1.1]", "Needs a source gem. Makes control circuits and steel."]
+	quest.46F3EB94FA4C484A.title: "Control Circuits"
+	quest.46F3EB94FA4C484A.quest_desc: ["[T1.2]", "Basic then advanced. The advanced circuit goes into the Twilight key."]
+	quest.532F495217179193.title: "Enchanting Apparatus"
+	quest.532F495217179193.quest_desc: ["[M1.1]", "Needs an osmium ingot. Every key and focus is made here."]
+	quest.72EBE60DB9DAB561.title: "Elemental Essences"
+	quest.72EBE60DB9DAB561.quest_desc: ["[M1.2]", "Any of the four essences counts for the Twilight key."]
+	quest.3C45360E65089FB8.title: "Netherite Drawer Upgrade"
+	quest.3C45360E65089FB8.quest_desc: ["[S1.1]", "Smithing table: diamond upgrade + netherite. The storage terminal needs one on a controller."]
+}

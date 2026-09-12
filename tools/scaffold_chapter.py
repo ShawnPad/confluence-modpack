@@ -2,6 +2,7 @@
 Refuses to overwrite an existing chapter file (spec §5.5). Layout: column = dependency depth, row = order in file.
 """
 import hashlib
+import re
 import sys
 from pathlib import Path
 
@@ -17,6 +18,33 @@ def quest_id(node: str) -> str:
     # readID(long) also rerolls 0 and 1. So: clear the top bit and floor at 2 (deviation from the plan, review finding 1).
     h = int(hashlib.sha1(f"confluence:{node}".encode()).hexdigest()[:16], 16) & MAX_ID
     return f"{max(h, 2):016X}"
+
+
+def load_reward_tables(folder: Path | None = None) -> dict[str, int]:
+    """Map reward-table name -> the long FTB Quests uses in a quest reward's `table_id`.
+
+    A reward table's long id IS its SNBT hex `id:`: BaseQuestFile.loadRewardTableFile builds it as
+    `new RewardTable(readID(tableNBT.get("id")), this, filename)` and readID(Tag) parses the string with
+    `Long.parseLong(id, 16)` (branch 1.21.1/main, L779 and L1364-1371); RandomReward.writeData then writes
+    `nbt.putLong("table_id", table.id)` and readData resolves it with `file.getRewardTable(id)` (RandomReward.java
+    L49/L65-67). So `table_id` is derivable after all -- this refutes D58 and the tooling report §4.6, which said the
+    long was generated independently of the hex id and had to be wired in the in-game editor.
+    Keyed by both the loot_crate `string_id` and the filename stem.
+    """
+    folder = folder if folder is not None else QUESTS / "reward_tables"
+    tables: dict[str, int] = {}
+    if not folder.exists():
+        return tables
+    for path in sorted(folder.glob("*.snbt")):
+        text = path.read_text()
+        m = re.search(r'^\tid: "([0-9A-Fa-f]{16})"', text, re.M)
+        if not m:
+            continue
+        tables[path.stem] = int(m.group(1), 16)
+        s = re.search(r'string_id: "([^"]+)"', text)
+        if s:
+            tables[s.group(1)] = int(m.group(1), 16)
+    return tables
 
 
 def parseable_id(hex_id: str) -> bool:
@@ -66,11 +94,14 @@ def parse_chapter(text: str) -> dict:
         q.setdefault("coins", 3)
         q.setdefault("desc", "")
         q.setdefault("consume", False)
+        q.setdefault("repeat", False)
+        q.setdefault("bag", "")
     return ch
 
 
-def validate_chapter(ch: dict) -> list[str]:
+def validate_chapter(ch: dict, tables: dict[str, int] | None = None) -> list[str]:
     """Problems that FTB Quests would swallow silently (no log line) rather than reject."""
+    tables = load_reward_tables() if tables is None else tables
     problems = []
     if not parseable_id(str(ch.get("group", ""))):
         # BaseQuestFile.readChapterGroupsFile / readChapterFiles (1.21.1/main): an unparseable group id gets a random id
@@ -79,6 +110,9 @@ def validate_chapter(ch: dict) -> list[str]:
     for q in ch["quests"]:
         if q["consume"] and not q["task"].startswith("item:"):
             problems.append(f'{q["node"]}: consume is only meaningful on an item task (ItemTask.consume_items)')
+        if q["bag"] and q["bag"] not in tables:
+            # An unknown table_id resolves to null in RandomReward.readData and the reward silently pays nothing.
+            problems.append(f'{q["node"]}: no reward table named "{q["bag"]}" in config/ftbquests/quests/reward_tables/')
     return problems
 
 
@@ -117,7 +151,8 @@ def _depth(q: dict, by_node: dict, memo: dict) -> int:
     return d
 
 
-def render_snbt(ch: dict) -> str:
+def render_snbt(ch: dict, tables: dict[str, int] | None = None) -> str:
+    tables = load_reward_tables() if tables is None else tables
     by_node = {q["node"]: q for q in ch["quests"]}
     memo: dict = {}
     rows_at: dict = {}
@@ -135,7 +170,18 @@ def render_snbt(ch: dict) -> str:
         rewards = []
         if q["coins"]:
             rewards.append(f'{{ id: "{quest_id(q["node"] + ":coin")}" item: {{ count: {q["coins"]}, id: "kubejs:coin" }} type: "item" }}')
+        if q["bag"]:
+            # LootReward extends RandomReward and is registered as `loot` (RewardTypes L27); it inherits the
+            # `table_id` long and always excludes itself from claim-all (LootReward.getExcludeFromClaimAll), so
+            # `exclude_from_claim_all` is not written. Keys alphabetical, as FTB Quests writes them.
+            rewards.append(f'{{ id: "{quest_id(q["node"] + ":bag")}" table_id: {tables[q["bag"]]}L type: "loot" }}')
         out.append("\t\t{")
+        if q["repeat"]:
+            # `can_repeat` is a quest-level Tristate: Quest.java holds `private Tristate canRepeat` and writes it as
+            # `canRepeat.write(nbt, "can_repeat")` (tag v2101.1.35 L325, read back L446) -- research/phase6-tier0-2-ids-2.md
+            # Q3. There is no task-level equivalent, and `consume_items` is NOT a quest key (it is chapter- and
+            # task-level only), so the two must not be written in the same place. Keys alphabetical, as FTB Quests writes them.
+            out.append("\t\t\tcan_repeat: true")
         if deps:
             out.append(f"\t\t\tdependencies: [{deps}]")
         out.append(f'\t\t\tid: "{qid}"')

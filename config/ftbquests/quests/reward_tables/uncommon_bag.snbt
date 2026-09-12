@@ -1,0 +1,21 @@
+{
+	id: "0C0F1B0000000002"
+	loot_crate: {
+		color: 5636095
+		drops: { boss: 0 monster: 0 passive: 0 }
+		glow: 0b
+		string_id: "uncommon_bag"
+	}
+	loot_size: 3
+	order_index: 1
+	rewards: [
+		{ id: "0C0F1B0000000201" item: { count: 4, id: "minecraft:diamond" } weight: 20.0f }
+		{ id: "0C0F1B0000000202" item: { count: 8, id: "mekanism:ingot_steel" } weight: 20.0f }
+		{ id: "0C0F1B0000000203" item: { count: 4, id: "powah:steel_energized" } weight: 15.0f }
+		{ id: "0C0F1B0000000204" item: { count: 16, id: "minecraft:quartz" } weight: 20.0f }
+		{ id: "0C0F1B0000000205" item: { count: 1, id: "industrialforegoing:machine_frame_pity" } weight: 10.0f }
+		{ id: "0C0F1B0000000206" item: { count: 4, id: "mekanism:basic_control_circuit" } weight: 10.0f }
+		{ id: "0C0F1B0000000207" item: { count: 16, id: "kubejs:coin" } weight: 10.0f }
+	]
+	use_title: true
+}

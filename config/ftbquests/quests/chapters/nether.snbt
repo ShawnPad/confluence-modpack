@@ -1,0 +1,78 @@
+{
+	default_hide_dependency_lines: false
+	default_quest_shape: "rsquare"
+	filename: "nether"
+	group: "0C0F1A0000000001"
+	icon: { id: "minecraft:netherrack" }
+	id: "22273CFA12CCC50B"
+	images: [ ]
+	order_index: 2
+	progression_mode: "flexible"
+	quest_links: [ ]
+	quests: [
+		{
+			dependencies: ["027FE16448966127", "53D85380B599D907"]
+			id: "7402B74889DEA9C1"
+			rewards: [{ id: "0A9911AAD935D8FE" item: { count: 10, id: "kubejs:coin" } type: "item" }, { id: "6BD960A3D1B4F895" table_id: 868942939919745025L type: "loot" }]
+			tasks: [{ id: "47096CF2E5C55D99" item: { count: 1, id: "minecraft:flint_and_steel" } type: "item" }]
+			x: 0.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["7402B74889DEA9C1"]
+			id: "412E53F722A070FB"
+			rewards: [{ id: "0653C132804883C2" item: { count: 3, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "207169CE84760EDD" item: { count: 1, id: "minecraft:netherite_ingot" } type: "item" }]
+			x: 2.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["7402B74889DEA9C1"]
+			id: "7E28C2FF2CEBAE0A"
+			rewards: [{ id: "0DFCFA93AC59E592" item: { count: 3, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "25E21E5DB3EAA02C" item: { count: 1, id: "minecraft:nether_star" } type: "item" }]
+			x: 2.0d
+			y: 2.0d
+		}
+		{
+			dependencies: ["027FE16448966127", "53D85380B599D907"]
+			id: "507D016CAAF0609B"
+			rewards: [{ id: "10D03292F013706D" item: { count: 3, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "207B0B1F6DD68B48" item: { count: 1, id: "mekanism:metallurgic_infuser" } type: "item" }]
+			x: 0.0d
+			y: 2.0d
+		}
+		{
+			dependencies: ["507D016CAAF0609B"]
+			id: "46F3EB94FA4C484A"
+			rewards: [{ id: "0B407F9C997E13B7" item: { count: 3, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "6EBE85ECC4BCE0E7" item: { count: 1, id: "mekanism:advanced_control_circuit" } type: "item" }]
+			x: 2.0d
+			y: 4.0d
+		}
+		{
+			dependencies: ["027FE16448966127", "53D85380B599D907"]
+			id: "532F495217179193"
+			rewards: [{ id: "10E197496AE0B09D" item: { count: 3, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "089E4C5C7728C269" item: { count: 1, id: "ars_nouveau:enchanting_apparatus" } type: "item" }]
+			x: 0.0d
+			y: 4.0d
+		}
+		{
+			dependencies: ["532F495217179193"]
+			id: "72EBE60DB9DAB561"
+			rewards: [{ id: "0AD3DE73B1FC0465" item: { count: 3, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "2DDE7E7FA86EC704" item: { count: 1, id: "ars_nouveau:fire_essence" } type: "item" }]
+			x: 2.0d
+			y: 6.0d
+		}
+		{
+			dependencies: ["412E53F722A070FB", "42D307D4117DBAA3"]
+			id: "3C45360E65089FB8"
+			rewards: [{ id: "41BA119AD7C05E86" item: { count: 3, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "0341951E519B65E0" item: { count: 1, id: "functionalstorage:netherite_upgrade" } type: "item" }]
+			x: 4.0d
+			y: 0.0d
+		}
+	]
+}

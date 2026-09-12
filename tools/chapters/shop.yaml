@@ -1,0 +1,23 @@
+chapter: shop
+title: Coin Shop
+group: 0C0F1A0000000003
+order: 20
+icon: kubejs:coin
+quests:
+  - node: SHOP.1
+    title: Common Bag
+    task: item:kubejs:coin:16
+    consume: true
+    repeat: true
+    coins: 0
+    bag: common_bag
+    desc: "Hand in 16 coins for a Common bag. Coins come from finishing quests, and this trade can be made as often as you can pay for it."
+  - node: SHOP.2
+    title: Uncommon Bag
+    task: item:kubejs:coin:48
+    deps: [D1.1]
+    consume: true
+    repeat: true
+    coins: 0
+    bag: uncommon_bag
+    desc: "Hand in 48 coins for an Uncommon bag. It opens once you hold the Nether key, and like the Common bag it can be traded again and again."

@@ -1,7 +1,8 @@
 from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from scaffold_chapter import parse_chapter, quest_id, parseable_id, render_snbt, render_lang, validate_chapter, MAX_ID
+from scaffold_chapter import (parse_chapter, quest_id, parseable_id, render_snbt, render_lang, validate_chapter,
+                              load_reward_tables, MAX_ID)
 
 YAML = """
 chapter: nether
@@ -96,3 +97,98 @@ def test_validate_rejects_unparseable_group():
     ch["quests"][0]["consume"] = True          # consume on a non-item task is caught too
     ch["quests"][0]["task"] = "checkmark"
     assert len(validate_chapter(ch)) == 1 and "D1.1" in validate_chapter(ch)[0]
+
+# Shop bags are the only repeatable quests in v0.1 (plan Task 13 Step 2 sets them repeatable; the `repeat:` YAML key
+# does it at scaffold time instead of by hand in the editor).
+REPEAT_YAML = """
+chapter: shop
+title: Coin Shop
+group: 0C0F1A0000000003
+order: 20
+icon: kubejs:coin
+quests:
+  - node: SHOP.1
+    title: Common Bag
+    task: item:kubejs:coin:16
+    consume: true
+    repeat: true
+    coins: 0
+  - node: SHOP.2
+    title: Uncommon Bag
+    task: item:kubejs:coin:48
+    deps: [D1.1]
+    consume: true
+    coins: 0
+"""
+
+def test_repeat_renders_a_quest_level_can_repeat():
+    # Quest.java (tag v2101.1.35) holds `private Tristate canRepeat` and writes `canRepeat.write(nbt, "can_repeat")`
+    # at L325, reading it back at L446 (research/phase6-tier0-2-ids-2.md Q3). There is no task-level `can_repeat`,
+    # and unlike `consume_items` it is not a chapter key either, so it belongs in the quest block and nowhere else.
+    ch = parse_chapter(REPEAT_YAML)
+    assert ch["quests"][0]["repeat"] is True
+    assert ch["quests"][1]["repeat"] is False          # default when the key is absent
+    assert validate_chapter(ch) == []                  # 0C0F1A0000000003 (the Shop group) is a parseable id
+    s = render_snbt(ch)
+    # first key in the quest block: FTB Quests writes keys alphabetically and can_repeat < dependencies < id
+    assert f'\t\t{{\n\t\t\tcan_repeat: true\n\t\t\tid: "{quest_id("SHOP.1")}"' in s
+    assert s.count("can_repeat") == 1                  # not on SHOP.2
+    for line in s.splitlines():
+        if line.lstrip().startswith("tasks:"):
+            assert "can_repeat" not in line            # never a task key
+
+
+# Bag (loot) rewards. `table_id` is the reward table's own long id, i.e. its SNBT hex `id:` parsed with
+# Long.parseLong(id, 16): BaseQuestFile.loadRewardTableFile L779 + readID(Tag) L1364-1371, RandomReward.writeData L49
+# / readData L65-67, LootReward extends RandomReward and registers as `loot` (RewardTypes L27), all branch 1.21.1/main.
+# This refutes D58 / tooling report §4.6 ("a runtime long the scaffolder cannot derive").
+BAG_YAML = """
+chapter: shop
+title: Coin Shop
+group: 0C0F1A0000000003
+order: 20
+icon: kubejs:coin
+quests:
+  - node: SHOP.1
+    title: Common Bag
+    task: item:kubejs:coin:16
+    consume: true
+    repeat: true
+    coins: 0
+    bag: common_bag
+  - node: D1.1
+    title: Nether Key
+    task: item:minecraft:flint_and_steel
+    coins: 10
+    bag: uncommon_bag
+"""
+TABLES = {"common_bag": 0x0C0F1B0000000001, "uncommon_bag": 0x0C0F1B0000000002}
+
+
+def test_load_reward_tables_reads_the_committed_tables():
+    tables = load_reward_tables()
+    assert tables["common_bag"] == 0x0C0F1B0000000001    # reward_tables/common_bag.snbt id: "0C0F1B0000000001" (D63)
+    assert tables["uncommon_bag"] == 0x0C0F1B0000000002
+
+
+def test_bag_renders_a_loot_reward_after_the_coin_reward():
+    ch = parse_chapter(BAG_YAML)
+    assert ch["quests"][0]["bag"] == "common_bag"
+    s = render_snbt(ch, TABLES)
+    assert f'rewards: [{{ id: "{quest_id("SHOP.1:bag")}" table_id: 868942939919745025L type: "loot" }}]' in s
+    assert ('rewards: ['
+            f'{{ id: "{quest_id("D1.1:coin")}" item: {{ count: 10, id: "kubejs:coin" }} type: "item" }}, '
+            f'{{ id: "{quest_id("D1.1:bag")}" table_id: 868942939919745026L type: "loot" }}]') in s
+    assert "exclude_from_claim_all" not in s   # LootReward.getExcludeFromClaimAll() is hard-coded true
+
+
+def test_no_bag_means_no_loot_reward():
+    assert "table_id" not in render_snbt(parse_chapter(YAML), TABLES)
+
+
+def test_validate_rejects_an_unknown_bag():
+    ch = parse_chapter(BAG_YAML)
+    assert validate_chapter(ch, TABLES) == []
+    ch["quests"][0]["bag"] = "epic_bag"
+    problems = validate_chapter(ch, TABLES)
+    assert len(problems) == 1 and "SHOP.1" in problems[0] and "epic_bag" in problems[0]

@@ -1,0 +1,58 @@
+chapter: overworld
+title: Overworld
+group: 0C0F1A0000000001
+order: 1
+icon: minecraft:diamond_pickaxe
+quests:
+  - node: T0.1
+    title: Tool Ladder
+    task: item:minecraft:diamond_pickaxe
+    desc: "Wood, stone, iron, diamond. No recipe here is rewritten; the diamond pickaxe is what mines the obsidian for the Nether."
+  - node: X0.1
+    title: First Power
+    task: item:industrialforegoing:pitiful_generator
+    desc: "Any first generator counts: Industrial Foregoing's Pitiful Generator, Mekanism's Heat Generator or a Powah furnator. All three keep their default recipes."
+  - node: T0.2
+    title: Heat Generator
+    task: item:mekanismgenerators:heat_generator
+    deps: [X0.1]
+    desc: "Mekanism Generators' own recipe, unchanged. It is the root of Mekanism ore processing, which doubles base metals and supplies the osmium ingots the tier-1 gates need."
+  - node: T0.3
+    title: Energizing Orb
+    task: item:powah:energizing_orb
+    deps: [X0.1]
+    desc: "Powah's own recipe, unchanged. The orb makes energized steel for the Pity Machine Frame and every Powah crystal later."
+  - node: T0.4
+    title: Pity Machine Frame
+    task: item:industrialforegoing:machine_frame_pity
+    deps: [T0.2, T0.3]
+    coins: 10
+    desc: "Rewritten: Industrial Foregoing's frame now needs osmium ingots from Mekanism and energized steel from Powah around a redstone block. Logs and iron no longer work."
+  - node: M0.1
+    title: Source Gem
+    task: item:ars_nouveau:source_gem
+    desc: "Ars Nouveau's own chain, unchanged. Source gems are an input of the Nether key, the Metallurgic Infuser and the Enchanting Apparatus."
+  - node: M0.2
+    title: Arcane Essence
+    task: item:irons_spellbooks:arcane_essence
+    desc: "Iron's Spells 'n Spellbooks, unchanged. It is the second magic root and it is ungated - nothing has to be unlocked before you start it."
+  - node: D0.1
+    title: Explore the Overworld
+    task: checkmark
+    desc: "Regions Unexplored, Biomes We've Gone, YUNG's structures, Towns and Towers and When Dungeons Arise are content, not gates. Nothing here is locked."
+  - node: D0.2
+    title: Deep Dark
+    task: item:minecraft:sculk
+    desc: "Vanilla, but bring a Silk Touch pickaxe - sculk drops nothing without one. Ancient Cities hold no Allthemodium in this pack; the Deep Dark is kept only as the doorway to the Otherside much later."
+  - node: S0.1
+    title: Drawer Controller
+    task: item:functionalstorage:storage_controller
+    desc: "Functional Storage, unchanged. Rung 0 of the storage ladder; its netherite-upgraded form is consumed by the tier-2 storage terminal."
+  - node: S0.2
+    title: Sophisticated Chest
+    task: item:sophisticatedstorage:chest
+    desc: "Sophisticated Storage, unchanged. One of these chests is an input of the tier-2 storage terminal."
+  - node: X0.2
+    title: Ore Tiers Live Elsewhere
+    task: checkmark
+    desc: "Audit: Allthemodium, Vibranium, Unobtainium and Powah's uraninite never spawn in the Overworld, Nether or End. Their default placements are switched off, so the only way to them is through the dimension gates."

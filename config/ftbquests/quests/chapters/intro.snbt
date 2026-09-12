@@ -1,0 +1,37 @@
+{
+	default_hide_dependency_lines: false
+	default_quest_shape: "rsquare"
+	filename: "intro"
+	group: "0C0F1A0000000001"
+	icon: { id: "minecraft:flint_and_steel" }
+	id: "692BF8F0ADE39D0B"
+	images: [ ]
+	order_index: 0
+	progression_mode: "flexible"
+	quest_links: [ ]
+	quests: [
+		{
+			id: "6091B4F5B7C86DA3"
+			rewards: [{ id: "246094B7FA79D4B5" item: { count: 3, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "59A45A7FF2485F42" type: "checkmark" }]
+			x: 0.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["6091B4F5B7C86DA3"]
+			id: "57D77E9BA6AEBD0A"
+			rewards: [{ id: "1EC03140CB796011" item: { count: 3, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "19D161B0B0A0A94A" type: "checkmark" }]
+			x: 2.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["57D77E9BA6AEBD0A"]
+			id: "1890D81D0709C89F"
+			rewards: [{ id: "304549E068C8298A" item: { count: 3, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "3E5C807704E4950A" type: "checkmark" }]
+			x: 4.0d
+			y: 0.0d
+		}
+	]
+}

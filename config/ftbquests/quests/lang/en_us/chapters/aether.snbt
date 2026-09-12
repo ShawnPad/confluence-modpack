@@ -1,0 +1,6 @@
+{
+	quest.04517156F533E86B.title: "The Aether"
+	quest.04517156F533E86B.quest_desc: ["[D1.2]", "The Aether's portal is a glowstone frame filled with a water bucket, and glowstone only drops in the Nether here, so the Nether key comes first. Nothing about the portal itself is rewritten - the Nether is the whole entry cost."]
+	quest.51CBC72A2B73D829.title: "Zanite Gemstone"
+	quest.51CBC72A2B73D829.quest_desc: ["[AETHER.1]", "Zanite ore is mined in the Aether and nowhere else, and the Twilight key recipe needs a zanite gemstone. That is why this trip is required rather than optional."]
+}

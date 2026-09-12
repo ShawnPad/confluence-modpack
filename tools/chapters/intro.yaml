@@ -1,0 +1,20 @@
+chapter: intro
+title: Start Here
+group: 0C0F1A0000000001
+order: 0
+icon: minecraft:flint_and_steel
+quests:
+  - node: INTRO.1
+    title: How gates work
+    task: checkmark
+    desc: "This pack locks things in exactly three ways: a rewritten crafting recipe, a dimension you cannot enter yet, and a KubeJS script check. Finishing a quest never unlocks anything by itself - the quests only mirror those locks so you can see every one coming."
+  - node: INTRO.2
+    title: The ladder
+    task: checkmark
+    deps: [INTRO.1]
+    desc: "Seven tiers in order: Overworld, Nether, Twilight Forest, Undergarden, The End, The Other, then Ad Astra space, with one catalyst above them. Each tier ore lives in its own dimension, and the side trips - the Aether, Otherside, Bumblezone and the L_Ender's Cataclysm bosses - are required because the next key recipe eats something only they drop."
+  - node: INTRO.3
+    title: Keys and the catalyst
+    task: checkmark
+    deps: [INTRO.2]
+    desc: "One key item opens each tier: flint and steel, the Twilight key, the Undergarden catalyst, the eye of ender, the Other key, then the Ad Astra NASA Workbench. Each one is rewritten to need products from the tiers below it, tech and magic both, and the last craft of all is the Confluence catalyst at the Ars Nouveau Enchanting Apparatus."

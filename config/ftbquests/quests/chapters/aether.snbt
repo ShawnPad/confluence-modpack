@@ -1,0 +1,30 @@
+{
+	default_hide_dependency_lines: false
+	default_quest_shape: "rsquare"
+	filename: "aether"
+	group: "0C0F1A0000000002"
+	icon: { id: "aether:zanite_gemstone" }
+	id: "411204531F46CE97"
+	images: [ ]
+	order_index: 10
+	progression_mode: "flexible"
+	quest_links: [ ]
+	quests: [
+		{
+			dependencies: ["7402B74889DEA9C1"]
+			id: "04517156F533E86B"
+			rewards: [{ id: "69D0A2BEFF5EE387" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ dimension: "aether:the_aether" id: "01379CA25ABB2059" type: "dimension" }]
+			x: 0.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["04517156F533E86B"]
+			id: "51CBC72A2B73D829"
+			rewards: [{ id: "35F706E21C953C30" item: { count: 3, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "183741AF0D613C51" item: { count: 1, id: "aether:zanite_gemstone" } type: "item" }]
+			x: 2.0d
+			y: 0.0d
+		}
+	]
+}

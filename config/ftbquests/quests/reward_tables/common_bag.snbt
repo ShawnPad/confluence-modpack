@@ -1,0 +1,22 @@
+{
+	id: "0C0F1B0000000001"
+	loot_crate: {
+		color: 11184810
+		drops: { boss: 0 monster: 15 passive: 0 }
+		glow: 0b
+		string_id: "common_bag"
+	}
+	loot_size: 3
+	order_index: 0
+	rewards: [
+		{ id: "0C0F1B0000000101" item: { count: 16, id: "minecraft:iron_ingot" } weight: 30.0f }
+		{ id: "0C0F1B0000000102" item: { count: 16, id: "minecraft:copper_ingot" } weight: 30.0f }
+		{ id: "0C0F1B0000000103" item: { count: 8, id: "minecraft:gold_ingot" } weight: 15.0f }
+		{ id: "0C0F1B0000000104" item: { count: 4, id: "mekanism:ingot_osmium" } weight: 15.0f }
+		{ id: "0C0F1B0000000105" item: { count: 64, id: "minecraft:oak_planks" } weight: 20.0f }
+		{ id: "0C0F1B0000000106" item: { count: 32, id: "minecraft:bread" } weight: 20.0f }
+		{ id: "0C0F1B0000000107" item: { count: 8, id: "ars_nouveau:source_gem" } weight: 10.0f }
+		{ id: "0C0F1B0000000108" item: { count: 8, id: "kubejs:coin" } weight: 10.0f }
+	]
+	use_title: true
+}
