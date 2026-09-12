@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.4
+- Textures: the pack's ten items and blocks (coin, both keys, both foci, the catalyst, both shards, both ores) get drawn starter textures in the bold-icon style (`art/STYLE.md`) instead of flat colour squares. Client-only; no server restart.
+- Tooling: `art/` (palette, style sheet, briefs, contributor guide), `tools/check_textures.py` in the test loop, `tools/gen_textures.py` never overwrites an existing PNG.
+
 ## 0.1.3
 - Fix: the questbook showed "Unnamed Group" / "Unnamed" for every group, chapter and quest, with no descriptions. The translations sat in `lang/en_us/{chapter,chapter_group}.snbt` + `lang/en_us/chapters/*.snbt`, the layout ATM10 uses - but ATM10 ships the FTB Quests Lang Splitter mod to merge those files, and FTB Quests itself reads only a flat `lang/en_us.snbt`. The pack now ships that one file (same keys, same text). Server-side and client-side; relaunch picks it up.
 - Fix: the Allthemodium upgrade smithing template was in Twilight stronghold caches at weight 1 against a pool of weight 575 (1 chest in 576). It is now weight 45, about 1 cache in 14 (measured 17 in 300 rolls). And the template no longer appears where Allthemodium itself put it: Ancient City suspicious clay (`allthemodium:arch`) and, for the Vibranium template, bastion suspicious soul sand (`allthemodium:arch2`) now roll empty. Chests and suspicious blocks generated before this update keep their old contents.
