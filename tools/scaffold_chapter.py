@@ -1,5 +1,13 @@
 """Scaffold an FTB Quests chapter (SNBT + lang) from tools/chapters/<name>.yaml.
 Refuses to overwrite an existing chapter file (spec §5.5). Layout: column = dependency depth, row = order in file.
+
+The lang file is ONE flat file, config/ftbquests/quests/lang/en_us.snbt, rebuilt from every tools/chapters/*.yaml
+plus GROUPS on every run: FTB Quests 2101.1.35 lists `lang/` non-recursively and keeps only names matching
+`^\\w+\\.snbt$` (TranslationManager.loadFromNBT / isValidLangFile, research/phase7-ftbquests-translations.md §2), so the
+per-type `lang/en_us/{chapter,chapter_group}.snbt` + `chapters/*.snbt` layout the v0.1 build copied from ATM10 loaded
+zero entries — ATM10 ships the FTB Quests Lang Splitter mod to merge that layout; this pack does not (§5).
+`--lang-only` rebuilds the lang file without scaffolding chapters (chapter SNBT is untouched; quest ids are
+deterministic in `node`, so the two never drift).
 """
 import hashlib
 import re
@@ -9,6 +17,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 QUESTS = ROOT / "config" / "ftbquests" / "quests"
 MAX_ID = 0x7FFFFFFFFFFFFFFF  # Java Long.MAX_VALUE
+LANG = QUESTS / "lang" / "en_us.snbt"
+CHAPTERS_DIR = ROOT / "tools" / "chapters"
+# Chapter-group titles. Ids are the ones committed in config/ftbquests/quests/chapter_groups.snbt (D63); the key shape
+# is `chapter_group.<%016X id>.title` (TranslationManager.makeKey, QuestObjectType.CHAPTER_GROUP, report §2).
+GROUPS = {"0C0F1A0000000001": "Trunk", "0C0F1A0000000002": "Spurs", "0C0F1A0000000003": "Shop"}
 
 
 def quest_id(node: str) -> str:
@@ -194,46 +207,57 @@ def render_snbt(ch: dict, tables: dict[str, int] | None = None) -> str:
     return "\n".join(out)
 
 
-def render_lang(ch: dict) -> str:
-    out = ["{"]
+def lang_entries(ch: dict) -> dict[str, str]:
+    """Translation keys for one chapter: its title and every quest's title and description (values are SNBT literals).
+    No node-id line in quest_desc any more: descs are player-facing (session 10), and check_quests.py finds a node's
+    quest through quest_id(node) instead."""
+    entries = {f"chapter.{quest_id('chapter:' + ch['chapter'])}.title": f'"{ch["title"]}"'}
     for q in ch["quests"]:
         qid = quest_id(q["node"])
-        out.append(f'\tquest.{qid}.title: "{q["title"]}"')
-        desc = f'"[{q["node"]}]"'
+        entries[f"quest.{qid}.title"] = f'"{q["title"]}"'
         if q["desc"]:
-            desc += f', "{q["desc"]}"'
-        out.append(f"\tquest.{qid}.quest_desc: [{desc}]")
-    out += ["}", ""]
-    return "\n".join(out)
+            entries[f"quest.{qid}.quest_desc"] = f'["{q["desc"]}"]'
+    return entries
 
 
-def main(paths: list[str]) -> int:
-    chapter_lang = QUESTS / "lang" / "en_us" / "chapter.snbt"
-    titles = {}
-    if chapter_lang.exists():
-        for line in chapter_lang.read_text().splitlines():
-            if line.strip().startswith("chapter."):
-                k, v = line.strip().split(":", 1)
-                titles[k] = v.strip()
-    for p in paths:
-        ch = parse_chapter(Path(p).read_text())
-        problems = validate_chapter(ch)
-        if problems:
-            for m in problems:
-                print(f"{p}: {m}")
-            return 1
-        target = QUESTS / "chapters" / f"{ch['chapter']}.snbt"
-        if target.exists():
-            print(f"refusing to overwrite {target}")
-            return 1
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(render_snbt(ch))
-        lang = QUESTS / "lang" / "en_us" / "chapters" / f"{ch['chapter']}.snbt"
-        lang.parent.mkdir(parents=True, exist_ok=True)
-        lang.write_text(render_lang(ch))
-        titles[f"chapter.{quest_id('chapter:' + ch['chapter'])}.title"] = f'"{ch["title"]}"'
-        print("wrote", target, "and", lang)
-    chapter_lang.write_text("{\n" + "\n".join(f"\t{k}: {v}" for k, v in sorted(titles.items())) + "\n}\n")
+def render_lang_text(entries: dict[str, str]) -> str:
+    return "{\n" + "\n".join(f"\t{k}: {v}" for k, v in sorted(entries.items())) + "\n}\n"
+
+
+def render_lang(ch: dict) -> str:
+    """One chapter's entries as an SNBT compound (tests and previews); the shipped file merges every chapter."""
+    return render_lang_text(lang_entries(ch))
+
+
+def build_lang(chapter_paths: list[Path]) -> str:
+    """The whole lang/en_us.snbt: GROUPS plus every chapter YAML given (normally all of tools/chapters/*.yaml)."""
+    entries = {f"chapter_group.{gid}.title": f'"{title}"' for gid, title in GROUPS.items()}
+    for p in chapter_paths:
+        entries.update(lang_entries(parse_chapter(p.read_text())))
+    return render_lang_text(entries)
+
+
+def main(argv: list[str]) -> int:
+    lang_only = "--lang-only" in argv
+    paths = [a for a in argv if a != "--lang-only"]
+    if not lang_only:
+        for p in paths:
+            ch = parse_chapter(Path(p).read_text())
+            problems = validate_chapter(ch)
+            if problems:
+                for m in problems:
+                    print(f"{p}: {m}")
+                return 1
+            target = QUESTS / "chapters" / f"{ch['chapter']}.snbt"
+            if target.exists():
+                print(f"refusing to overwrite {target}")
+                return 1
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(render_snbt(ch))
+            print("wrote", target)
+    LANG.parent.mkdir(parents=True, exist_ok=True)
+    LANG.write_text(build_lang(sorted(CHAPTERS_DIR.glob("*.yaml"))))
+    print("wrote", LANG)
     return 0
 
 

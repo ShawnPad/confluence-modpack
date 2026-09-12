@@ -9,9 +9,9 @@ quests:
     task: dimension:aether:the_aether
     deps: [D1.1]
     coins: 10
-    desc: "The Aether's portal is a glowstone frame filled with a water bucket, and glowstone only drops in the Nether here, so the Nether key comes first. Nothing about the portal itself is rewritten - the Nether is the whole entry cost."
+    desc: "Build a glowstone frame and fill it with a water bucket. Glowstone only drops in the Nether here, so the Nether key comes first - the portal itself is not rewritten, and that Nether trip is the whole entry cost. Up here is the zanite the Twilight key wants."
   - node: AETHER.1
     title: Zanite Gemstone
     task: item:aether:zanite_gemstone
     deps: [D1.2]
-    desc: "Zanite ore is mined in the Aether and nowhere else, and the Twilight key recipe needs a zanite gemstone. That is why this trip is required rather than optional."
+    desc: "Mine zanite ore in the Aether; it is found nowhere else. The Twilight key recipe needs a zanite gemstone, which is why this trip is required rather than optional - bring a few home."

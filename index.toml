@@ -37,40 +37,8 @@ file = "config/ftbquests/quests/data.snbt"
 hash = "daed85b108619d4dd9044df7c0e38984dd6aa44b53e776cb493f453399776b3f"
 
 [[files]]
-file = "config/ftbquests/quests/lang/en_us/chapter.snbt"
-hash = "b04dfdeee63eca223226be0f90d136e3ae5bb0c8069d851808fed641bc9f4266"
-
-[[files]]
-file = "config/ftbquests/quests/lang/en_us/chapter_group.snbt"
-hash = "772315a5b5340056dcf58a025d1d0f53a721810410baf9d9ed5b5d87522311fc"
-
-[[files]]
-file = "config/ftbquests/quests/lang/en_us/chapters/aether.snbt"
-hash = "8b9968baee9c386cacda6126134c99aa89f965ba43a65f2ee655549774763229"
-
-[[files]]
-file = "config/ftbquests/quests/lang/en_us/chapters/cataclysm.snbt"
-hash = "5d1a66bb752f4ba09f9318dc609779fd94c9b5733747cee63d3ee081e5667683"
-
-[[files]]
-file = "config/ftbquests/quests/lang/en_us/chapters/intro.snbt"
-hash = "0572c29f46dde1732a7354c741bc0c3bcc072d1205c00429f6a3913b64c60291"
-
-[[files]]
-file = "config/ftbquests/quests/lang/en_us/chapters/nether.snbt"
-hash = "42877fa2c20101a73882ae7097a97fe77fd8bf1a5d3192c971a541fe0b69ca25"
-
-[[files]]
-file = "config/ftbquests/quests/lang/en_us/chapters/overworld.snbt"
-hash = "d01da3ab2c8abc42dc869c1dc1fb3b646546a77f74bcbd653ac1f07a4a2194c9"
-
-[[files]]
-file = "config/ftbquests/quests/lang/en_us/chapters/shop.snbt"
-hash = "209538a3d409bda3a34b7e50fa02f200c2f2cded80025a3581375921620aff70"
-
-[[files]]
-file = "config/ftbquests/quests/lang/en_us/chapters/twilight.snbt"
-hash = "974cbd97be0534a6bfb9ff0ddde1d472ba8f8a5a73cf02f707f727123a26400a"
+file = "config/ftbquests/quests/lang/en_us.snbt"
+hash = "6999aec6cb9252e69bff4fa31d98e0481542cb2723cd7f58c9d1b3d78fc6fd6a"
 
 [[files]]
 file = "config/ftbquests/quests/reward_tables/common_bag.snbt"
@@ -202,11 +170,11 @@ hash = "9c35d42ba3cad1b0d47dcbbc8edb9f9902c633c758dbcbad9c11a79b375dc983"
 
 [[files]]
 file = "kubejs/server_scripts/lib/ids.js"
-hash = "e12ccff1a16899465ceea8ca2c659c3f71e628a9cac84aec4187c76030ee8780"
+hash = "c1ae647e032d443cea7d7f1600ff98e725658d8cbe2094f33b802f6fec3d97e4"
 
 [[files]]
 file = "kubejs/server_scripts/loot.js"
-hash = "8cd9262aeb2fd3044de0ae39b1ff5302f8756953b900e900e5b51f4197e3226a"
+hash = "fb2d98edaf6eb0cb23ec6bb5e14722113f4f0ab4df53b347f77fb98d8878c33f"
 
 [[files]]
 file = "kubejs/server_scripts/tagcheck.js"

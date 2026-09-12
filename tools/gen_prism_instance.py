@@ -36,6 +36,9 @@ LWJGL_VERSION = "3.3.3"        # prism §2: net.minecraft 1.21.1 suggests org.lw
 # prism §4: the documented client pre-launch command, "$INST_JAVA" -jar <bootstrap> <pack.toml>.
 # prism §1 (issue #1134): the embedded double quotes MUST be written backslash-escaped in
 # the INI value, or Qt's INI writer flattens the quoting the first time Prism re-saves it.
+MIN_MEM_MIB = 2048
+MAX_MEM_MIB = 6144
+
 PRE_LAUNCH_COMMAND = f'\\"$INST_JAVA\\" -jar {BOOTSTRAP_JAR} {PACK_TOML_URL}'
 
 INSTANCE_CFG = "\n".join([
@@ -48,6 +51,13 @@ INSTANCE_CFG = "\n".join([
     "notes=Confluence - NeoForge progression modpack (auto-updates via packwiz)",
     "OverrideCommands=true",  # prism §1: must be true for the instance's PreLaunchCommand to apply
     f"PreLaunchCommand={PRE_LAUNCH_COMMAND}",  # prism §1 key, §4 value
+    # prism §1 (MinecraftInstance.cpp L184-213): OverrideMemory gates MinMemAlloc/MaxMemAlloc (integers, MiB).
+    # Prism's default 4096 MiB heap ran out on a 128-mod singleplayer world (issue #1, crash-2026-09-12_19.29.24-server:
+    # `java.lang.OutOfMemoryError: Java heap space`, `-Xmx4096m`), so the instance asks for 6 GiB. Prism reads
+    # instance.cfg once at import; instances imported before 0.1.3 set it by hand (PLAYTEST.md, Setup).
+    "OverrideMemory=true",
+    f"MinMemAlloc={MIN_MEM_MIB}",
+    f"MaxMemAlloc={MAX_MEM_MIB}",
 ]) + "\n"
 
 # prism §2 / §6: the minimal generator shape (no cached* fields); formatVersion must be the

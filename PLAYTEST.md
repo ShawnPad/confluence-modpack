@@ -6,8 +6,9 @@ Tiers 0–2 are playable: Overworld → Nether → Twilight Forest. This page is
 
 1. Install [Prism Launcher](https://prismlauncher.org/) and a Java 21 runtime (Prism → Settings → Java can download one).
 2. Prism → **Add Instance → Import** → paste `https://github.com/ShawnPad/confluence-modpack/releases/latest/download/confluence-prism.zip` → launch. The first launch downloads about 130 mods; every later launch checks for updates by itself, so never re-import.
-3. Multiplayer → Add Server → `136.60.16.74:25584`.
-4. If a launch fails with an install error: close Prism, delete `<instance>/.minecraft/packwiz.json`, launch again. Logs live in `<instance>/.minecraft/logs/latest.log`, crashes in `crash-reports/`.
+3. **Memory.** The zip from 0.1.3 on asks Prism for a 6 GB heap. If you imported before 0.1.3, set it once by hand: instance → Edit → Settings → Java → tick Memory → Maximum **6144** MiB. Prism's default 4 GB ran out of heap in a single-player world (`java.lang.OutOfMemoryError: Java heap space`).
+4. Multiplayer → Add Server → `136.60.16.74:25584`.
+5. If a launch fails with an install error: close Prism, delete `<instance>/.minecraft/packwiz.json`, launch again. Logs live in `<instance>/.minecraft/logs/latest.log`, crashes in `crash-reports/`.
 
 Two kinds of probe. **Server** = play normally on the server. **Creative** = make a single-player creative world with cheats on (same instance) and use the commands given; you cannot run those on the server unless you are an op. In JEI, hover an item and press **R** for its recipe, **U** for its uses.
 
@@ -20,7 +21,7 @@ Harmless and known: the log shows a couple of dozen "Couldn't load tag … missi
 | # | Kind | Do | Expected |
 |---|---|---|---|
 | A1 | Server | Launch, join the server. Search JEI for "Twilight Key" and "Coin". | You are in; both items exist. |
-| A2 | Server | Open the questbook (the FTB Quests book button in your inventory, or its keybind under Controls). | Seven chapters in three groups: Intro, Overworld, Nether, Twilight Forest; Aether, Cataclysm; Coin Shop. Descriptions are readable and make sense. |
+| A2 | Server | Open the questbook (the FTB Quests book button in your inventory, or its keybind under Controls). | Seven chapters in three groups (Trunk: Start Here, Overworld, Nether, Twilight Forest; Spurs: The Aether, Cataclysm; Shop: Coin Shop), every one titled. Each quest has a description that says what to do and what it leads to. (0.1.2 and earlier showed "Unnamed" everywhere: the translation file was in a layout FTB Quests does not read. Fixed in 0.1.3.) |
 
 ## B. Tier 1: the Nether key
 
@@ -44,7 +45,7 @@ Harmless and known: the log shows a couple of dozen "Couldn't load tag … missi
 | C7 | Server | Craft 9 spirited crystals into a block, then the block back. | Both directions work (9 ↔ 1). |
 | C8 | Server | Look up Industrial Foregoing's Simple Machine Frame and Dissolution Chamber. | Frame (Dissolution Chamber recipe): one nether brick replaced by an Ars Nouveau essence (air, earth, fire or water). Chamber (crafting): one gold replaced by a basic control circuit. |
 | C9 | Server | Walk Twilight Forest caves below y 10 (in chunks nobody visited before 0.1.2) and look at the **floors**; mine with a netherite pickaxe. | Allthemodium ore shows in cave floors, roughly a vein every 2–3 chunks, and drops raw Allthemodium. |
-| C10 | Creative | `/loot give @s loot twilightforest:stronghold_cache`, twenty times. | The Allthemodium upgrade smithing template shows up at least once (roughly 1 in 14 rolls). |
+| C10 | Creative | `/loot give @s loot twilightforest:stronghold_cache`, thirty times. | The Allthemodium upgrade smithing template shows up at least once (about 1 in 14 caches; 0.1.2 had it at 1 in 576 by mistake, fixed in 0.1.3). Brushing suspicious clay in an Overworld Ancient City never gives it any more; the template exists only in Twilight strongholds. |
 | C11 | Server | Look up the Twilight Uncrafting Table. | No recipe, and it never appears in Twilight loot. |
 | C12 | Creative | Mekanism Combiner with Allthemodium ore + a vibranium ingot; 3 raw Allthemodium + ingot; a raw block + ingot. Then look up Allthemodium ore's uses. | 5, 10 and 30 Allthemodium crystals. The ore → dirty slurry Dissolution Chamber route is gone from JEI. (Vibranium is a later tier, so this one is creative only.) |
 
@@ -52,7 +53,7 @@ Harmless and known: the log shows a couple of dozen "Couldn't load tag … missi
 
 | # | Do | Expected |
 |---|---|---|
-| D1 | `/execute in allthemodium:mining run tp @s 0 40 0`, then dig or spectate through y 65 … 250. | Uraninite ore (poor / normal / dense) is present. No Allthemodium: in this pack it spawns only in the Twilight Forest. |
+| D1 | `/execute in allthemodium:mining run tp @s 0 120 0`, then spectate or dig **between y 65 and y 250** (the ore is buried in stone; nothing is placed below y 65, so the bottom layers are the wrong place to look). | Uraninite ore (poor / normal / dense) is common, dozens per chunk. No Allthemodium anywhere in this dimension: in this pack it spawns only in the Twilight Forest. |
 | D2 | `/execute in allthemodium:the_other run tp @s 0 64 0`, look around underground. | No uraninite. |
 | D3 | Twilight Forest caves, floors, y ≤ 10, freshly generated chunks. | Allthemodium ore present. |
 | D4 | Overworld deep dark, the Nether, the End. | No Allthemodium, Vibranium, Unobtainium or uraninite anywhere. |

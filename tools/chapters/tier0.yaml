@@ -7,52 +7,52 @@ quests:
   - node: T0.1
     title: Tool Ladder
     task: item:minecraft:diamond_pickaxe
-    desc: "Wood, stone, iron, diamond. No recipe here is rewritten; the diamond pickaxe is what mines the obsidian for the Nether."
+    desc: "Work up the usual way - wood, stone, iron, diamond - because none of these recipes are changed. You need the diamond pickaxe to mine the obsidian for your Nether portal, so make it your first real goal."
   - node: X0.1
     title: First Power
     task: item:industrialforegoing:pitiful_generator
-    desc: "Any first generator counts: Industrial Foregoing's Pitiful Generator, Mekanism's Heat Generator or a Powah furnator. All three keep their default recipes."
+    desc: "Get any first generator running: Industrial Foregoing's Pitiful Generator, Mekanism's Heat Generator or a Powah furnator all count, and all three keep their default recipes. Power is the root of both tech branches - the Heat Generator and the Energizing Orb come straight off it."
   - node: T0.2
     title: Heat Generator
     task: item:mekanismgenerators:heat_generator
     deps: [X0.1]
-    desc: "Mekanism Generators' own recipe, unchanged. It is the root of Mekanism ore processing, which doubles base metals and supplies the osmium ingots the tier-1 gates need."
+    desc: "Craft Mekanism Generators' Heat Generator with its normal recipe. It is the root of Mekanism ore processing, which doubles base metals and supplies the osmium ingots the Pity Machine Frame, the Nether key and the Enchanting Apparatus all need."
   - node: T0.3
     title: Energizing Orb
     task: item:powah:energizing_orb
     deps: [X0.1]
-    desc: "Powah's own recipe, unchanged. The orb makes energized steel for the Pity Machine Frame and every Powah crystal later."
+    desc: "Build Powah's Energizing Orb - its recipe is unchanged. The orb makes the energized steel for the Pity Machine Frame, and every Powah crystal you energize later goes through it."
   - node: T0.4
     title: Pity Machine Frame
     task: item:industrialforegoing:machine_frame_pity
     deps: [T0.2, T0.3]
     coins: 10
-    desc: "Rewritten: Industrial Foregoing's frame now needs osmium ingots from Mekanism and energized steel from Powah around a redstone block. Logs and iron no longer work."
+    desc: "Industrial Foregoing's frame is rewritten: it now takes osmium ingots from Mekanism and energized steel from Powah around a redstone block, so logs and iron no longer work. It is the base part of the Dissolution Chamber and the Simple Machine Frame further up the tech branch."
   - node: M0.1
     title: Source Gem
     task: item:ars_nouveau:source_gem
-    desc: "Ars Nouveau's own chain, unchanged. Source gems are an input of the Nether key, the Metallurgic Infuser and the Enchanting Apparatus."
+    desc: "Follow Ars Nouveau's own chain to your first source gem - nothing about it is changed. Source gems are an input of the Nether key, the Metallurgic Infuser and the Enchanting Apparatus, so this is the magic root you cannot skip."
   - node: M0.2
     title: Arcane Essence
     task: item:irons_spellbooks:arcane_essence
-    desc: "Iron's Spells 'n Spellbooks, unchanged. Arcane essence has no recipe: it drops from Iron's casters (necromancers roam every Overworld biome; cultists, priests and apothecarists drop more) and turns up in many vanilla chests. It is the second magic root and it is ungated - nothing has to be unlocked before you start it."
+    desc: "Arcane essence has no recipe: it drops from Iron's Spells casters - necromancers roam every Overworld biome, while cultists, priests and apothecarists drop more - and it turns up in many vanilla chests. It is the second magic root and nothing has to be unlocked first, so start collecting the moment you spawn."
   - node: D0.1
     title: Explore the Overworld
     task: checkmark
-    desc: "Regions Unexplored, Biomes We've Gone, YUNG's structures, Towns and Towers and When Dungeons Arise are content, not gates. Nothing here is locked."
+    desc: "Good to know: Regions Unexplored, Biomes We've Gone, YUNG's structures, Towns and Towers and When Dungeons Arise are here as content, not as gates. Nothing in the Overworld is locked, so wander and loot as freely as you like."
   - node: D0.2
     title: Deep Dark
     task: item:minecraft:sculk
-    desc: "Vanilla, but bring a Silk Touch pickaxe - sculk drops nothing without one. Ancient Cities hold no Allthemodium in this pack; the Deep Dark is kept only as the doorway to the Otherside much later."
+    desc: "Bring a Silk Touch pickaxe when you head down, because sculk drops nothing without one. Do not count on Ancient Cities for Allthemodium here - the Deep Dark is kept only as the doorway to the Otherside much later."
   - node: S0.1
     title: Drawer Controller
     task: item:functionalstorage:storage_controller
-    desc: "Functional Storage, unchanged. Rung 0 of the storage ladder; its netherite-upgraded form is consumed by the tier-2 storage terminal."
+    desc: "Craft Functional Storage's drawer controller; its recipe is unchanged. It is the bottom rung of the storage ladder - it takes the netherite drawer upgrade next, and both are eaten by the storage terminal later."
   - node: S0.2
     title: Sophisticated Chest
     task: item:sophisticatedstorage:chest
-    desc: "Sophisticated Storage, unchanged. One of these chests is an input of the tier-2 storage terminal."
+    desc: "Craft a Sophisticated Storage chest with its normal recipe. One of these is an input of the storage terminal further up, so keep a spare aside."
   - node: X0.2
     title: Ore Tiers Live Elsewhere
     task: checkmark
-    desc: "Audit: Allthemodium, Vibranium, Unobtainium and Powah's uraninite never spawn in the Overworld, Nether or End. Their default placements are switched off, so the only way to them is through the dimension gates."
+    desc: "Good to know: Allthemodium, Vibranium, Unobtainium and Powah's uraninite never spawn in the Overworld, the Nether or the End here - their default placements are switched off. The only way to them is through the dimension gates, so do not burn time strip mining for them."

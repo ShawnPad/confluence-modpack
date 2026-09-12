@@ -29,6 +29,12 @@ const IDS = {
 IDS.allthemodium.template = 'allthemodium:allthemodium_upgrade_smithing_template'
 // §A2: raw ore item (tag c:raw_materials/allthemodium).
 IDS.allthemodium.rawOre = 'allthemodium:raw_allthemodium'
+// Session 10 (issue #1 C10): Allthemodium's two template loot sources outside their tier dimensions, both read from
+// allthemodium-3.0.1_mc_1.21.1.jar: data/minecraft/worldgen/processor_list/ancient_city_generic_degradation.json turns
+// polished basalt (p 0.009) into allthemodium:suspicious_clay with append_loot `allthemodium:arch` (the Allthemodium
+// template, data/allthemodium/loot_table/arch.json), and treasure_rooms.json (bastions) turns blackstone (p 0.007) into
+// allthemodium:suspicious_soul_sand with `allthemodium:arch2` (the Vibranium template). Emptied in loot.js ([D2.3] note).
+IDS.allthemodium.strayTemplateTables = ['allthemodium:arch', 'allthemodium:arch2']
 // §A3 crystal row (processing/allthemodium/crystal/from_slurry.json output).
 IDS.allthemodium.crystal = 'allthemodium:allthemodium_crystal'
 // Jar check for this task: data/c/tags/item/ingots/vibranium.json exists in allthemodium-3.0.1_mc_1.21.1.jar

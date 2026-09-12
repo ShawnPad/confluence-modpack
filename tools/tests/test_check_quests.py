@@ -2,6 +2,7 @@ from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from check_quests import tree_nodes, quests_in_lang, forbidden_in_table
+from scaffold_chapter import quest_id
 
 TREE = """
 ### Tier 1 — Nether
@@ -20,8 +21,8 @@ def test_tree_nodes_and_gates():
     assert nodes["D1.1"] == ["T0.2", "M0.1"]
 
 def test_lang_nodes():
-    lang = '{\n\tquest.ABCDEF0123456789.quest_desc: ["[D1.1]", "text"]\n}'
-    assert quests_in_lang(lang) == {"D1.1": "ABCDEF0123456789"}
+    lang = '{\n\tquest.' + quest_id("D1.1") + '.title: "Nether Key"\n\tquest.' + quest_id("D1.1") + '.quest_desc: ["text"]\n}'
+    assert quests_in_lang(lang, ["D1.1", "D2.1"]) == {"D1.1": quest_id("D1.1")}
 
 def test_forbidden():
     table = 'item: { count: 1, id: "kubejs:twilight_key" }\nitem: { count: 1, id: "minecraft:bread" }'
@@ -34,7 +35,7 @@ def test_gate_refs_ignore_citations():
 
 
 def test_lang_nodes_multiline_list():
-    # research/phase6-tooling-worldgen-quests.md §4.7 L509-512: FTB Quests writes a multi-entry quest_desc
-    # one entry per line ("quest_desc: [" newline, tab-indented entries, "]"), not the scaffolder's inline form.
-    lang = '{\n\tquest.ABCDEF0123456789.quest_desc: [\n\t\t"[D1.1]"\n\t\t"text"\n\t]\n}'
-    assert quests_in_lang(lang) == {"D1.1": "ABCDEF0123456789"}
+    # research/phase6-tooling-worldgen-quests.md §4.7 L509-512: FTB Quests re-saves a multi-entry quest_desc one entry
+    # per line; the title key is unaffected either way, so the mapping survives an editor round-trip.
+    lang = '{\n\tquest.' + quest_id("D1.1") + '.quest_desc: [\n\t\t"a"\n\t\t"b"\n\t]\n\tquest.' + quest_id("D1.1") + '.title: "Nether Key"\n}'
+    assert quests_in_lang(lang, ["D1.1"]) == {"D1.1": quest_id("D1.1")}

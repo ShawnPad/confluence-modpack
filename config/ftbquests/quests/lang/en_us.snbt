@@ -1,0 +1,102 @@
+{
+	chapter.1FAA98FF40CC82E1.title: "Overworld"
+	chapter.22273CFA12CCC50B.title: "Nether"
+	chapter.411204531F46CE97.title: "The Aether"
+	chapter.4245286CDF0A5D04.title: "Twilight Forest"
+	chapter.43F8183D98ACEECD.title: "Cataclysm"
+	chapter.4C7CF9EFB4ABB884.title: "Coin Shop"
+	chapter.692BF8F0ADE39D0B.title: "Start Here"
+	chapter_group.0C0F1A0000000001.title: "Trunk"
+	chapter_group.0C0F1A0000000002.title: "Spurs"
+	chapter_group.0C0F1A0000000003.title: "Shop"
+	quest.027FE16448966127.quest_desc: ["Craft Mekanism Generators' Heat Generator with its normal recipe. It is the root of Mekanism ore processing, which doubles base metals and supplies the osmium ingots the Pity Machine Frame, the Nether key and the Enchanting Apparatus all need."]
+	quest.027FE16448966127.title: "Heat Generator"
+	quest.03A64F0DB6424DEE.quest_desc: ["Tom's terminal now pulls one part from every branch: an Industrial Foregoing Simple Machine Frame, an Ars Nouveau elemental essence, a Functional Storage drawer controller plus its netherite upgrade, and a Sophisticated Storage chest. Gather all five before you start the craft - this is the top of the storage ladder for now."]
+	quest.03A64F0DB6424DEE.title: "Storage Terminal"
+	quest.04517156F533E86B.quest_desc: ["Build a glowstone frame and fill it with a water bucket. Glowstone only drops in the Nether here, so the Nether key comes first - the portal itself is not rewritten, and that Nether trip is the whole entry cost. Up here is the zanite the Twilight key wants."]
+	quest.04517156F533E86B.title: "The Aether"
+	quest.04D3B6995483A2C4.quest_desc: ["Good to know: Allthemodium, Vibranium, Unobtainium and Powah's uraninite never spawn in the Overworld, the Nether or the End here - their default placements are switched off. The only way to them is through the dimension gates, so do not burn time strip mining for them."]
+	quest.04D3B6995483A2C4.title: "Ore Tiers Live Elsewhere"
+	quest.068239C7E8C67F4C.quest_desc: ["Good to know: Industrial Foregoing's Laser Drill keeps its base-ore tables, but the ancient debris entry is removed and no tier ore or planet metal is added. Netherite stays a trip to the Nether."]
+	quest.068239C7E8C67F4C.title: "No Laser-Drilled Debris"
+	quest.0BA58716C453F0A7.quest_desc: ["Industrial Foregoing's frame is rewritten: it now takes osmium ingots from Mekanism and energized steel from Powah around a redstone block, so logs and iron no longer work. It is the base part of the Dissolution Chamber and the Simple Machine Frame further up the tech branch."]
+	quest.0BA58716C453F0A7.title: "Pity Machine Frame"
+	quest.0F7A3CFCC14D5B59.quest_desc: ["Good to know: Mystical Agriculture ships no seed for Allthemodium, Vibranium, Unobtainium or any planet metal, and none has been added. Its default crops are still here to enjoy, just not as a shortcut past a gate."]
+	quest.0F7A3CFCC14D5B59.title: "No Tier-Ore Seeds"
+	quest.0F93A60BDE37286C.quest_desc: ["Bring a Silk Touch pickaxe when you head down, because sculk drops nothing without one. Do not count on Ancient Cities for Allthemodium here - the Deep Dark is kept only as the doorway to the Otherside much later."]
+	quest.0F93A60BDE37286C.title: "Deep Dark"
+	quest.102CA469468F8E1A.quest_desc: ["The template is in the Twilight stronghold cache loot, so it stays inside the dimension with the ore - go raid one. Then take it to a smithing table with netherite gear and Allthemodium ingots to upgrade your kit."]
+	quest.102CA469468F8E1A.title: "Allthemodium Template"
+	quest.12BBBE8926B9593C.quest_desc: ["Imbue an amethyst block with 2,000 Source in Ars Nouveau's Imbuement Chamber; the recipe is unchanged. Stock up on these - the ritual brazier and the End focus both call for them later."]
+	quest.12BBBE8926B9593C.title: "Source Gem Block"
+	quest.14BD76FC2D6209A3.quest_desc: ["This one is made in the Dissolution Chamber from a Pity Machine Frame, plastic and latex, with an Ars Nouveau elemental essence standing in for one of the two nether bricks. It is the part the Arcane Anvil and the storage terminal both call for, so plan on building more than one."]
+	quest.14BD76FC2D6209A3.title: "Simple Machine Frame"
+	quest.1890D81D0709C89F.quest_desc: ["Good to know: one key item opens each tier - flint and steel, the Twilight key, the Undergarden catalyst, the eye of ender, the Other key, then the Ad Astra NASA Workbench. Each one is rewritten to need products from the tiers below it, tech and magic both, and the last craft of all is the Confluence catalyst at the Ars Nouveau Enchanting Apparatus. Your first one is flint and steel, so start there."]
+	quest.1890D81D0709C89F.title: "Keys and the catalyst"
+	quest.2053A3F99454EF66.quest_desc: ["Arcane essence has no recipe: it drops from Iron's Spells casters - necromancers roam every Overworld biome, while cultists, priests and apothecarists drop more - and it turns up in many vanilla chests. It is the second magic root and nothing has to be unlocked first, so start collecting the moment you spawn."]
+	quest.2053A3F99454EF66.title: "Arcane Essence"
+	quest.2C69CB63F838AE13.quest_desc: ["Iron's Spells' anvil now takes an Industrial Foregoing Simple Machine Frame in place of one polished deepslate; everything else is Iron's default. Build it once you have a spare frame - it is the magic side's payoff for the tech chain you just finished."]
+	quest.2C69CB63F838AE13.title: "Arcane Anvil"
+	quest.2EC979265124AB1E.quest_desc: ["Craft the key from a netherite ingot, an Aether zanite gemstone, a Mekanism advanced control circuit, an Ars Nouveau elemental essence and Cataclysm's Monstrous Horn. Throw it into the portal pool instead of a diamond - the diamond no longer opens anything. Through it lie Allthemodium and knightmetal."]
+	quest.2EC979265124AB1E.title: "Twilight Key"
+	quest.315020D6830FCDD8.quest_desc: ["Industrial Foregoing's chamber still wants its Pity Machine Frame and plastic, but one gold ingot is now a Mekanism basic control circuit instead. Build it, because the Simple Machine Frame is made inside it."]
+	quest.315020D6830FCDD8.title: "Dissolution Chamber"
+	quest.34C4DC4DF5B82831.quest_desc: ["Allthemodium spawns only in the Twilight Forest here, in the floors of caves below y 10, so look down rather than up. Bring a netherite-tier pickaxe or it will not break. The raw ore is what the smithing template and the Teleport Pad wait on."]
+	quest.34C4DC4DF5B82831.title: "Allthemodium Ore"
+	quest.3C45360E65089FB8.quest_desc: ["At a smithing table, combine the diamond drawer upgrade with netherite. The storage terminal later wants one of these sitting on a drawer controller, so keep the pair together."]
+	quest.3C45360E65089FB8.title: "Netherite Drawer Upgrade"
+	quest.3C76069F96AE065B.quest_desc: ["Powah's spirited crystal is now energized from uraninite instead of an emerald. Bring uraninite back from the Mining Dimension behind the Teleport Pad and feed it to the Energizing Orb."]
+	quest.3C76069F96AE065B.title: "Spirited Crystal"
+	quest.40CBD13E78A1F42C.quest_desc: ["Craft the pad from four Allthemodium nuggets and an ender pearl; the recipe is unchanged. It opens the Mining Dimension, the only place Powah uraninite spawns in this pack, and uraninite is what the Spirited Crystal needs."]
+	quest.40CBD13E78A1F42C.title: "Teleport Pad"
+	quest.412E53F722A070FB.quest_desc: ["Ancient debris is the only source of netherite, so go digging once the Nether is open. A netherite ingot goes into the Twilight key, netherite-tier tools are what break Allthemodium later, and the drawer upgrade wants some too."]
+	quest.412E53F722A070FB.title: "Netherite"
+	quest.41A5B57830B98089.quest_desc: ["Fight the Goblin Knights in the Dark Forest's Knight Stronghold for armor shards, craft them into a cluster, then smelt the cluster into a Knightmetal Ingot. Twilight Forest's own recipes are untouched, so this is a straight loot-and-smelt run."]
+	quest.41A5B57830B98089.title: "Knightmetal"
+	quest.426E087DF5AC9F9E.quest_desc: ["Find L_Ender's Cataclysm Soul Forge, which generates only in the Nether, and kill the Netherite Monstrosity that guards it. Once is enough, and what it drops is the next quest."]
+	quest.426E087DF5AC9F9E.title: "Netherite Monstrosity"
+	quest.42D307D4117DBAA3.quest_desc: ["Craft Functional Storage's drawer controller; its recipe is unchanged. It is the bottom rung of the storage ladder - it takes the netherite drawer upgrade next, and both are eaten by the storage terminal later."]
+	quest.42D307D4117DBAA3.title: "Drawer Controller"
+	quest.46F3EB94FA4C484A.quest_desc: ["Infuse a basic control circuit first, then upgrade that into an advanced one. The advanced circuit goes into the Twilight key and a basic one is wanted by the Dissolution Chamber, so make spares."]
+	quest.46F3EB94FA4C484A.title: "Control Circuits"
+	quest.4CAFF05242DE1ACD.quest_desc: ["Good to know: Mekanism's 5x slurry chain runs on base metals with no restriction at all. Tier ores are different - each one's chain consumes the next tier's material, so it multiplies a tier you have already reached and can never open one early."]
+	quest.4CAFF05242DE1ACD.title: "Ore Quintupling"
+	quest.507D016CAAF0609B.quest_desc: ["Mekanism's Metallurgic Infuser now needs a source gem. Build it and it makes your steel and the control circuits the next quest asks for."]
+	quest.507D016CAAF0609B.title: "Metallurgic Infuser"
+	quest.51B7CA5D3BD490D1.quest_desc: ["Pick up the Monstrous Horn the Netherite Monstrosity drops. The Twilight key recipe needs one, so this boss sits on the critical path and is not a side trip."]
+	quest.51B7CA5D3BD490D1.title: "Monstrous Horn"
+	quest.51CBC72A2B73D829.quest_desc: ["Mine zanite ore in the Aether; it is found nowhere else. The Twilight key recipe needs a zanite gemstone, which is why this trip is required rather than optional - bring a few home."]
+	quest.51CBC72A2B73D829.title: "Zanite Gemstone"
+	quest.5221FFF470BDC11A.quest_desc: ["Hand in 16 coins for a Common bag. Coins come from finishing quests, and this trade can be made as often as you can pay for it."]
+	quest.5221FFF470BDC11A.title: "Common Bag"
+	quest.532F495217179193.quest_desc: ["Ars Nouveau's Enchanting Apparatus now needs an osmium ingot. Set it up early: every key and focus in the pack is made on it, and the elemental essences come next."]
+	quest.532F495217179193.title: "Enchanting Apparatus"
+	quest.53D85380B599D907.quest_desc: ["Follow Ars Nouveau's own chain to your first source gem - nothing about it is changed. Source gems are an input of the Nether key, the Metallurgic Infuser and the Enchanting Apparatus, so this is the magic root you cannot skip."]
+	quest.53D85380B599D907.title: "Source Gem"
+	quest.5749A4B5622ACD78.quest_desc: ["Good to know: Productive Bees ships no bee for Allthemodium, Vibranium, Unobtainium or any planet metal, and none has been added. Keep the mod for its own sake, not as a way around a dimension."]
+	quest.5749A4B5622ACD78.title: "No Tier-Ore Bees"
+	quest.57D77E9BA6AEBD0A.quest_desc: ["Good to know: you climb seven tiers in order - Overworld, Nether, Twilight Forest, Undergarden, The End, The Other, then Ad Astra space, with one catalyst above them all. Each tier ore lives in its own dimension, and the side trips - the Aether, Otherside, Bumblezone and the L_Ender's Cataclysm bosses - are required, not optional, because the next key recipe eats something only they drop. Next up: the keys themselves."]
+	quest.57D77E9BA6AEBD0A.title: "The ladder"
+	quest.588CD6E60AEF0F63.quest_desc: ["Hand in 48 coins for an Uncommon bag. It opens once you hold the Nether key, and like the Common bag it can be traded again and again."]
+	quest.588CD6E60AEF0F63.title: "Uncommon Bag"
+	quest.5E1B6F2BBDE03DD1.quest_desc: ["Get any first generator running: Industrial Foregoing's Pitiful Generator, Mekanism's Heat Generator or a Powah furnator all count, and all three keep their default recipes. Power is the root of both tech branches - the Heat Generator and the Energizing Orb come straight off it."]
+	quest.5E1B6F2BBDE03DD1.title: "First Power"
+	quest.6091B4F5B7C86DA3.quest_desc: ["Good to know: this pack locks things in exactly three ways - a rewritten crafting recipe, a dimension you cannot enter yet, and a script check. Ticking a quest never unlocks anything by itself; the quests only mirror those locks so you can see every one coming. Read on for the ladder they guard."]
+	quest.6091B4F5B7C86DA3.title: "How gates work"
+	quest.626CBAD11FDF4B21.quest_desc: ["Good to know: Regions Unexplored, Biomes We've Gone, YUNG's structures, Towns and Towers and When Dungeons Arise are here as content, not as gates. Nothing in the Overworld is locked, so wander and loot as freely as you like."]
+	quest.626CBAD11FDF4B21.title: "Explore the Overworld"
+	quest.68B9330B6BC20CF4.quest_desc: ["Good to know: the Twilight Forest Uncrafting Table is removed, because it could reverse the keys and cross-mod recipes this pack is built on. Plan your crafts - there is no taking them apart again."]
+	quest.68B9330B6BC20CF4.title: "No Uncrafting"
+	quest.6F0DAEEA9F65E32D.quest_desc: ["Craft a Sophisticated Storage chest with its normal recipe. One of these is an input of the storage terminal further up, so keep a spare aside."]
+	quest.6F0DAEEA9F65E32D.title: "Sophisticated Chest"
+	quest.72EBE60DB9DAB561.quest_desc: ["Any one of the four elemental essences counts here. The Twilight key needs one, and later recipes ask for essences as well, so it is worth making more than one."]
+	quest.72EBE60DB9DAB561.title: "Elemental Essences"
+	quest.7402B74889DEA9C1.quest_desc: ["Flint and steel is rewritten: it now needs an osmium ingot from Mekanism and a source gem from Ars Nouveau, so there is no Nether until you have one machine and one spell. It is the gate everything above depends on - netherite, the Aether trip and the Cataclysm boss all start here."]
+	quest.7402B74889DEA9C1.title: "Nether Key"
+	quest.7497F7C8118F3795.quest_desc: ["Build Powah's Energizing Orb - its recipe is unchanged. The orb makes the energized steel for the Pity Machine Frame, and every Powah crystal you energize later goes through it."]
+	quest.7497F7C8118F3795.title: "Energizing Orb"
+	quest.78F1F403F58EBB37.quest_desc: ["Work up the usual way - wood, stone, iron, diamond - because none of these recipes are changed. You need the diamond pickaxe to mine the obsidian for your Nether portal, so make it your first real goal."]
+	quest.78F1F403F58EBB37.title: "Tool Ladder"
+	quest.7E28C2FF2CEBAE0A.quest_desc: ["Beat a Wither for its nether star. Nothing needs it yet - ether gas asks for one much later - so bank it somewhere safe."]
+	quest.7E28C2FF2CEBAE0A.title: "Nether Star"
+}

@@ -7,14 +7,14 @@ quests:
   - node: INTRO.1
     title: How gates work
     task: checkmark
-    desc: "This pack locks things in exactly three ways: a rewritten crafting recipe, a dimension you cannot enter yet, and a KubeJS script check. Finishing a quest never unlocks anything by itself - the quests only mirror those locks so you can see every one coming."
+    desc: "Good to know: this pack locks things in exactly three ways - a rewritten crafting recipe, a dimension you cannot enter yet, and a script check. Ticking a quest never unlocks anything by itself; the quests only mirror those locks so you can see every one coming. Read on for the ladder they guard."
   - node: INTRO.2
     title: The ladder
     task: checkmark
     deps: [INTRO.1]
-    desc: "Seven tiers in order: Overworld, Nether, Twilight Forest, Undergarden, The End, The Other, then Ad Astra space, with one catalyst above them. Each tier ore lives in its own dimension, and the side trips - the Aether, Otherside, Bumblezone and the L_Ender's Cataclysm bosses - are required because the next key recipe eats something only they drop."
+    desc: "Good to know: you climb seven tiers in order - Overworld, Nether, Twilight Forest, Undergarden, The End, The Other, then Ad Astra space, with one catalyst above them all. Each tier ore lives in its own dimension, and the side trips - the Aether, Otherside, Bumblezone and the L_Ender's Cataclysm bosses - are required, not optional, because the next key recipe eats something only they drop. Next up: the keys themselves."
   - node: INTRO.3
     title: Keys and the catalyst
     task: checkmark
     deps: [INTRO.2]
-    desc: "One key item opens each tier: flint and steel, the Twilight key, the Undergarden catalyst, the eye of ender, the Other key, then the Ad Astra NASA Workbench. Each one is rewritten to need products from the tiers below it, tech and magic both, and the last craft of all is the Confluence catalyst at the Ars Nouveau Enchanting Apparatus."
+    desc: "Good to know: one key item opens each tier - flint and steel, the Twilight key, the Undergarden catalyst, the eye of ender, the Other key, then the Ad Astra NASA Workbench. Each one is rewritten to need products from the tiers below it, tech and magic both, and the last craft of all is the Confluence catalyst at the Ars Nouveau Enchanting Apparatus. Your first one is flint and steel, so start there."

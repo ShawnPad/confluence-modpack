@@ -10,39 +10,39 @@ quests:
     deps: [T0.2, M0.1]
     coins: 10
     bag: common_bag
-    desc: "Flint and steel now needs an osmium ingot from Mekanism and a source gem from Ars Nouveau. That is the tier-1 gate: no Nether without one machine and one spell."
+    desc: "Flint and steel is rewritten: it now needs an osmium ingot from Mekanism and a source gem from Ars Nouveau, so there is no Nether until you have one machine and one spell. It is the gate everything above depends on - netherite, the Aether trip and the Cataclysm boss all start here."
   - node: X1.1
     title: Netherite
     task: item:minecraft:netherite_ingot
     deps: [D1.1]
-    desc: "Ancient debris is the only source. It feeds the Twilight key."
+    desc: "Ancient debris is the only source of netherite, so go digging once the Nether is open. A netherite ingot goes into the Twilight key, netherite-tier tools are what break Allthemodium later, and the drawer upgrade wants some too."
   - node: X1.2
     title: Nether Star
     task: item:minecraft:nether_star
     deps: [D1.1]
-    desc: "A Wither. Ether gas needs one much later."
+    desc: "Beat a Wither for its nether star. Nothing needs it yet - ether gas asks for one much later - so bank it somewhere safe."
   - node: T1.1
     title: Metallurgic Infuser
     task: item:mekanism:metallurgic_infuser
     deps: [T0.2, M0.1]
-    desc: "Needs a source gem. Makes control circuits and steel."
+    desc: "Mekanism's Metallurgic Infuser now needs a source gem. Build it and it makes your steel and the control circuits the next quest asks for."
   - node: T1.2
     title: Control Circuits
     task: item:mekanism:advanced_control_circuit
     deps: [T1.1]
-    desc: "Basic then advanced. The advanced circuit goes into the Twilight key."
+    desc: "Infuse a basic control circuit first, then upgrade that into an advanced one. The advanced circuit goes into the Twilight key and a basic one is wanted by the Dissolution Chamber, so make spares."
   - node: M1.1
     title: Enchanting Apparatus
     task: item:ars_nouveau:enchanting_apparatus
     deps: [T0.2, M0.1]
-    desc: "Needs an osmium ingot. Every key and focus is made here."
+    desc: "Ars Nouveau's Enchanting Apparatus now needs an osmium ingot. Set it up early: every key and focus in the pack is made on it, and the elemental essences come next."
   - node: M1.2
     title: Elemental Essences
     task: item:ars_nouveau:fire_essence
     deps: [M1.1]
-    desc: "Any of the four essences counts for the Twilight key."
+    desc: "Any one of the four elemental essences counts here. The Twilight key needs one, and later recipes ask for essences as well, so it is worth making more than one."
   - node: S1.1
     title: Netherite Drawer Upgrade
     task: item:functionalstorage:netherite_upgrade
     deps: [X1.1, S0.1]
-    desc: "Smithing table: diamond upgrade + netherite. The storage terminal needs one on a controller."
+    desc: "At a smithing table, combine the diamond drawer upgrade with netherite. The storage terminal later wants one of these sitting on a drawer controller, so keep the pair together."

@@ -1,6 +1,0 @@
-{
-	quest.5221FFF470BDC11A.title: "Common Bag"
-	quest.5221FFF470BDC11A.quest_desc: ["[SHOP.1]", "Hand in 16 coins for a Common bag. Coins come from finishing quests, and this trade can be made as often as you can pay for it."]
-	quest.588CD6E60AEF0F63.title: "Uncommon Bag"
-	quest.588CD6E60AEF0F63.quest_desc: ["[SHOP.2]", "Hand in 48 coins for an Uncommon bag. It opens once you hold the Nether key, and like the Common bag it can be traded again and again."]
-}

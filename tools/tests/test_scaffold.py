@@ -1,7 +1,7 @@
 from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from scaffold_chapter import (parse_chapter, quest_id, parseable_id, render_snbt, render_lang, validate_chapter,
+from scaffold_chapter import (parse_chapter, quest_id, parseable_id, render_snbt, render_lang, validate_chapter, build_lang, GROUPS,
                               load_reward_tables, MAX_ID)
 
 YAML = """
@@ -69,7 +69,7 @@ def test_snbt_has_dependency_and_task():
     assert 'type: "item"' in s
     # count-1 item task keeps the tooling report §4.3 shape exactly; no task-level count key
     assert f'tasks: [{{ id: "{quest_id("X1.1:task")}" item: {{ count: 1, id: "minecraft:netherite_ingot" }} type: "item" }}]' in s
-    assert '"[D1.1]"' in render_lang(ch)  # node id kept as first quest_desc line in lang for check_quests (plan Step 3 note, line 1317; Task 14 regex, line 1634)
+    assert '"[D1.1]"' not in render_lang(ch)  # session 10: descs are player-facing; check_quests maps nodes via quest_id
 
 def test_item_task_count_and_consume_live_on_the_task():
     # ItemTask.writeData/readData (1.21.1/main): `count` is a task-level long (stack saved with count 1) and
@@ -86,7 +86,22 @@ def test_lang():
     ch = parse_chapter(YAML)
     l = render_lang(ch)
     assert f'quest.{quest_id("D1.1")}.title: "Nether Key"' in l
-    assert 'quest_desc: ["[D1.1]", "Gate text."]' in l  # node id first, then desc (plan Step 3 note, line 1317; Task 14 test fixture, line 1583)
+    assert f'quest.{quest_id("D1.1")}.quest_desc: ["Gate text."]' in l  # desc only, no node-id line (session 10)
+    assert f'chapter.{quest_id("chapter:nether")}.title: "' in l  # the chapter title lives in the same flat file
+    assert l.startswith("{\n") and l.endswith("}\n")
+
+
+def test_build_lang_is_one_flat_compound_with_group_titles(tmp_path):
+    # FTB Quests 2101.1.35 reads lang/<locale>.snbt only (TranslationManager.isValidLangFile, `^\w+\.snbt$`):
+    # everything - groups, chapters, quests - must sit in one compound.
+    y = tmp_path / "nether.yaml"
+    y.write_text(YAML)
+    text = build_lang([y])
+    for gid, title in GROUPS.items():
+        assert f'\tchapter_group.{gid}.title: "{title}"' in text
+    assert f'\tquest.{quest_id("D1.1")}.title: "Nether Key"' in text
+    assert text.count("{") == 1 and text.count("}") == 1
+    assert "\n\n" not in text
 
 def test_validate_rejects_unparseable_group():
     ch = parse_chapter(YAML)

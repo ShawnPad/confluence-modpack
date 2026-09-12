@@ -51,6 +51,11 @@ def test_instance_cfg_keys(tmp_path, monkeypatch):
         '\\"$INST_JAVA\\" -jar packwiz-installer-bootstrap.jar ' + PACK_TOML_URL
     )
     assert not kv["PreLaunchCommand"].startswith('"'), "quotes must be escaped, not bare"
+    # prism §1 memory override: both allocations are gated by OverrideMemory and are plain integers (MiB)
+    assert kv["OverrideMemory"] == "true"
+    assert kv["MinMemAlloc"] == "2048"
+    assert kv["MaxMemAlloc"] == "6144"
+    assert int(kv["MinMemAlloc"]) < int(kv["MaxMemAlloc"])
     assert cfg.endswith("\n")
 
 

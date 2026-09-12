@@ -4,6 +4,8 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from scaffold_chapter import LANG, quest_id  # noqa: E402
 TREE = ROOT.parent / "progression" / "combined-tree.md"
 QUESTS = ROOT / "config" / "ftbquests" / "quests"
 NO_QUEST = {"X0.3", "X3.3"}          # audit-only nodes with nothing to do (spec §5.2)
@@ -38,13 +40,15 @@ def tree_nodes(text: str, tiers: set[int]) -> dict[str, list[str]]:
     return out
 
 
-def quests_in_lang(text: str) -> dict[str, str]:
+def quests_in_lang(text: str, nodes) -> dict[str, str]:
+    """node -> quest id for every node whose quest has a title in the lang file. Quest ids are quest_id(node)
+    (scaffold_chapter), so the lang file no longer needs a "[D1.1]" first desc line (session 10); the title key is
+    the one entry every quest has, and FTB Quests writes keys one per line in either form."""
     found = {}
-    # `\[\s*"` (plan L1634 has `\["`): the scaffolder writes `quest_desc: ["[D1.1]", "text"]` inline, but the editor
-    # writes a multi-entry list one entry per line (research/phase6-tooling-worldgen-quests.md §4.7 L509-512), and
-    # spec §5.5 finishes prose in the editor and copies the files back, so the checker must accept both shapes.
-    for m in re.finditer(r'quest\.([0-9A-F]{16})\.quest_desc: \[\s*"\[([A-Z]+\d*\.\d+)\]"', text):
-        found[m.group(2)] = m.group(1)
+    for n in nodes:
+        qid = quest_id(n)
+        if re.search(rf"^\s*quest\.{qid}\.title: ", text, re.M):
+            found[n] = qid
     return found
 
 
@@ -55,8 +59,8 @@ def forbidden_in_table(text: str) -> list[str]:
 def main(argv: list[str]) -> int:
     tiers = {int(t) for t in argv[argv.index("--tiers") + 1].split(",")} if "--tiers" in argv else {0, 1, 2}
     expected = tree_nodes(TREE.read_text(), tiers)
-    lang_text = "".join(p.read_text() for p in (QUESTS / "lang" / "en_us" / "chapters").glob("*.snbt"))
-    have = quests_in_lang(lang_text)
+    lang_text = LANG.read_text() if LANG.exists() else ""
+    have = quests_in_lang(lang_text, expected)
     missing = sorted(n for n in expected if n not in have)
     # dependency mirror: every gate ref that has a quest must be a dependency of the node's quest
     chapters = "".join(p.read_text() for p in (QUESTS / "chapters").glob("*.snbt"))
