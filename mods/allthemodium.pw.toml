@@ -1,0 +1,13 @@
+name = "AllTheModium"
+filename = "allthemodium-3.0.1_mc_1.21.1.jar"
+side = "both"
+
+[download]
+url = "https://cdn.modrinth.com/data/YDA6eZ1t/versions/YHejKr3B/allthemodium-3.0.1_mc_1.21.1.jar"
+hash-format = "sha512"
+hash = "964fb9e415a6899b5ebf1664f0eaeecf040c21458c5f3a2bfad906bfe95b0c1dac9d8383a2ce1be7a0c44b694d7fcd505ac532789a8af7ca99bcdac3a09831d3"
+
+[update]
+[update.modrinth]
+mod-id = "YDA6eZ1t"
+version = "YHejKr3B"

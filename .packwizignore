@@ -4,3 +4,5 @@ README.md
 CHANGELOG.md
 .gitignore
 *.md
+.pytest_cache/
+__pycache__/

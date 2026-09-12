@@ -1,0 +1,13 @@
+name = "Eternal Starlight"
+filename = "eternalstarlight-0.9.0+1.21.1+neoforge.jar"
+side = "both"
+
+[download]
+url = "https://cdn.modrinth.com/data/XvcfUGfB/versions/zPYks5bS/eternalstarlight-0.9.0%2B1.21.1%2Bneoforge.jar"
+hash-format = "sha512"
+hash = "6563e063365b1ce810a68ea1bfbeb72498722b4901bcdd061102763b79d9c47126527547fab1126c2628b78a2598df0659b9a228520648281689403c0daeacca"
+
+[update]
+[update.modrinth]
+mod-id = "XvcfUGfB"
+version = "zPYks5bS"
