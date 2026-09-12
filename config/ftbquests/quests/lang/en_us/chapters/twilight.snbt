@@ -2,7 +2,7 @@
 	quest.2EC979265124AB1E.title: "Twilight Key"
 	quest.2EC979265124AB1E.quest_desc: ["[D2.1]", "The key is crafted from a netherite ingot, an Aether zanite gemstone, a Mekanism advanced control circuit, an Ars Nouveau elemental essence and Cataclysm's Monstrous Horn. Throw it into the portal pool instead of a diamond; the diamond no longer opens anything."]
 	quest.34C4DC4DF5B82831.title: "Allthemodium Ore"
-	quest.34C4DC4DF5B82831.quest_desc: ["[D2.2]", "Allthemodium spawns only in the Twilight Forest in this pack, in cave-exposed veins. You need a netherite-tier pickaxe to break it."]
+	quest.34C4DC4DF5B82831.quest_desc: ["[D2.2]", "Allthemodium spawns only in the Twilight Forest in this pack, in the floors of caves below y 10 - look down, not up. You need a netherite-tier pickaxe to break it."]
 	quest.102CA469468F8E1A.title: "Allthemodium Template"
 	quest.102CA469468F8E1A.quest_desc: ["[D2.3]", "The template is added to the Twilight stronghold cache loot, so it stays inside the dimension with the ore. Smithing table: netherite gear plus Allthemodium ingots plus this template."]
 	quest.41A5B57830B98089.title: "Knightmetal"

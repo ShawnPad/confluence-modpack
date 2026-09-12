@@ -43,7 +43,7 @@ Harmless and known: the log shows a couple of dozen "Couldn't load tag … missi
 | C6 | Server | Powah Energizing Orb: try an emerald, then uraninite. | The emerald no longer makes a spirited crystal. Uraninite does, at 1,000,000 FE. |
 | C7 | Server | Craft 9 spirited crystals into a block, then the block back. | Both directions work (9 ↔ 1). |
 | C8 | Server | Look up Industrial Foregoing's Simple Machine Frame and Dissolution Chamber. | Frame (Dissolution Chamber recipe): one nether brick replaced by an Ars Nouveau essence (air, earth, fire or water). Chamber (crafting): one gold replaced by a basic control circuit. |
-| C9 | Server | Mine in Twilight Forest caves with a netherite pickaxe. | Allthemodium ore exists there and drops raw Allthemodium. |
+| C9 | Server | Walk Twilight Forest caves below y 10 (in chunks nobody visited before 0.1.2) and look at the **floors**; mine with a netherite pickaxe. | Allthemodium ore shows in cave floors, roughly a vein every 2–3 chunks, and drops raw Allthemodium. |
 | C10 | Creative | `/loot give @s loot twilightforest:stronghold_cache`, twenty times. | The Allthemodium upgrade smithing template shows up at least once (roughly 1 in 14 rolls). |
 | C11 | Server | Look up the Twilight Uncrafting Table. | No recipe, and it never appears in Twilight loot. |
 | C12 | Creative | Mekanism Combiner with Allthemodium ore + a vibranium ingot; 3 raw Allthemodium + ingot; a raw block + ingot. Then look up Allthemodium ore's uses. | 5, 10 and 30 Allthemodium crystals. The ore → dirty slurry Dissolution Chamber route is gone from JEI. (Vibranium is a later tier, so this one is creative only.) |
@@ -52,9 +52,9 @@ Harmless and known: the log shows a couple of dozen "Couldn't load tag … missi
 
 | # | Do | Expected |
 |---|---|---|
-| D1 | `/execute in allthemodium:mining run tp @s 0 40 0`, then dig or spectate down to y −60 … −20. | Allthemodium ore and uraninite ore are present. |
+| D1 | `/execute in allthemodium:mining run tp @s 0 40 0`, then dig or spectate through y 65 … 250. | Uraninite ore (poor / normal / dense) is present. No Allthemodium: in this pack it spawns only in the Twilight Forest. |
 | D2 | `/execute in allthemodium:the_other run tp @s 0 64 0`, look around underground. | No uraninite. |
-| D3 | Twilight Forest caves. | Allthemodium ore present. |
+| D3 | Twilight Forest caves, floors, y ≤ 10, freshly generated chunks. | Allthemodium ore present. |
 | D4 | Overworld deep dark, the Nether, the End. | No Allthemodium, Vibranium, Unobtainium or uraninite anywhere. |
 | D5 | `/give @s kubejs:mercury_ore` and `/give @s kubejs:glacio_ore`; place and break with a diamond-tier pickaxe. | Each drops its shard. |
 

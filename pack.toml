@@ -1,12 +1,12 @@
 name = "Confluence"
 author = "ShawnPad"
-version = "0.1.1"
+version = "0.1.2"
 pack-format = "packwiz:1.1.0"
 
 [index]
 file = "index.toml"
 hash-format = "sha256"
-hash = "193cea054032220ab44bfa33117cc475b4442b5edca6d40dd97f5cae2cd962ec"
+hash = "35a8b45010ee8b704a5641339f087aa54ee56b08f2bf51040474b87a0fec2710"
 
 [versions]
 minecraft = "1.21.1"

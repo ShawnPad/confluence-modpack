@@ -70,7 +70,7 @@ hash = "209538a3d409bda3a34b7e50fa02f200c2f2cded80025a3581375921620aff70"
 
 [[files]]
 file = "config/ftbquests/quests/lang/en_us/chapters/twilight.snbt"
-hash = "ecab25be165a14cf3605c57fb6e486237667b98e8ccbf29871b795457fd0c447"
+hash = "974cbd97be0534a6bfb9ff0ddde1d472ba8f8a5a73cf02f707f727123a26400a"
 
 [[files]]
 file = "config/ftbquests/quests/reward_tables/common_bag.snbt"
@@ -226,7 +226,7 @@ hash = "d75c37df6f3a34c84b37d28141165584f3236083c9eb2b7ded107d26b7c3a8e5"
 
 [[files]]
 file = "kubejs/server_scripts/worldgen.js"
-hash = "36afb5d940f587b1fa35df8d9a05447923c455c91ac9df6fa22717ebd61fb290"
+hash = "13802a53ec3e110cbde87b39fbaf623acffe6d7f7ff3f36103c7282a766d1f73"
 
 [[files]]
 file = "kubejs/startup_scripts/items.js"

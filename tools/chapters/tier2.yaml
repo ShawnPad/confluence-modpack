@@ -16,7 +16,7 @@ quests:
     task: item:allthemodium:raw_allthemodium
     deps: [D2.1, X1.1]
     coins: 10
-    desc: "Allthemodium spawns only in the Twilight Forest in this pack, in cave-exposed veins. You need a netherite-tier pickaxe to break it."
+    desc: "Allthemodium spawns only in the Twilight Forest in this pack, in the floors of caves below y 10 - look down, not up. You need a netherite-tier pickaxe to break it."
   - node: D2.3
     title: Allthemodium Template
     task: item:allthemodium:allthemodium_upgrade_smithing_template
