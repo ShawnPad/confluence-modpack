@@ -1,0 +1,53 @@
+chapter: nether
+title: Nether
+group: 0C0F1A0000000001
+order: 2
+icon: minecraft:netherrack
+quests:
+  - node: D1.1
+    title: Nether Key
+    task: item:minecraft:flint_and_steel
+    deps: [T0.2, M0.1]
+    coins: 10
+    desc: "Flint and steel now needs an osmium ingot from Mekanism and a source gem from Ars Nouveau. That is the tier-1 gate: no Nether without one machine and one spell."
+  - node: X1.1
+    title: Netherite
+    task: item:minecraft:netherite_ingot
+    deps: [D1.1]
+    desc: "Ancient debris is the only source. It feeds the Twilight key."
+  - node: X1.2
+    title: Nether Star
+    task: item:minecraft:nether_star
+    deps: [D1.1]
+    desc: "A Wither. Ether gas needs one much later."
+  - node: D1.3
+    title: Monstrous Horn
+    task: item:cataclysm:monstrous_horn
+    deps: [D1.1]
+    coins: 10
+    desc: "Cataclysm's Netherite Monstrosity guards the Soul Forge. Its horn is a Twilight key input. See the Cataclysm chapter."
+  - node: T1.1
+    title: Metallurgic Infuser
+    task: item:mekanism:metallurgic_infuser
+    deps: [T0.2, M0.1]
+    desc: "Needs a source gem. Makes control circuits and steel."
+  - node: T1.2
+    title: Control Circuits
+    task: item:mekanism:advanced_control_circuit
+    deps: [T1.1]
+    desc: "Basic then advanced. The advanced circuit goes into the Twilight key."
+  - node: M1.1
+    title: Enchanting Apparatus
+    task: item:ars_nouveau:enchanting_apparatus
+    deps: [T0.2, M0.1]
+    desc: "Needs an osmium ingot. Every key and focus is made here."
+  - node: M1.2
+    title: Elemental Essences
+    task: item:ars_nouveau:fire_essence
+    deps: [M1.1]
+    desc: "Any of the four essences counts for the Twilight key."
+  - node: S1.1
+    title: Netherite Drawer Upgrade
+    task: item:functionalstorage:netherite_upgrade
+    deps: [X1.1, S0.1]
+    desc: "Smithing table: diamond upgrade + netherite. The storage terminal needs one on a controller."
