@@ -35,7 +35,7 @@ quests:
   - node: M0.2
     title: Arcane Essence
     task: item:irons_spellbooks:arcane_essence
-    desc: "Iron's Spells 'n Spellbooks, unchanged. It is the second magic root and it is ungated - nothing has to be unlocked before you start it."
+    desc: "Iron's Spells 'n Spellbooks, unchanged. Arcane essence has no recipe: it drops from Iron's casters (necromancers roam every Overworld biome; cultists, priests and apothecarists drop more) and turns up in many vanilla chests. It is the second magic root and it is ungated - nothing has to be unlocked before you start it."
   - node: D0.1
     title: Explore the Overworld
     task: checkmark

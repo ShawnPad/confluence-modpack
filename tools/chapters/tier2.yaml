@@ -28,7 +28,7 @@ quests:
     task: item:twilightforest:knightmetal_ingot
     deps: [D2.1]
     coins: 10
-    desc: "Goblin Knights in the Dark Forest's Knight Stronghold drop armor shards; the shards craft into a cluster that smelts into a Knightmetal Ingot. Twilight Forest, unchanged."
+    desc: "Goblin Knights in the Dark Forest's Knight Stronghold drop armor shards; nine shards craft into a cluster that smelts into a Knightmetal Ingot. Twilight Forest, unchanged."
   - node: D2.5
     title: Teleport Pad
     task: item:allthemodium:teleport_pad
