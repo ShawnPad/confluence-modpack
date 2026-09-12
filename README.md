@@ -12,6 +12,8 @@ A NeoForge 1.21.1 progression modpack: tech and magic in one tree, expert recipe
 3. Launch the instance. The first launch downloads all mods (a few minutes); every later launch checks this repository and pulls whatever changed, so you never re-import.
 4. Multiplayer → Add Server → `136.60.16.74:25584`.
 
+**Help test:** the v0.1 checklist is in [PLAYTEST.md](PLAYTEST.md); report in [issue #1](https://github.com/ShawnPad/confluence-modpack/issues/1).
+
 If a launch fails with an "error while installing" message, close Prism, delete the instance's `.minecraft/packwiz.json`, and launch again.
 
 ## Server (Pterodactyl)
