@@ -6,3 +6,4 @@ CHANGELOG.md
 *.md
 .pytest_cache/
 __pycache__/
+dist/
