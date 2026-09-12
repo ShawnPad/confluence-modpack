@@ -1,0 +1,22 @@
+// Verified registry ids and tags (research/phase6-tier0-2-ids.md §A). Keep alphabetical by mod.
+const IDS = {
+  aether: { zanite: '#c:gems/zanite' },
+  allthemodium: { ingot: '#c:ingots/allthemodium', nugget: '#c:nuggets/allthemodium', ore: 'allthemodium:allthemodium_ore', slateOre: 'allthemodium:allthemodium_slate_ore', teleportPad: 'allthemodium:teleport_pad' },
+  ars: { sourceGem: 'ars_nouveau:source_gem', sourceGemBlock: 'ars_nouveau:source_gem_block', apparatus: 'ars_nouveau:enchanting_apparatus', sourcestone: 'ars_nouveau:sourcestone',
+         essences: ['ars_nouveau:air_essence', 'ars_nouveau:earth_essence', 'ars_nouveau:fire_essence', 'ars_nouveau:water_essence'], essenceTag: '#confluence:ars_essences' },
+  cataclysm: { monstrousHorn: 'cataclysm:monstrous_horn' },
+  fs: { controller: 'functionalstorage:storage_controller', netheriteUpgrade: 'functionalstorage:netherite_upgrade' },
+  ifg: { pityFrame: 'industrialforegoing:machine_frame_pity', simpleFrame: 'industrialforegoing:machine_frame_simple', simpleFrameTag: '#industrialforegoing:machine_frame/simple',
+         pityFrameTag: '#industrialforegoing:machine_frame/pity', dissolutionChamber: 'industrialforegoing:dissolution_chamber', plastics: '#c:plastics', latex: 'industrialforegoing:latex' },
+  irons: { arcaneAnvil: 'irons_spellbooks:arcane_anvil', upgradeOrb: 'irons_spellbooks:upgrade_orb', arcaneEssence: 'irons_spellbooks:arcane_essence' },
+  mek: { osmiumIngot: '#c:ingots/osmium', osmiumIngotItem: 'mekanism:ingot_osmium', redstoneDust: '#c:dusts/redstone', infuser: 'mekanism:metallurgic_infuser',
+         basicCircuit: '#c:circuits/basic', advancedCircuit: 'mekanism:advanced_control_circuit', heatGenerator: 'mekanismgenerators:heat_generator' },
+  powah: { energizedSteel: 'powah:steel_energized', spirited: 'powah:crystal_spirited', nitro: 'powah:crystal_nitro', uraninite: 'powah:uraninite',
+           uraniniteOre: 'powah:uraninite_ore', uraniniteOrePoor: 'powah:uraninite_ore_poor', uraniniteOreDense: 'powah:uraninite_ore_dense',
+           deepslateUraniniteOre: 'powah:deepslate_uraninite_ore', deepslateUraniniteOrePoor: 'powah:deepslate_uraninite_ore_poor', deepslateUraniniteOreDense: 'powah:deepslate_uraninite_ore_dense' },
+  soph: { chest: 'sophisticatedstorage:chest' },
+  toms: { storageTerminal: 'toms_storage:storage_terminal', craftingTerminal: 'toms_storage:crafting_terminal', inventoryConnector: 'toms_storage:inventory_connector' },
+  twilight: { uncraftingTable: 'twilightforest:uncrafting_table', knightmetal: '#c:ingots/knightmetal', activatorTag: 'twilightforest:portal/activator' },
+  vanilla: { flintAndSteel: 'minecraft:flint_and_steel', fireCharge: 'minecraft:fire_charge', ruinedPortalLoot: 'minecraft:chests/ruined_portal', netherite: 'minecraft:netherite_ingot', enderPearl: 'minecraft:ender_pearl' },
+  pack: { twilightKey: 'kubejs:twilight_key', otherKey: 'kubejs:other_key', endFocus: 'kubejs:end_focus', astralFocus: 'kubejs:astral_focus', catalyst: 'kubejs:confluence_catalyst', coin: 'kubejs:coin' },
+}
