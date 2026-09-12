@@ -1,0 +1,24 @@
+# glacio_ore - Glacio Ore. Same base and fleck layout as mercury_ore, ice flecks. Family: ores.
+N neutral_3
+n neutral_2
+d neutral_4
+o outline
+H ice_light
+B ice_base
+D ice_dark
+NNNNnNNNNNNNNdNN
+NNnNNNNNdNNNNNNN
+NNNoooNNNNNNnNNN
+NdoHBBoNNNNNNNNN
+NNoBBDoNNNNdNNNN
+NNoBDDoNNNNNNNNn
+NNNoooNNNdNNNNNN
+dNNNNNNNNNNNnNNN
+NNNnNNNNNNoooNNN
+NNNNNNNNNoHBBoNN
+NNNNNNnNNoBBDoNd
+NNooNNNNNoBDDoNN
+NoHBoNNNNNoooNNN
+NoBDodNNNNNNNnNN
+NnooNNNNNNNdNNNN
+NNNNNNNNNNNNNNNN

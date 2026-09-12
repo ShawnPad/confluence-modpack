@@ -1,0 +1,24 @@
+# mercury_ore - Mercury Ore. Neutral stone base, three ember fleck clusters with outlines. Family: ores.
+N neutral_3
+n neutral_2
+d neutral_4
+o outline
+H ember_light
+B ember_base
+D ember_dark
+NNNNnNNNNNNNNdNN
+NNnNNNNNdNNNNNNN
+NNNoooNNNNNNnNNN
+NdoHBBoNNNNNNNNN
+NNoBBDoNNNNdNNNN
+NNoBDDoNNNNNNNNn
+NNNoooNNNdNNNNNN
+dNNNNNNNNNNNnNNN
+NNNnNNNNNNoooNNN
+NNNNNNNNNoHBBoNN
+NNNNNNnNNoBBDoNd
+NNooNNNNNoBDDoNN
+NoHBoNNNNNoooNNN
+NoBDodNNNNNNNnNN
+NnooNNNNNNNdNNNN
+NNNNNNNNNNNNNNNN
