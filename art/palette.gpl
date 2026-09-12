@@ -1,0 +1,31 @@
+GIMP Palette
+Name: Confluence
+Columns: 4
+#
+# One outline colour, a 5-step neutral ramp, five 4-step material ramps. art/STYLE.md says how they are used.
+ 27  18  32	outline
+242 238 245	neutral_1
+185 176 196	neutral_2
+126 117 144	neutral_3
+ 78  70  96	neutral_4
+ 46  40  64	neutral_5
+255 240 160	gold_light
+242 182  50	gold_base
+184 116  26	gold_dark
+110  66  16	gold_deep
+182 242 122	green_light
+ 91 194  74	green_base
+ 46 138  60	green_dark
+ 27  85  48	green_deep
+226 166 255	purple_light
+165  75 224	purple_base
+106  42 160	purple_dark
+ 62  24 102	purple_deep
+228 251 255	ice_light
+126 220 245	ice_base
+ 58 155 201	ice_dark
+ 31  92 134	ice_deep
+255 210 122	ember_light
+245 118  42	ember_base
+185  58  26	ember_dark
+110  30  20	ember_deep
