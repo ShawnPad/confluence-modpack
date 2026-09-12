@@ -4,4 +4,6 @@ RecipeViewerEvents.addInformation('item', event => {
   event.add('mekanism:metallurgic_infuser', ['Confluence: needs a source gem (Ars Nouveau).'])
   event.add('ars_nouveau:enchanting_apparatus', ['Confluence: needs an osmium ingot (Mekanism).'])
   event.add('industrialforegoing:machine_frame_pity', ['Confluence: needs osmium (Mekanism) and energized steel (Powah).'])
+  event.add('undergarden:catalyst', ['Confluence: tier 3. Needs knightmetal, Allthemodium, a Simple Machine Frame and an Upgrade Orb. Authored in v0.2.'])
+  event.add('toms_storage:storage_terminal', ['Confluence: needs a Simple Machine Frame, an Ars essence, a drawer controller with a netherite upgrade, and a Sophisticated chest.'])
 })

@@ -2,9 +2,26 @@ gates:
   - confluence:tier1/flint_and_steel
   - confluence:tier1/metallurgic_infuser
   - confluence:tier1/enchanting_apparatus
+  - confluence:tier2/twilight_key
+  - confluence:tier2/arcane_anvil
+  - confluence:tier2/storage_terminal
+  - confluence:tier2/inventory_connector
+  - confluence:tier2/crystal_spirited
+  - confluence:bypass/allthemodium_crystal_from_ore
+  - confluence:bypass/allthemodium_crystal_from_raw_ore
+  - confluence:bypass/allthemodium_crystal_from_raw_block
 removed:
   - minecraft:flint_and_steel
   - mekanism:metallurgic_infuser
   - ars_nouveau:enchanting_apparatus
   - minecraft:fire_charge
   - ars_nouveau:fire_essence_to_charge
+  - irons_spellbooks:arcane_anvil
+  - toms_storage:storage_terminal
+  - toms_storage:inventory_connector
+  - powah:energizing/spirited_crystal
+  - industrialforegoing:laser_drill_ore/ancient_debris
+  - twilightforest:uncrafting_table
+  - allthemodium:processing/allthemodium/slurry/dirty/from_ore
+  - allthemodium:processing/allthemodium/slurry/dirty/from_raw_ore
+  - allthemodium:processing/allthemodium/slurry/dirty/from_raw_block

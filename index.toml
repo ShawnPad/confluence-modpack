@@ -2,15 +2,87 @@ hash-format = "sha256"
 
 [[files]]
 file = "config/ftbquests/quests/chapter_groups.snbt"
-hash = "0ac6427066284823378a1736f0d65ed05fa0ca7dbe2c0dfdfc9b1d43814f8a9d"
+hash = "2b42c663287cba587e437daec921d3be1ac845c4b1efc1320d22b795f07c2cf6"
+
+[[files]]
+file = "config/ftbquests/quests/chapters/aether.snbt"
+hash = "acb6709f530f26c40c183e1ee0ef0d57211bab1d3a826af6d516bbebac445e18"
+
+[[files]]
+file = "config/ftbquests/quests/chapters/cataclysm.snbt"
+hash = "56e24cca2c89792c446dc41bc805844e5eb9a7fab6f97709e2ef93d59b124cff"
+
+[[files]]
+file = "config/ftbquests/quests/chapters/intro.snbt"
+hash = "474cf6ab45d97940d43d44e7cf2d73b0c9bcb0a81554a57b49babfbb0ba532f9"
+
+[[files]]
+file = "config/ftbquests/quests/chapters/nether.snbt"
+hash = "231b732aae25b86cd7d842cc8d968867c599489cc706c145286588d39ab4050d"
+
+[[files]]
+file = "config/ftbquests/quests/chapters/overworld.snbt"
+hash = "3b0237ca880f14e9d432f808da58fe17546e1c084a557b614579df6f8c218c7e"
+
+[[files]]
+file = "config/ftbquests/quests/chapters/shop.snbt"
+hash = "610ff74cdb602f40c59a0a32199b1fd3382ee98dc85fb05bf2d9a6924925f2cb"
+
+[[files]]
+file = "config/ftbquests/quests/chapters/twilight.snbt"
+hash = "4594b27c1847d35ae1afcd5d5bfcf79283dcea8a3e33bf2401dd85698f13339c"
 
 [[files]]
 file = "config/ftbquests/quests/data.snbt"
 hash = "daed85b108619d4dd9044df7c0e38984dd6aa44b53e776cb493f453399776b3f"
 
 [[files]]
+file = "config/ftbquests/quests/lang/en_us/chapter.snbt"
+hash = "b04dfdeee63eca223226be0f90d136e3ae5bb0c8069d851808fed641bc9f4266"
+
+[[files]]
 file = "config/ftbquests/quests/lang/en_us/chapter_group.snbt"
-hash = "2ba16edfffb3585065af28a41e5d35f76dded0797a8deab3142e0cfa52ed1ea9"
+hash = "772315a5b5340056dcf58a025d1d0f53a721810410baf9d9ed5b5d87522311fc"
+
+[[files]]
+file = "config/ftbquests/quests/lang/en_us/chapters/aether.snbt"
+hash = "8b9968baee9c386cacda6126134c99aa89f965ba43a65f2ee655549774763229"
+
+[[files]]
+file = "config/ftbquests/quests/lang/en_us/chapters/cataclysm.snbt"
+hash = "5d1a66bb752f4ba09f9318dc609779fd94c9b5733747cee63d3ee081e5667683"
+
+[[files]]
+file = "config/ftbquests/quests/lang/en_us/chapters/intro.snbt"
+hash = "0572c29f46dde1732a7354c741bc0c3bcc072d1205c00429f6a3913b64c60291"
+
+[[files]]
+file = "config/ftbquests/quests/lang/en_us/chapters/nether.snbt"
+hash = "42877fa2c20101a73882ae7097a97fe77fd8bf1a5d3192c971a541fe0b69ca25"
+
+[[files]]
+file = "config/ftbquests/quests/lang/en_us/chapters/overworld.snbt"
+hash = "d01da3ab2c8abc42dc869c1dc1fb3b646546a77f74bcbd653ac1f07a4a2194c9"
+
+[[files]]
+file = "config/ftbquests/quests/lang/en_us/chapters/shop.snbt"
+hash = "209538a3d409bda3a34b7e50fa02f200c2f2cded80025a3581375921620aff70"
+
+[[files]]
+file = "config/ftbquests/quests/lang/en_us/chapters/twilight.snbt"
+hash = "ecab25be165a14cf3605c57fb6e486237667b98e8ccbf29871b795457fd0c447"
+
+[[files]]
+file = "config/ftbquests/quests/reward_tables/common_bag.snbt"
+hash = "b6e34fe221dacf1cc5c38711976e7e1a00288a87a55e9cc47e2af5addf59ed0e"
+
+[[files]]
+file = "config/ftbquests/quests/reward_tables/uncommon_bag.snbt"
+hash = "86339e09c0a2bea970b03ac6c09f780b20fc915c4061313bd940c2cee0ee43b1"
+
+[[files]]
+file = "config/twilightforest-common.toml"
+hash = "c28d10a5b8d9952b250dbd4d10a7ba708f26d2229b51fea2705d7d77b880f908"
 
 [[files]]
 file = "kubejs/assets/kubejs/textures/block/glacio_ore.png"
@@ -54,15 +126,75 @@ hash = "09d4d5f62f02477db143d190b0b977cca9be9991065e245dcd52a5a1fe35b5d3"
 
 [[files]]
 file = "kubejs/client_scripts/jei.js"
-hash = "b8372fe7ab190a12731640d444fbfe73fb29d0e5a0dfcc0cd75fca67d59ddeb2"
+hash = "c0a70a74875312dde0795174253991461df1f14c761e63135a1e3331028a5c89"
 
 [[files]]
 file = "kubejs/client_scripts/tooltips.js"
 hash = "918183357ec86103fcf8074a00191974a73f7b9b8cf65a9867b19d5f216e3738"
 
 [[files]]
+file = "kubejs/data/allthemodium/neoforge/biome_modifier/allthemodium/allthemodium.json"
+hash = "2b925da45ae9ccc37f6f5ae1fd1f62fb64d9155a6df14a5d44e9d3ab6538cf9d"
+
+[[files]]
+file = "kubejs/data/allthemodium/neoforge/biome_modifier/allthemodium/dim_ores/ore_allthemodium.json"
+hash = "2b925da45ae9ccc37f6f5ae1fd1f62fb64d9155a6df14a5d44e9d3ab6538cf9d"
+
+[[files]]
+file = "kubejs/data/allthemodium/neoforge/biome_modifier/allthemodium/the_other/allthemodium.json"
+hash = "2b925da45ae9ccc37f6f5ae1fd1f62fb64d9155a6df14a5d44e9d3ab6538cf9d"
+
+[[files]]
+file = "kubejs/data/allthemodium/neoforge/biome_modifier/allthemodium/the_other/vibranium.json"
+hash = "2b925da45ae9ccc37f6f5ae1fd1f62fb64d9155a6df14a5d44e9d3ab6538cf9d"
+
+[[files]]
+file = "kubejs/data/allthemodium/neoforge/biome_modifier/allthemodium/unobtainium.json"
+hash = "2b925da45ae9ccc37f6f5ae1fd1f62fb64d9155a6df14a5d44e9d3ab6538cf9d"
+
+[[files]]
+file = "kubejs/data/allthemodium/neoforge/biome_modifier/allthemodium/vibranium.json"
+hash = "2b925da45ae9ccc37f6f5ae1fd1f62fb64d9155a6df14a5d44e9d3ab6538cf9d"
+
+[[files]]
+file = "kubejs/data/confluence/tags/item/ars_essences.json"
+hash = "278d63f098f69191a9248bcdc7d9b846f5f537aa696a5e087d3b963e714a70de"
+
+[[files]]
+file = "kubejs/data/industrialforegoing/recipe/dissolution_chamber.json"
+hash = "53d455c58a9c02b56a839a1664a86c27ffe085fb8fa20248f8ac4cf7281111b4"
+
+[[files]]
+file = "kubejs/data/industrialforegoing/recipe/dissolution_chamber/simple_machine_frame.json"
+hash = "ed71d60e38f9e98d5ff3a71df2c9a8ff93b544c0d1e231068f728fd753f4d952"
+
+[[files]]
+file = "kubejs/data/industrialforegoing/recipe/machine_frame_pity.json"
+hash = "c842eacf8037b4a68b21097e0986c360dd817fab2dac34d531e3dc9012b2618f"
+
+[[files]]
+file = "kubejs/data/powah/neoforge/biome_modifier/uraninite_ore.json"
+hash = "2b925da45ae9ccc37f6f5ae1fd1f62fb64d9155a6df14a5d44e9d3ab6538cf9d"
+
+[[files]]
+file = "kubejs/data/powah/neoforge/biome_modifier/uraninite_ore_dense.json"
+hash = "2b925da45ae9ccc37f6f5ae1fd1f62fb64d9155a6df14a5d44e9d3ab6538cf9d"
+
+[[files]]
+file = "kubejs/data/powah/neoforge/biome_modifier/uraninite_ore_poor.json"
+hash = "2b925da45ae9ccc37f6f5ae1fd1f62fb64d9155a6df14a5d44e9d3ab6538cf9d"
+
+[[files]]
+file = "kubejs/server_scripts/bypass.js"
+hash = "1b22a684bb5e794ea036a2a29d62357e37c01b3834d9ebb80f83a2f5b8b4d1b7"
+
+[[files]]
 file = "kubejs/server_scripts/dump.js"
-hash = "7e90242e851896b19c54798f56ca01ecda30fa579d8c12ddcc52a24e67cdceae"
+hash = "11752aa1e3cf64ae3226e946d1a4408c840f3670ab529399b5a9d7e683c3145c"
+
+[[files]]
+file = "kubejs/server_scripts/events.js"
+hash = "18e8f28fd8b30c3c7b9916248cb73c61418a8f25fd134337f6220bad295db19e"
 
 [[files]]
 file = "kubejs/server_scripts/lib/gates.js"
@@ -70,7 +202,27 @@ hash = "9c35d42ba3cad1b0d47dcbbc8edb9f9902c633c758dbcbad9c11a79b375dc983"
 
 [[files]]
 file = "kubejs/server_scripts/lib/ids.js"
-hash = "93a41e4dc631098030bf6d91f512a1b41247098b16c9b5542b87f5ccc2a15bc9"
+hash = "e12ccff1a16899465ceea8ca2c659c3f71e628a9cac84aec4187c76030ee8780"
+
+[[files]]
+file = "kubejs/server_scripts/loot.js"
+hash = "8cd9262aeb2fd3044de0ae39b1ff5302f8756953b900e900e5b51f4197e3226a"
+
+[[files]]
+file = "kubejs/server_scripts/tiers/tier0.js"
+hash = "fffa238fdbffa3dc7a1da40cd477c1e2ff2751ad06be812836eb62e133d01bdd"
+
+[[files]]
+file = "kubejs/server_scripts/tiers/tier1.js"
+hash = "e799d0a5f24247b3c5f7400d97b3d48f75b862e36191ff67759dd64e5cfe740f"
+
+[[files]]
+file = "kubejs/server_scripts/tiers/tier2.js"
+hash = "d75c37df6f3a34c84b37d28141165584f3236083c9eb2b7ded107d26b7c3a8e5"
+
+[[files]]
+file = "kubejs/server_scripts/worldgen.js"
+hash = "36afb5d940f587b1fa35df8d9a05447923c455c91ac9df6fa22717ebd61fb290"
 
 [[files]]
 file = "kubejs/startup_scripts/items.js"

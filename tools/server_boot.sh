@@ -29,6 +29,10 @@ for i in $(seq 1 120); do
   if grep -q -E 'Failed to load datapacks|Failed to start the minecraft server|Exception in thread "main"|Missing or unsupported mandatory dependencies|Mod ID: .* Requested by' console.log 2>/dev/null; then break; fi
   sleep 5
 done
+# FTB Quests loads the quest files ~1 s after "Done": give it up to 20 s so the chapter/quest count is logged.
+if grep -q 'Done (' console.log 2>/dev/null; then
+  for i in $(seq 1 20); do grep -q '\[FTB Quests/\]: Loaded' console.log 2>/dev/null && break; sleep 1; done
+fi
 # run.sh is a plain wrapper (no exec): kill the java child too, then wait for it to exit.
 JAVA_PID="$(pgrep -P "$SERVER_PID" || true)"
 kill $JAVA_PID "$SERVER_PID" 2>/dev/null || true
@@ -37,4 +41,7 @@ sleep 3
 grep -E 'Done \(|Failed to load datapacks|Failed to start the minecraft server|Missing or unsupported mandatory|Requested by' console.log || true
 if ! grep -q 'Done (' console.log; then echo "BOOT FAILED"; exit 1; fi
 if grep -q -E '^\[.*ERROR' logs/kubejs/startup.log logs/kubejs/server.log 2>/dev/null; then echo "KUBEJS ERRORS"; grep -E 'ERROR' logs/kubejs/*.log | head -40; exit 1; fi
+# Questbook: print the load line and fail on any FTB Quests error (a malformed SNBT id or reward is logged, not thrown).
+grep '\[FTB Quests/\]: Loaded' console.log || echo "WARN: no FTB Quests 'Loaded' line within the grace period"
+if grep -E '/(ERROR|WARN)\] \[FTB Quests/\]' console.log | grep -v -i 'translation'; then echo "FTBQUESTS ERRORS"; exit 1; fi
 echo "BOOT OK"
