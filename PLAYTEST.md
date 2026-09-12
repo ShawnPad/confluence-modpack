@@ -13,6 +13,8 @@ Two kinds of probe. **Server** = play normally on the server. **Creative** = mak
 
 Harmless and known: the log shows a couple of dozen "Couldn't load tag … missing following references" errors at world load. They come from mods referencing items that are not in this pack; no need to report them.
 
+**Known, not a bug to report:** the pack ships Iris 1.8.14-beta.1 (the only Iris that works with Sodium 0.8). With a shader pack enabled, block entities such as chests can be missing from shadows and FPS may drop in busy areas; that is upstream Iris. Shaders off = unaffected. If the game crashes, attach the newest file from the instance's `.minecraft/crash-reports/` to issue #1.
+
 ## A. Getting in
 
 | # | Kind | Do | Expected |
