@@ -37,8 +37,9 @@ It checks the mechanical rules (size, RGBA, no half-transparent pixels, items ke
 empty, ores fully opaque) and says which file and rule failed.
 
 The maintainer checks the rest of `STYLE.md` by eye on the 8× sheet: the 1-px outline ring on items, the
-10×12 silhouette, the shared family silhouette (both keys, both foci, both shards, both ores), colours from the
-palette, light from the top-left. Those are what a PR gets bounced for. Taste is a conversation, not a rule.
+minimum silhouette size (12 px on one axis, 8 on the other), the shared family silhouette (both keys, both foci,
+both shards, both ores), colours from the palette, light from the top-left. Those are what a PR gets bounced
+for. Taste is a conversation, not a rule.
 
 ## The PR
 
@@ -54,3 +55,13 @@ palette, light from the top-left. Those are what a PR gets bounced for. Taste is
 
 Those text files are the maintainer's drafting format (one character per pixel). You do not need them. If you
 redraw a texture, the grid is simply out of date; the PNG wins.
+
+## For the maintainer
+
+After merging a PR that changes a PNG or `art/briefs.json`:
+
+    python3 tools/gen_textures.py --preview art/preview/x8
+    python3 tools/gen_preview.py --round <n>
+    packwiz refresh
+
+then commit `art/`, `index.toml` and `pack.toml`, and push `main`. The tests fail until the first two have run.

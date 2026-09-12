@@ -135,3 +135,12 @@ def test_legend_line_may_use_a_tab():
 def test_parse_palette_rejects_out_of_range():
     with pytest.raises(ValueError, match="out of range"):
         gen_textures.parse_palette("GIMP Palette\n300  18  32\toutline\n")
+
+
+def test_main_anchors_a_relative_preview_path_to_the_pack_root(tmp_path, monkeypatch):
+    root = setup_tree(tmp_path)
+    monkeypatch.setattr(packitems, "ROOT", root)
+    monkeypatch.setattr(packitems, "load", lambda: KINDS)
+    gen_textures.main(["--preview", "some/rel/dir"])
+    assert (root / "some" / "rel" / "dir" / "coin.png").exists()
+    assert (root / "some" / "rel" / "dir" / "mercury_ore.png").exists()

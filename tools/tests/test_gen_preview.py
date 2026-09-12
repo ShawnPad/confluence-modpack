@@ -75,6 +75,15 @@ def test_unknown_family_is_an_error(tmp_path):
         gen_preview.markdown(root, KINDS)
 
 
+def test_missing_brief_field_names_the_texture(tmp_path):
+    root = tree(tmp_path)
+    briefs = json.loads((root / "art" / "briefs.json").read_text())
+    del briefs["textures"]["coin"]["earned"]
+    (root / "art" / "briefs.json").write_text(json.dumps(briefs))
+    with pytest.raises(KeyError, match=r"'coin': brief is missing \['earned'\]"):
+        gen_preview.markdown(root, KINDS)
+
+
 def test_real_briefs_cover_every_registered_id():
     briefs = json.loads((packitems.ROOT / "art" / "briefs.json").read_text())
     ids = packitems.load()

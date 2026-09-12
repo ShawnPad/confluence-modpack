@@ -46,6 +46,9 @@ def ordered(kinds: dict, briefs: dict):
             brief = briefs["textures"][item_id]
             if brief["family"] not in order:
                 raise KeyError(f"{item_id!r}: family {brief['family']!r} is not one of art/briefs.json families {order}")
+            missing = [k for k in ("display", "role", "earned", "consumed", "notes") if not brief.get(k)]
+            if missing:
+                raise KeyError(f"{item_id!r}: brief is missing {missing} in art/briefs.json")
             rows.append((kind, item_id, brief))
     return sorted(rows, key=lambda r: order.index(r[2]["family"]))
 
@@ -140,7 +143,10 @@ def data_uri(png: bytes) -> str:
 
 def html(root: Path, kinds: dict, round_no: int, date: str) -> str:
     briefs = load_briefs(root)
-    palette = gen_textures.parse_palette((root / "art" / "palette.gpl").read_text())
+    try:
+        palette = gen_textures.parse_palette((root / "art" / "palette.gpl").read_text())
+    except ValueError as e:
+        raise ValueError(f"art/palette.gpl: {e}") from None
     swatches = "".join(
         f'<div class="swatch"><i style="background:#{r:02X}{g:02X}{b:02X}"></i>'
         f'<b>{htmlmod.escape(name)}</b>#{r:02X}{g:02X}{b:02X}</div>'

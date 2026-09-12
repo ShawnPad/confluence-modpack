@@ -10,6 +10,8 @@ unless told to with --force <id>, so an artist's edit is safe from a re-run.
   python3 tools/gen_textures.py --preview art/preview/x8
                                                        also write 8x upscales of every CURRENT PNG (the
                                                        canonical file, human-edited or not) into that folder
+                                                       (a relative path is taken from the pack root, not the
+                                                       current directory)
 """
 import argparse
 import os
@@ -142,6 +144,8 @@ def main(argv=None) -> int:
     ap.add_argument("--force", nargs="+", default=[], metavar="ID", help="re-render these ids even if their PNG exists")
     ap.add_argument("--preview", metavar="DIR", type=Path, help="write 8x upscales of every current PNG into DIR")
     args = ap.parse_args(argv)
+    if args.preview is not None and not args.preview.is_absolute():
+        args.preview = packitems.ROOT / args.preview
     written, kept, previewed = run(packitems.ROOT, packitems.load(), force=args.force, preview=args.preview)
     for p in written:
         print("wrote", p.relative_to(packitems.ROOT))

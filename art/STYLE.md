@@ -9,9 +9,10 @@ the questbook and stand out in a chest. Not vanilla-faithful on purpose (the mai
 1. **Canvas** 16×16, RGBA PNG, transparent background. No anti-aliasing, no gradients: every pixel is fully
    opaque or fully transparent. Save as 8-bit RGBA (convert the sprite to RGB colour mode with an alpha channel
    before exporting; no interlacing).
-2. **Items** get a 1-px outline in `outline` around the whole silhouette, and the silhouette covers at least a
-   10×12 box so the item reads in an inventory slot. Keep the outer 1-px border of the canvas empty (rows 0 and
-   15, columns 0 and 15) so the outline is never clipped by the slot.
+2. **Items** get a 1-px outline in `outline` around the whole silhouette, and the silhouette spans at least 12 px
+   on one axis and 8 px on the other so the item reads in an inventory slot (the shards are 8×14, the coin
+   12×12). Keep the outer 1-px border of the canvas empty (rows 0 and 15, columns 0 and 15) so the outline is
+   never clipped by the slot.
 3. **Blocks** (the two ores) have no outline around the block edge (they tile) and every pixel is opaque. The
    stone base has no outline; each fleck cluster has its own 1-px `outline` ring.
 4. **Light from the top-left.** A texture's main material uses three shades of one ramp: light on top-left edges
