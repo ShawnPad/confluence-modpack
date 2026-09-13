@@ -182,7 +182,7 @@ hash = "4ae033218a27fb9cbfbb4e5e54a86260197bffc65f661f6c5d8df4c5de254e74"
 
 [[files]]
 file = "kubejs/server_scripts/loot.js"
-hash = "fb2d98edaf6eb0cb23ec6bb5e14722113f4f0ab4df53b347f77fb98d8878c33f"
+hash = "afd034393ba225e247aea25300839a090a0975bca72eeec8dd25b2ded20d6608"
 
 [[files]]
 file = "kubejs/server_scripts/tagcheck.js"

@@ -24,6 +24,15 @@ LootJS.lootTables(event => {
   // [D2.3] closure: Allthemodium's own template sources outside the tier dimensions (Ancient City suspicious clay →
   // `allthemodium:arch`, bastion suspicious soul sand → `allthemodium:arch2`; see IDS.allthemodium.strayTemplateTables
   // in lib/ids.js for the jar paths). Emptied, so the Allthemodium template exists only in Twilight stronghold caches and
-  // the Vibranium one waits for its v0.2 Undergarden table. The brushable blocks still generate; they yield nothing.
+  // the Vibranium one only in the Undergarden catacombs pool below (D86). The brushable blocks still generate; they
+  // yield nothing.
   IDS.allthemodium.strayTemplateTables.forEach(id => event.getLootTable(id).clear())
+
+  // D3.3 (D86): the Vibranium template rides in Undergarden catacombs chests. undergarden:chests/catacombs has three pools;
+  // pool index 2 is the valuable pool (minecraft:empty 8, forgotten_upgrade_smithing_template 3, forgotten_nugget 1 = 12;
+  // The_Undergarden-1.21.1-0.9.6.jar!data/undergarden/loot_table/chests/catacombs.json, phase7-undergarden-worldgen-loot.md §4).
+  // Weight 2 → 2/14, one chest in 7 (user choice, D86). Same getPool(2) || firstPool() guard as the Twilight cache above.
+  const catacombs = event.getLootTable(IDS.undergarden.catacombsChest)
+  const valuable = catacombs.getPool(2) || catacombs.firstPool()
+  valuable.addEntry(LootEntry.of(IDS.allthemodium.vibraniumTemplate).withWeight(2))
 })
