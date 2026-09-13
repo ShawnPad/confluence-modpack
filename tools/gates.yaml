@@ -21,6 +21,11 @@ gates:
   - confluence:tier3/qio_drive_array
   - confluence:tier3/qio_importer
   - confluence:tier3/qio_exporter
+  # v0.2 tier 4
+  - confluence:tier4/ender_eye
+  - confluence:tier4/planarium
+  - confluence:tier4/end_focus
+  - industrialforegoing:dissolution_chamber/advanced_machine_frame
 removed:
   - minecraft:flint_and_steel
   - mekanism:metallurgic_infuser
@@ -48,3 +53,6 @@ removed:
   - mekanism:qio_drive_array
   - mekanism:qio_importer
   - mekanism:qio_exporter
+  # v0.2 tier 4
+  - minecraft:ender_eye
+  - ars_nouveau:planarium

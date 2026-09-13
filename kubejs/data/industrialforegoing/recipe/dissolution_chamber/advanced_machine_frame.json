@@ -1,0 +1,41 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:item_exists",
+      "item": "industrialforegoing:machine_frame_advanced"
+    }
+  ],
+  "type": "industrialforegoing:dissolution_chamber",
+  "input": [
+    {
+      "tag": "c:plastics"
+    },
+    {
+      "tag": "industrialforegoing:machine_frame/simple"
+    },
+    {
+      "tag": "c:plastics"
+    },
+    {
+      "tag": "c:ingots/vibranium"
+    },
+    {
+      "tag": "c:ingots/vibranium"
+    },
+    {
+      "item": "irons_spellbooks:lightning_upgrade_orb"
+    },
+    {
+      "tag": "c:gears/diamond"
+    }
+  ],
+  "inputFluid": {
+    "amount": 500,
+    "fluid": "industrialforegoing:pink_slime"
+  },
+  "output": {
+    "count": 1,
+    "id": "industrialforegoing:machine_frame_advanced"
+  },
+  "processingTime": 300
+}

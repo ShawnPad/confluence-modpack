@@ -133,6 +133,10 @@ file = "kubejs/data/industrialforegoing/recipe/dissolution_chamber.json"
 hash = "53d455c58a9c02b56a839a1664a86c27ffe085fb8fa20248f8ac4cf7281111b4"
 
 [[files]]
+file = "kubejs/data/industrialforegoing/recipe/dissolution_chamber/advanced_machine_frame.json"
+hash = "19c82ce6f9c141274a82de8b8bef2b16905295be11006d21e1b1160047364f36"
+
+[[files]]
 file = "kubejs/data/industrialforegoing/recipe/dissolution_chamber/simple_machine_frame.json"
 hash = "ed71d60e38f9e98d5ff3a71df2c9a8ff93b544c0d1e231068f728fd753f4d952"
 
@@ -195,6 +199,10 @@ hash = "d75c37df6f3a34c84b37d28141165584f3236083c9eb2b7ded107d26b7c3a8e5"
 [[files]]
 file = "kubejs/server_scripts/tiers/tier3.js"
 hash = "c93ccf04c9cb300b324b078de82c3f6cf2e4ccd5b0076826ca7bfc0e98c29a50"
+
+[[files]]
+file = "kubejs/server_scripts/tiers/tier4.js"
+hash = "513cc37e119edda21032c60ac1d5b0eb05d9510ddb4338c8bbce3dc1f8fdb573"
 
 [[files]]
 file = "kubejs/server_scripts/worldgen.js"
