@@ -270,9 +270,19 @@ def test_validate_allows_repeat_on_a_kill_task():
 
 # An unnamespaced advancement id is a silent never-completes: AdvancementTask.canSubmit looks the id up on the
 # server and returns false forever when it misses (§3).
-def test_validate_flags_an_advancement_task_without_a_namespace():
+def _advancement_problems(task):
     ch = parse_chapter(YAML)
     ch["group"] = quest_id("chapter:nether")
-    ch["quests"][1]["task"] = "advancement:story/root"
-    problems = validate_chapter(ch, tables={})
-    assert len(problems) == 1 and "X1.1" in problems[0] and "namespace" in problems[0]
+    ch["quests"][1]["task"] = task
+    return validate_chapter(ch, tables={})
+
+
+def test_validate_flags_an_advancement_task_without_a_namespace():
+    for task in ("advancement:story/root", "advancement::path", "advancement:ns:", "advancement:story/root:killed_frost"):
+        problems = _advancement_problems(task)
+        assert len(problems) == 1 and "X1.1" in problems[0] and "namespace" in problems[0], task
+
+
+def test_validate_accepts_a_namespaced_advancement_with_or_without_criterion():
+    assert _advancement_problems("advancement:minecraft:nether/root") == []
+    assert _advancement_problems("advancement:minecraft:nether/root:entered_nether") == []

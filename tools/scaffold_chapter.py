@@ -121,6 +121,11 @@ def _kind(q: dict) -> str:
     return q["task"].partition(":")[0]
 
 
+def _rest(q: dict) -> str:
+    """Everything after the task kind's colon."""
+    return q["task"].partition(":")[2]
+
+
 def validate_chapter(ch: dict, tables: dict[str, int] | None = None) -> list[str]:
     """Problems that FTB Quests would swallow silently (no log line) rather than reject, plus design lints that
     should block scaffolding: main() treats every problem here as fatal."""
@@ -138,20 +143,21 @@ def validate_chapter(ch: dict, tables: dict[str, int] | None = None) -> list[str
             # An unknown table_id resolves to null in RandomReward.readData and the reward silently pays nothing.
             problems.append(f'{q["node"]}: no reward table named "{q["bag"]}" in config/ftbquests/quests/reward_tables/')
         if q["repeat"] and kind in AUTO_SUBMITTING_TASKS:
-            problems.append(f'{q["node"]}: repeat on a {kind} task re-completes itself every tick '
-                            f'({kind.capitalize()}Task.autoSubmitOnPlayerTick); drop repeat')
+            problems.append(f'{q["node"]}: repeat on a {kind} task re-completes itself on a timer (every 100 ticks for '
+                            f'dimension, 5 for advancement -- {kind.capitalize()}Task.autoSubmitOnPlayerTick); drop repeat')
         if kind == "advancement":
             # AdvancementTask.canSubmit looks the id up in the server's advancement registry and returns false forever
-            # when it misses -- an unnamespaced id is a silent never-completes, no log line (task-shapes §3).
-            ident = q["task"].partition(":")[2].split(":")
-            if len(ident) < 2 or not ident[0] or not ident[1]:
+            # when it misses -- an unnamespaced id is a silent never-completes, no log line (task-shapes §3). A namespace
+            # is [a-z0-9_.-]+ (ResourceLocation.isValidNamespace), so a '/' there means the path was written without one.
+            ident = _rest(q).split(":")
+            if len(ident) < 2 or not ident[0] or not ident[1] or "/" in ident[0]:
                 problems.append(f'{q["node"]}: advancement task needs "<namespace>:<path>[:<criterion>]", got {q["task"]!r}')
     return problems
 
 
 def _task(q: dict, tid: str) -> str:
     kind = _kind(q)
-    rest = q["task"].partition(":")[2]
+    rest = _rest(q)
     if kind == "item":
         parts = rest.split(":")
         count = int(parts[2]) if len(parts) == 3 else 1

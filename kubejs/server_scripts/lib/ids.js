@@ -8,7 +8,7 @@ const IDS = {
   // data/c/tags/item/gems/zanite.json, so the c: form phase6-tier0-2-ids.md line 77 lists is an empty tag.
   aether: { zanite: '#aether:gems/zanite' },
   allthemodium: { ingot: '#c:ingots/allthemodium', nugget: '#c:nuggets/allthemodium', ore: 'allthemodium:allthemodium_ore', slateOre: 'allthemodium:allthemodium_slate_ore', teleportPad: 'allthemodium:teleport_pad' },
-  ars: { sourceGem: 'ars_nouveau:source_gem', sourceGemBlock: 'ars_nouveau:source_gem_block', apparatus: 'ars_nouveau:enchanting_apparatus', sourcestone: 'ars_nouveau:sourcestone',
+  ars: { sourceGem: 'ars_nouveau:source_gem', apparatus: 'ars_nouveau:enchanting_apparatus', sourcestone: 'ars_nouveau:sourcestone',
          essences: ['ars_nouveau:air_essence', 'ars_nouveau:earth_essence', 'ars_nouveau:fire_essence', 'ars_nouveau:water_essence'], essenceTag: '#confluence:ars_essences' },
   cataclysm: { monstrousHorn: 'cataclysm:monstrous_horn' },
   fs: { controller: 'functionalstorage:storage_controller', netheriteUpgrade: 'functionalstorage:netherite_upgrade' },
