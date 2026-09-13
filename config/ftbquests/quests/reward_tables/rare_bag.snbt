@@ -1,0 +1,23 @@
+{
+	id: "0C0F1B0000000003"
+	loot_crate: {
+		color: 11141290
+		drops: { boss: 0 monster: 0 passive: 0 }
+		glow: 1b
+		string_id: "rare_bag"
+	}
+	loot_size: 3
+	order_index: 2
+	rewards: [
+		{ id: "0C0F1B0000000301" item: { count: 2, id: "minecraft:netherite_ingot" } weight: 15.0f }
+		{ id: "0C0F1B0000000302" item: { count: 8, id: "minecraft:diamond" } weight: 20.0f }
+		{ id: "0C0F1B0000000303" item: { count: 8, id: "minecraft:emerald" } weight: 15.0f }
+		{ id: "0C0F1B0000000304" item: { count: 16, id: "mekanism:ingot_steel" } weight: 20.0f }
+		{ id: "0C0F1B0000000305" item: { count: 8, id: "powah:steel_energized" } weight: 15.0f }
+		{ id: "0C0F1B0000000306" item: { count: 8, id: "minecraft:ender_pearl" } weight: 15.0f }
+		{ id: "0C0F1B0000000307" item: { count: 8, id: "minecraft:blaze_rod" } weight: 15.0f }
+		{ id: "0C0F1B0000000308" item: { count: 8, id: "powah:uraninite" } weight: 10.0f }
+		{ id: "0C0F1B0000000309" item: { count: 24, id: "kubejs:coin" } weight: 10.0f }
+	]
+	use_title: true
+}

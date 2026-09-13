@@ -73,7 +73,7 @@ quests:
   - node: X2.2
     title: Ore Quintupling
     task: checkmark
-    deps: [T0.2]
+    deps: [T0.2, D3.2]
     desc: "Good to know: Mekanism's 5x slurry chain runs on base metals with no restriction at all. Tier ores are different - each one's chain consumes the next tier's material, so it multiplies a tier you have already reached and can never open one early."
   - node: X2.3
     title: No Tier-Ore Seeds

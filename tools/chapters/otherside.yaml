@@ -1,0 +1,24 @@
+chapter: otherside
+title: The Otherside
+group: 0C0F1A0000000002
+order: 12
+icon: deeperdarker:resonarium
+quests:
+  - node: D3.5
+    title: The Otherside
+    task: dimension:deeperdarker:otherside
+    deps: [D0.2]
+    coins: 15
+    desc: "Frame reinforced deepslate in the Nether-portal shape and light it with a Heart of the Deep from a Warden; unlit portals also stand in Ancient Cities. Resonarium is here and nowhere else."
+  - node: OTHER.1
+    title: Resonarium
+    task: item:deeperdarker:resonarium
+    deps: [D3.5]
+    coins: 10
+    desc: "Only the smallest Sludges drop Resonarium, and they live in the Blooming Caverns biome. Each Eye of Ender takes one, so hunt the little ones."
+  - node: OTHER.2
+    title: Soul Crystal
+    task: item:deeperdarker:soul_crystal
+    deps: [D3.5]
+    coins: 5
+    desc: "The Stalker drops a Soul Crystal; with an elytra it makes the Soul Elytra. A prize, not a gate."

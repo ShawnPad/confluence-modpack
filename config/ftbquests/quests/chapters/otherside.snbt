@@ -1,0 +1,38 @@
+{
+	default_hide_dependency_lines: false
+	default_quest_shape: "rsquare"
+	filename: "otherside"
+	group: "0C0F1A0000000002"
+	icon: { id: "deeperdarker:resonarium" }
+	id: "7069DC09548AF329"
+	images: [ ]
+	order_index: 12
+	progression_mode: "flexible"
+	quest_links: [ ]
+	quests: [
+		{
+			dependencies: ["0F93A60BDE37286C"]
+			id: "623AA49C6273667B"
+			rewards: [{ id: "30EE69EA3AAC5D77" item: { count: 15, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ dimension: "deeperdarker:otherside" id: "2F3C5A14F6ADEA67" type: "dimension" }]
+			x: 0.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["623AA49C6273667B"]
+			id: "3C71B7C91C4975BE"
+			rewards: [{ id: "03C4837E76748237" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "3BC6CC295FBB1B90" item: { count: 1, id: "deeperdarker:resonarium" } type: "item" }]
+			x: 2.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["623AA49C6273667B"]
+			id: "34E69FBC45B51CB9"
+			rewards: [{ id: "7F014731C3764758" item: { count: 5, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "3EF7A2B34E2ED86E" item: { count: 1, id: "deeperdarker:soul_crystal" } type: "item" }]
+			x: 2.0d
+			y: 2.0d
+		}
+	]
+}

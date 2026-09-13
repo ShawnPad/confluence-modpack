@@ -27,5 +27,14 @@
 			x: 0.0d
 			y: 2.0d
 		}
+		{
+			can_repeat: true
+			dependencies: ["1FEF5F2F48909FF0"]
+			id: "12731FAC49EF492E"
+			rewards: [{ id: "73DF0B0DA511B20A" table_id: 868942939919745027L type: "loot" }]
+			tasks: [{ consume_items: true count: 96L id: "18B2F9A2E5785BA7" item: { count: 1, id: "kubejs:coin" } type: "item" }]
+			x: 0.0d
+			y: 4.0d
+		}
 	]
 }

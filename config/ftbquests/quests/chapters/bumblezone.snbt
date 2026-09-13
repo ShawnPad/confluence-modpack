@@ -1,0 +1,37 @@
+{
+	default_hide_dependency_lines: false
+	default_quest_shape: "rsquare"
+	filename: "bumblezone"
+	group: "0C0F1A0000000002"
+	icon: { id: "the_bumblezone:essence_of_the_bees" }
+	id: "1353776F7E6B94A5"
+	images: [ ]
+	order_index: 13
+	progression_mode: "flexible"
+	quest_links: [ ]
+	quests: [
+		{
+			id: "048CE4CA6B1BD4EA"
+			rewards: [{ id: "29DDCE0E40594AEC" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ dimension: "the_bumblezone:the_bumblezone" id: "6A606FB02DF9952D" type: "dimension" }]
+			x: 0.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["048CE4CA6B1BD4EA"]
+			id: "73EC632E6035ECB8"
+			rewards: [{ id: "5B58BE7E4789871D" item: { count: 5, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ advancement: "the_bumblezone:structures/enter_throne_pillar" id: "73E5796E5B3C660D" type: "advancement" }]
+			x: 2.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["73EC632E6035ECB8"]
+			id: "22B9F8EF1313BE6C"
+			rewards: [{ id: "0CF012E334373446" item: { count: 15, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "62C950825658CDFE" item: { count: 1, id: "the_bumblezone:essence_of_the_bees" } type: "item" }]
+			x: 4.0d
+			y: 0.0d
+		}
+	]
+}

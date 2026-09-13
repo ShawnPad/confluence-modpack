@@ -9,8 +9,16 @@ file = "config/ftbquests/quests/chapters/aether.snbt"
 hash = "acb6709f530f26c40c183e1ee0ef0d57211bab1d3a826af6d516bbebac445e18"
 
 [[files]]
+file = "config/ftbquests/quests/chapters/bumblezone.snbt"
+hash = "dfe41010eefc5c50c06477f042120b282821545881c00ddb287d19f98bdc0a80"
+
+[[files]]
 file = "config/ftbquests/quests/chapters/cataclysm.snbt"
 hash = "56e24cca2c89792c446dc41bc805844e5eb9a7fab6f97709e2ef93d59b124cff"
+
+[[files]]
+file = "config/ftbquests/quests/chapters/end.snbt"
+hash = "bbc5b21cfe7e6df4775b55a19c783d4bb90c25314bf4920f9e9b83a70836dc62"
 
 [[files]]
 file = "config/ftbquests/quests/chapters/intro.snbt"
@@ -21,16 +29,24 @@ file = "config/ftbquests/quests/chapters/nether.snbt"
 hash = "231b732aae25b86cd7d842cc8d968867c599489cc706c145286588d39ab4050d"
 
 [[files]]
+file = "config/ftbquests/quests/chapters/otherside.snbt"
+hash = "3489472554861edb7c0d954e2a701d57208f6f078afe74492f6416d6200984c1"
+
+[[files]]
 file = "config/ftbquests/quests/chapters/overworld.snbt"
 hash = "3b0237ca880f14e9d432f808da58fe17546e1c084a557b614579df6f8c218c7e"
 
 [[files]]
 file = "config/ftbquests/quests/chapters/shop.snbt"
-hash = "610ff74cdb602f40c59a0a32199b1fd3382ee98dc85fb05bf2d9a6924925f2cb"
+hash = "c118ac20c426e92aab274178bbe9ba0981bf80e62a4d519e7c7143b5867714d1"
 
 [[files]]
 file = "config/ftbquests/quests/chapters/twilight.snbt"
-hash = "4594b27c1847d35ae1afcd5d5bfcf79283dcea8a3e33bf2401dd85698f13339c"
+hash = "ba23f8f40e834437de1ff9412c4d14b019f1727e20c5a2cd5b6515d4ab970614"
+
+[[files]]
+file = "config/ftbquests/quests/chapters/undergarden.snbt"
+hash = "c7074535f85e919ee3c3694294055c93dceeb93fadcc8c013ff95e126aa03003"
 
 [[files]]
 file = "config/ftbquests/quests/data.snbt"
@@ -38,11 +54,15 @@ hash = "daed85b108619d4dd9044df7c0e38984dd6aa44b53e776cb493f453399776b3f"
 
 [[files]]
 file = "config/ftbquests/quests/lang/en_us.snbt"
-hash = "6999aec6cb9252e69bff4fa31d98e0481542cb2723cd7f58c9d1b3d78fc6fd6a"
+hash = "0faac2a08bc50472a29b3c44eaa01a4d126360f6ee76a69c67728e4e0e86831d"
 
 [[files]]
 file = "config/ftbquests/quests/reward_tables/common_bag.snbt"
 hash = "b6e34fe221dacf1cc5c38711976e7e1a00288a87a55e9cc47e2af5addf59ed0e"
+
+[[files]]
+file = "config/ftbquests/quests/reward_tables/rare_bag.snbt"
+hash = "861cb93a702fa790a008dba78bb0b1689a8045c5b90f30078a229647bfade1d5"
 
 [[files]]
 file = "config/ftbquests/quests/reward_tables/uncommon_bag.snbt"
