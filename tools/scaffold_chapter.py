@@ -126,6 +126,9 @@ def validate_chapter(ch: dict, tables: dict[str, int] | None = None) -> list[str
         if q["bag"] and q["bag"] not in tables:
             # An unknown table_id resolves to null in RandomReward.readData and the reward silently pays nothing.
             problems.append(f'{q["node"]}: no reward table named "{q["bag"]}" in config/ftbquests/quests/reward_tables/')
+        if q["repeat"] and q["task"].split(":", 1)[0] in ("dimension", "kill", "advancement"):
+            # These tasks auto-submit on a player tick (task-shapes §1-§3); a repeatable one re-completes every few seconds.
+            problems.append(f'{q["node"]}: repeat on a {q["task"].split(":", 1)[0]} task would re-complete itself')
     return problems
 
 
@@ -150,6 +153,16 @@ def _task(q: dict, tid: str) -> str:
     if kind == "kill":
         ent, n = rest.rsplit(":", 1)
         return f'{{ entity: "{ent}" id: "{tid}" type: "kill" value: {n}L }}'
+    if kind == "advancement":
+        # AdvancementTask (FTB Quests 2101.1.35): keys `advancement` and `criterion`; readData defaults criterion to "" when absent
+        # (research/phase7-ftbquests-task-shapes.md §3, §9). rest = "<namespace>:<path>[:<criterion>]" -- the id itself holds one ':'.
+        ns, _, tail = rest.partition(":")
+        path, _, crit = tail.partition(":")
+        keys = [f'advancement: "{ns}:{path}"']
+        if crit:
+            keys.append(f'criterion: "{crit}"')
+        keys += [f'id: "{tid}"', 'type: "advancement"']
+        return "{ " + " ".join(keys) + " }"
     return f'{{ id: "{tid}" type: "checkmark" }}'
 
 

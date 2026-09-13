@@ -2,7 +2,7 @@ from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from scaffold_chapter import (parse_chapter, quest_id, parseable_id, render_snbt, render_lang, validate_chapter, build_lang, GROUPS,
-                              load_reward_tables, MAX_ID)
+                              load_reward_tables, MAX_ID, _task)
 
 YAML = """
 chapter: nether
@@ -207,3 +207,22 @@ def test_validate_rejects_an_unknown_bag():
     ch["quests"][0]["bag"] = "epic_bag"
     problems = validate_chapter(ch, TABLES)
     assert len(problems) == 1 and "SHOP.1" in problems[0] and "epic_bag" in problems[0]
+
+
+# AdvancementTask (research/phase7-ftbquests-task-shapes.md §3, §9): `advancement` is the id string, `criterion`
+# is optional (readData defaults an absent key to "" -- same "omit when default" convention as item's `count`).
+# The advancement id itself is "<namespace>:<path>", so rest = "<namespace>:<path>[:<criterion>]" holds one ':'
+# before any optional criterion separator.
+def test_advancement_task_renders_advancement_and_optional_criterion():
+    q = {"task": "advancement:the_bumblezone:structures/enter_throne_pillar", "consume": False}
+    assert _task(q, "0000000000000002") == '{ advancement: "the_bumblezone:structures/enter_throne_pillar" id: "0000000000000002" type: "advancement" }'
+    q2 = {"task": "advancement:minecraft:nether/root:entered_nether", "consume": False}
+    assert 'criterion: "entered_nether"' in _task(q2, "0000000000000002")
+
+
+# dimension/kill/advancement tasks auto-submit on a player tick (task-shapes §1-§3, §9); `repeat: true` on one
+# would re-complete itself every few seconds once its deps are met, so validate_chapter flags it.
+def test_validate_flags_repeat_on_an_auto_completing_task():
+    ch = parse_chapter(YAML.replace("task: item:minecraft:netherite_ingot", "task: dimension:minecraft:the_end\n    repeat: true"))
+    problems = validate_chapter(ch, tables={})
+    assert any("X1.1" in p and "repeat" in p for p in problems)
