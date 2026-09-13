@@ -170,7 +170,7 @@ hash = "9c35d42ba3cad1b0d47dcbbc8edb9f9902c633c758dbcbad9c11a79b375dc983"
 
 [[files]]
 file = "kubejs/server_scripts/lib/ids.js"
-hash = "c1ae647e032d443cea7d7f1600ff98e725658d8cbe2094f33b802f6fec3d97e4"
+hash = "0be2c53d4f8cf69824c7b71f126b877ba56bbacccb5df434cdf574a12447952c"
 
 [[files]]
 file = "kubejs/server_scripts/loot.js"
