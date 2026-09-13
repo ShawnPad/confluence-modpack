@@ -170,7 +170,7 @@ hash = "9c35d42ba3cad1b0d47dcbbc8edb9f9902c633c758dbcbad9c11a79b375dc983"
 
 [[files]]
 file = "kubejs/server_scripts/lib/ids.js"
-hash = "0be2c53d4f8cf69824c7b71f126b877ba56bbacccb5df434cdf574a12447952c"
+hash = "74cb34cb2ce81b71b6be8f6e10c8414f93207b63d4a915a2effcfea3fbe2cc91"
 
 [[files]]
 file = "kubejs/server_scripts/loot.js"
@@ -193,8 +193,12 @@ file = "kubejs/server_scripts/tiers/tier2.js"
 hash = "d75c37df6f3a34c84b37d28141165584f3236083c9eb2b7ded107d26b7c3a8e5"
 
 [[files]]
+file = "kubejs/server_scripts/tiers/tier3.js"
+hash = "c93ccf04c9cb300b324b078de82c3f6cf2e4ccd5b0076826ca7bfc0e98c29a50"
+
+[[files]]
 file = "kubejs/server_scripts/worldgen.js"
-hash = "b211322566be37ac919727949e73cda395e433de87d57e0c24db32601e5453fd"
+hash = "711fe5fbd52205ffe67a31dce54923c6f5abfb3a089f5dec0e768583ad76f413"
 
 [[files]]
 file = "kubejs/startup_scripts/items.js"

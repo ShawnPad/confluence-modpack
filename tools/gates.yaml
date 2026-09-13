@@ -10,6 +10,17 @@ gates:
   - confluence:bypass/allthemodium_crystal_from_ore
   - confluence:bypass/allthemodium_crystal_from_raw_ore
   - confluence:bypass/allthemodium_crystal_from_raw_block
+  # v0.2 tier 3
+  - confluence:tier3/undergarden_catalyst
+  - confluence:tier3/crystal_nitro
+  - confluence:tier3/elite_control_circuit
+  - confluence:tier3/refined_obsidian_ingot
+  - confluence:tier3/ritual_brazier
+  - confluence:tier3/lightning_upgrade_orb
+  - confluence:tier3/qio_dashboard
+  - confluence:tier3/qio_drive_array
+  - confluence:tier3/qio_importer
+  - confluence:tier3/qio_exporter
 removed:
   - minecraft:flint_and_steel
   - mekanism:metallurgic_infuser
@@ -25,3 +36,15 @@ removed:
   - allthemodium:processing/allthemodium/slurry/dirty/from_ore
   - allthemodium:processing/allthemodium/slurry/dirty/from_raw_ore
   - allthemodium:processing/allthemodium/slurry/dirty/from_raw_block
+  # v0.2 tier 3
+  - undergarden:catalyst
+  - powah:energizing/nitro_crystal
+  - mekanism:control_circuit/elite
+  - mekanism:control_circuit/infused_elite
+  - mekanism:processing/refined_obsidian/ingot/from_dust
+  - ars_nouveau:ritual_brazier
+  - irons_spellbooks:lightning_upgrade_orb
+  - mekanism:qio_dashboard
+  - mekanism:qio_drive_array
+  - mekanism:qio_importer
+  - mekanism:qio_exporter
