@@ -32,6 +32,10 @@ const IDS = {
 IDS.allthemodium.template = 'allthemodium:allthemodium_upgrade_smithing_template'
 // §A2: raw ore item (tag c:raw_materials/allthemodium).
 IDS.allthemodium.rawOre = 'allthemodium:raw_allthemodium'
+// The Twilight stronghold cache, the loot table loot.js adds the Allthemodium template to (D2.3):
+// twilightforest-1.21.1-4.8.3345-universal.jar!data/twilightforest/loot_table/stronghold_cache.json -- this version has
+// no `structures/` path segment, so the id is the bare twilightforest:stronghold_cache.
+IDS.twilight.strongholdCache = 'twilightforest:stronghold_cache'
 // Session 10 (issue #1 C10): Allthemodium's two template loot sources outside their tier dimensions, both read from
 // allthemodium-3.0.1_mc_1.21.1.jar: data/minecraft/worldgen/processor_list/ancient_city_generic_degradation.json turns
 // polished basalt (p 0.009) into allthemodium:suspicious_clay with append_loot `allthemodium:arch` (the Allthemodium

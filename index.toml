@@ -198,11 +198,15 @@ hash = "513125401cee98784accfb0f317786d06cc67c3c46c093dc24b1715413c1781e"
 
 [[files]]
 file = "kubejs/server_scripts/lib/ids.js"
-hash = "ee0ad41fc919c00bf964cfc361a00ee563e73a56be9b4434121b76f014414c08"
+hash = "8a5caa3f2ae39951f4d2ec16a777593fc9f1a8255433ebc214ab4315547433db"
+
+[[files]]
+file = "kubejs/server_scripts/lib/loot.js"
+hash = "62f43223a93e6e05d48bbdc2781244f1904066d280157617be310b48b3af2b4b"
 
 [[files]]
 file = "kubejs/server_scripts/loot.js"
-hash = "afd034393ba225e247aea25300839a090a0975bca72eeec8dd25b2ded20d6608"
+hash = "2de905a8fd27d109802dfb1b1feb8ce92d0407de78142855bfc25dd4c6224562"
 
 [[files]]
 file = "kubejs/server_scripts/tagcheck.js"
