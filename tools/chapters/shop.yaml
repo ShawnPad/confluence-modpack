@@ -21,3 +21,12 @@ quests:
     coins: 0
     bag: uncommon_bag
     desc: "Hand in 48 coins for an Uncommon bag. It opens once you hold the Nether key, and like the Common bag it can be traded again and again."
+  - node: SHOP.3
+    title: Rare Bag
+    task: item:kubejs:coin:96
+    deps: [D3.1]
+    consume: true
+    repeat: true
+    coins: 0
+    bag: rare_bag
+    desc: "Hand in 96 coins for a Rare bag. It opens once you hold the Undergarden catalyst, and it can be traded again and again."

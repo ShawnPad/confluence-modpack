@@ -1,0 +1,61 @@
+chapter: end
+title: The End
+group: 0C0F1A0000000001
+order: 5
+icon: minecraft:ender_eye
+quests:
+  - node: D4.1
+    title: Eye of Ender
+    task: item:minecraft:ender_eye
+    deps: [D3.2, D3.4, D3.5, T3.1, M3.1]
+    coins: 20
+    bag: rare_bag
+    desc: "The Eye of Ender is rewritten: a Vibranium ingot, a forgotten ingot, Resonarium from the Otherside, a nitro crystal and a Ritual Brazier per eye. A stronghold's portal frame can want up to twelve, and every eye you throw to find it is one more - craft with room to spare."
+  - node: END.1
+    title: The End
+    task: dimension:minecraft:the_end
+    deps: [D4.1]
+    coins: 5
+    desc: "Find a stronghold, fill its portal frame with eyes of ender - twelve, less whatever the frame already holds - and drop in. The dragon, the Ruined Citadel and the End cities are all on the list."
+  - node: D4.2
+    title: The Dragon
+    task: kill:minecraft:ender_dragon:1
+    deps: [D4.1]
+    coins: 20
+    desc: "Slay the dragon. Bottle its breath for the End Focus and keep the egg: the key to The Other will want one, and Mystical Agradditions can grow more from dragon egg seeds."
+  - node: D4.4
+    title: Gauntlet of Guard
+    task: item:cataclysm:gauntlet_of_guard
+    deps: [D4.1]
+    coins: 15
+    desc: "Cataclysm's Ender Guardian waits in the Ruined Citadel on the End's outer islands and always drops the Gauntlet of Guard. The End Focus needs it."
+  - node: T4.1
+    title: Advanced Machine Frame
+    task: item:industrialforegoing:machine_frame_advanced
+    deps: [T2.1, T2.2, M3.2, D3.2]
+    coins: 15
+    desc: "In the Dissolution Chamber with pink slime: two plastic, a Simple frame, two Vibranium ingots, a Lightning Upgrade Orb, a diamond gear and a gold ingot - the netherite scrap and one of the two golds are out. The key to The Other and the Supreme frame build on it."
+  - node: T4.2
+    title: Stasis Chamber
+    task: item:industrialforegoing:stasis_chamber
+    deps: [T4.1, T2.1, X1.2]
+    coins: 10
+    desc: "Hold a Wither in a Stasis Chamber and aim a Fluid Laser Drill with a purple lens at it for Ether Gas; the Supreme frame drinks it later. Industrial Foregoing's own recipes, unchanged."
+  - node: M4.1
+    title: Planarium
+    task: item:ars_nouveau:planarium
+    deps: [T3.3, T3.2, M1.1]
+    coins: 10
+    desc: "At the Enchanting Apparatus the Planarium now also takes a Mekanism teleportation core and a refined obsidian ingot on the pedestals, next to the stable warp scroll, conjuration essence and diamond, with a mob jar as the reagent. It opens a pocket dimension - and the End Focus consumes one."
+  - node: M4.2
+    title: End Focus
+    task: item:kubejs:end_focus
+    deps: [M1.2, D4.2, D4.4, M3.1, M2.2, M4.1, M1.1]
+    coins: 20
+    desc: "At the Enchanting Apparatus: a Planarium as the reagent, and on the eight pedestals the four elemental essences, dragon's breath, the Gauntlet of Guard, a Ritual Brazier and a source gem block. It is the magic half of the key to The Other."
+  - node: X4.1
+    title: Elytra
+    task: item:minecraft:elytra
+    deps: [D4.1]
+    coins: 10
+    desc: "End cities hold the elytra, the only flight gate before space. The Soul Elytra flies as well, but it unlocks nothing. Keep this one: the space suit will need it."

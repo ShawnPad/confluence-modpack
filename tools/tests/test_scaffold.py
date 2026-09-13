@@ -2,7 +2,7 @@ from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from scaffold_chapter import (parse_chapter, quest_id, parseable_id, render_snbt, render_lang, validate_chapter, build_lang, GROUPS,
-                              load_reward_tables, MAX_ID)
+                              load_reward_tables, MAX_ID, _task)
 
 YAML = """
 chapter: nether
@@ -207,3 +207,82 @@ def test_validate_rejects_an_unknown_bag():
     ch["quests"][0]["bag"] = "epic_bag"
     problems = validate_chapter(ch, TABLES)
     assert len(problems) == 1 and "SHOP.1" in problems[0] and "epic_bag" in problems[0]
+
+
+# AdvancementTask (research/phase7-ftbquests-task-shapes.md §3, §9): `advancement` is the id string, `criterion`
+# is optional (readData defaults an absent key to "" -- same "omit when default" convention as item's `count`).
+# The advancement id itself is "<namespace>:<path>", so rest = "<namespace>:<path>[:<criterion>]" holds one ':'
+# before any optional criterion separator.
+def test_advancement_task_renders_advancement_and_optional_criterion():
+    q = {"task": "advancement:the_bumblezone:structures/enter_throne_pillar", "consume": False}
+    assert _task(q, "0000000000000002") == '{ advancement: "the_bumblezone:structures/enter_throne_pillar" id: "0000000000000002" type: "advancement" }'
+    q2 = {"task": "advancement:minecraft:nether/root:entered_nether", "consume": False}
+    assert _task(q2, "0000000000000002") == '{ advancement: "minecraft:nether/root" criterion: "entered_nether" id: "0000000000000002" type: "advancement" }'
+
+
+# The same advancement task through the whole pipeline (the shape bumblezone.yaml BZ.1 ships).
+ADVANCEMENT_YAML = """
+chapter: bumblezone
+title: The Bumblezone
+group: 0C0F1A0000000002
+order: 13
+icon: the_bumblezone:essence_of_the_bees
+quests:
+  - node: BZ.1
+    title: Throne Pillar
+    task: advancement:the_bumblezone:structures/enter_throne_pillar
+    coins: 5
+"""
+
+
+def test_advancement_task_renders_end_to_end():
+    ch = parse_chapter(ADVANCEMENT_YAML)
+    assert validate_chapter(ch, tables={}) == []
+    s = render_snbt(ch, TABLES)
+    assert 'type: "advancement"' in s
+    assert f'tasks: [{{ advancement: "the_bumblezone:structures/enter_throne_pillar" id: "{quest_id("BZ.1:task")}" type: "advancement" }}]' in s
+
+
+# `dimension` and `advancement` auto-submit on a player tick (task-shapes §1: 100 ticks, §3: 5 ticks), so a repeatable
+# one re-completes itself as soon as its deps are met. `kill` is NOT one of them: KillTask has no
+# autoSubmitOnPlayerTick and accrues kills toward `value` (§2), so a repeatable kill bounty is legitimate.
+def _repeat_problems(task: str) -> list[str]:
+    ch = parse_chapter(YAML)
+    ch["group"] = quest_id("chapter:nether")   # a parseable group, so only the task lints can fire
+    ch["quests"][1]["task"] = task             # node X1.1
+    ch["quests"][1]["repeat"] = True
+    return validate_chapter(ch, tables={})
+
+
+def test_validate_flags_repeat_on_a_dimension_task():
+    problems = _repeat_problems("dimension:minecraft:the_end")
+    assert len(problems) == 1 and "X1.1" in problems[0] and "repeat" in problems[0]
+
+
+def test_validate_flags_repeat_on_an_advancement_task():
+    problems = _repeat_problems("advancement:minecraft:story/root")
+    assert len(problems) == 1 and "X1.1" in problems[0] and "repeat" in problems[0]
+
+
+def test_validate_allows_repeat_on_a_kill_task():
+    assert _repeat_problems("kill:minecraft:blaze:10") == []
+
+
+# An unnamespaced advancement id is a silent never-completes: AdvancementTask.canSubmit looks the id up on the
+# server and returns false forever when it misses (§3).
+def _advancement_problems(task):
+    ch = parse_chapter(YAML)
+    ch["group"] = quest_id("chapter:nether")
+    ch["quests"][1]["task"] = task
+    return validate_chapter(ch, tables={})
+
+
+def test_validate_flags_an_advancement_task_without_a_namespace():
+    for task in ("advancement:story/root", "advancement::path", "advancement:ns:", "advancement:story/root:killed_frost"):
+        problems = _advancement_problems(task)
+        assert len(problems) == 1 and "X1.1" in problems[0] and "namespace" in problems[0], task
+
+
+def test_validate_accepts_a_namespaced_advancement_with_or_without_criterion():
+    assert _advancement_problems("advancement:minecraft:nether/root") == []
+    assert _advancement_problems("advancement:minecraft:nether/root:entered_nether") == []

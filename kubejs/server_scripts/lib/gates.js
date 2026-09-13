@@ -1,13 +1,18 @@
-// Remove-and-re-add helpers (spec §2.1). Every id is confluence:<tier>/<name>.
+// Recipe helpers (spec §2.1), in three shapes: add-only (shaped, shapeless, and custom with no `output`),
+// remove-only (remove, by id string or regex, for the bypass closures), and remove-and-re-add (replaceShaped,
+// replaceShapeless, and custom with an `output`). Every id we add is confluence:<tier>/<name> or confluence:bypass/<name>.
 const gate = {
+  // Add a crafting-grid recipe with an explicit id, no removal.
+  shaped(event, id, output, pattern, keys) { event.shaped(Item.of(output), pattern, keys).id(id) },
+  shapeless(event, id, output, inputs) { event.shapeless(Item.of(output), inputs).id(id) },
   // Replace a crafting-grid recipe: remove every recipe producing `output`, add ours.
   replaceShaped(event, id, output, pattern, keys) {
     event.remove({ output: output })
-    event.shaped(Item.of(output), pattern, keys).id(id)
+    gate.shaped(event, id, output, pattern, keys)
   },
   replaceShapeless(event, id, output, inputs) {
     event.remove({ output: output })
-    event.shapeless(Item.of(output), inputs).id(id)
+    gate.shapeless(event, id, output, inputs)
   },
   // Remove by id (string or regex) without adding anything (bypass closures).
   remove(event, filter) { event.remove(filter) },

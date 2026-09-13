@@ -1,0 +1,78 @@
+chapter: undergarden
+title: The Undergarden
+group: 0C0F1A0000000001
+order: 4
+icon: undergarden:catalyst
+quests:
+  - node: D3.1
+    title: Undergarden Catalyst
+    task: item:undergarden:catalyst
+    deps: [D2.4, D2.2, T2.1, M2.1]
+    coins: 15
+    bag: rare_bag
+    desc: "Craft the catalyst from a knightmetal ingot, an Allthemodium ingot, an Industrial Foregoing Simple Machine Frame and an Iron's Spells Upgrade Orb. The next quest shows the frame. Vibranium and the forgotten metal wait below - and the Rare bag opens in the Coin Shop."
+  - node: UG.1
+    title: Into the Undergarden
+    task: dimension:undergarden:undergarden
+    deps: [D3.1]
+    coins: 5
+    desc: "Build the frame in the Nether-portal shape from stone bricks or deepslate bricks, then right-click a bottom inner block with the catalyst. The Undergarden has no sky: bring light, food and an Allthemodium pickaxe."
+  - node: D3.2
+    title: Vibranium Ore
+    task: item:allthemodium:raw_vibranium
+    deps: [D3.1, D2.3]
+    coins: 10
+    desc: "Vibranium spawns only in the Undergarden here, in the floors of caves deep down (below y -16), and needs an Allthemodium-tier pickaxe. Its ingots go into the Eye of Ender, the QIO storage line and the Advanced Machine Frame - and Mekanism's 5x chain for Allthemodium runs on them."
+  - node: D3.3
+    title: Vibranium Template
+    task: item:allthemodium:vibranium_upgrade_smithing_template
+    deps: [D3.2, D2.3]
+    coins: 10
+    desc: "Catacombs chests hold the Vibranium upgrade template, about one chest in seven. Smithing table, Allthemodium gear, a Vibranium ingot: Vibranium gear. The Vibranium pickaxe is what Unobtainium will need later."
+  - node: D3.4
+    title: Forgotten Ingot
+    task: item:undergarden:forgotten_ingot
+    deps: [D3.1]
+    coins: 10
+    desc: "The Forgotten Guardian stalks the catacombs' tunnels and drops forgotten nuggets when a player kills it; nine make an ingot. Every Eye of Ender takes one, and the ME Controller will want two much later."
+  - node: T3.1
+    title: Nitro Crystal
+    task: item:powah:crystal_nitro
+    deps: [X2.1, M0.2]
+    coins: 10
+    desc: "Powah's nitro crystal is energized from a nether star, a redstone block, a blazing crystal block, a spirited crystal, an Iron's arcane essence and uraninite - six items, sixteen crystals. One goes into each Eye of Ender."
+  - node: T3.2
+    title: Elite Control Circuit
+    task: item:mekanism:elite_control_circuit
+    deps: [T1.2, T1.1, D2.2]
+    coins: 10
+    desc: "Elite circuits and refined obsidian both cost Allthemodium now: the circuit takes an ingot above the usual reinforced alloys and advanced circuit, and refined obsidian dust becomes ingots in the Combiner with an Allthemodium nugget instead of in the Osmium Compressor. The obsidian feeds the QIO dashboard and the Planarium; the circuit becomes the ultimate control circuit the drive array, importer and exporter each want."
+  - node: T3.3
+    title: Teleportation Core
+    task: item:mekanism:teleportation_core
+    deps: [T3.2]
+    coins: 5
+    desc: "Mekanism's own recipe, untouched: atomic alloys, ender pearls, gold and a diamond. The QIO dashboard and the Planarium each take one; the Quantum Entangloporter is yours too."
+  - node: M3.1
+    title: Ritual Brazier
+    task: item:ars_nouveau:ritual_brazier
+    deps: [X2.1, M2.2, M1.1]
+    coins: 10
+    desc: "Ars' shapeless recipe grows: an arcane pedestal, two source gem blocks and three gold ingots, plus a Powah spirited crystal. The second source gem block is ours. It runs every Ars ritual - and every Eye of Ender and the End Focus consume one, so build several."
+  - node: M3.2
+    title: Lightning Upgrade Orb
+    task: item:irons_spellbooks:lightning_upgrade_orb
+    deps: [D2.2]
+    coins: 10
+    desc: "Seven lightning runes, an upgrade orb and an Allthemodium ingot. The Advanced Machine Frame eats one."
+  - node: S3.1
+    title: QIO Dashboard
+    task: item:mekanism:qio_dashboard
+    deps: [S2.1, T3.3, T3.2, D3.2]
+    coins: 15
+    desc: "The dashboard is built from Tom's crafting terminal, a teleportation core, three refined obsidian ingots and a Vibranium ingot; the drive array swaps its bottom ender pearl for Vibranium, and the importer and exporter each swap one of their two lead ingots. This is the top of the storage line before Applied Energistics."
+  - node: X3.4
+    title: No Henge Boss Loot
+    task: checkmark
+    deps: [M3.1]
+    desc: "Good to know: a bound Drygmy still farms drops from ordinary mobs, but the Forgotten Guardian, the Otherside's Sludges and Stalker, Cataclysm's Ender Guardian and Netherite Monstrosity, the Bee Queen, the dragon, the Wither and the Warden are all blacklisted from it. The mobs this tree asks you to fight stay fights."

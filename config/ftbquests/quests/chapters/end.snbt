@@ -1,0 +1,86 @@
+{
+	default_hide_dependency_lines: false
+	default_quest_shape: "rsquare"
+	filename: "end"
+	group: "0C0F1A0000000001"
+	icon: { id: "minecraft:ender_eye" }
+	id: "52076F43C15C139A"
+	images: [ ]
+	order_index: 5
+	progression_mode: "flexible"
+	quest_links: [ ]
+	quests: [
+		{
+			dependencies: ["4D7ABB8D3D3668EF", "212C206BB74F7374", "623AA49C6273667B", "30182D96B88BDA83", "2E9D5FE7F6CF191E"]
+			id: "4AD9375F10947DD4"
+			rewards: [{ id: "76A4B313FF03F216" item: { count: 20, id: "kubejs:coin" } type: "item" }, { id: "07C45827A97B6D9A" table_id: 868942939919745027L type: "loot" }]
+			tasks: [{ id: "3E65FE38D3B9BC65" item: { count: 1, id: "minecraft:ender_eye" } type: "item" }]
+			x: 0.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["4AD9375F10947DD4"]
+			id: "755B270CA570D518"
+			rewards: [{ id: "310656C98B25B313" item: { count: 5, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ dimension: "minecraft:the_end" id: "7A66364BCBB30A43" type: "dimension" }]
+			x: 2.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["4AD9375F10947DD4"]
+			id: "1D427134CD615C79"
+			rewards: [{ id: "671D8A4ECCA31E66" item: { count: 20, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ entity: "minecraft:ender_dragon" id: "2562698F9C231227" type: "kill" value: 1L }]
+			x: 2.0d
+			y: 2.0d
+		}
+		{
+			dependencies: ["4AD9375F10947DD4"]
+			id: "09B4A5432B8ED352"
+			rewards: [{ id: "262A74C6ABF34410" item: { count: 15, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "6907E083877B3D17" item: { count: 1, id: "cataclysm:gauntlet_of_guard" } type: "item" }]
+			x: 2.0d
+			y: 4.0d
+		}
+		{
+			dependencies: ["14BD76FC2D6209A3", "315020D6830FCDD8", "4FD848E606994BB4", "4D7ABB8D3D3668EF"]
+			id: "1D0BCB2E7D3ED925"
+			rewards: [{ id: "2AFB5312F05EE48B" item: { count: 15, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "6D04D6FC65414657" item: { count: 1, id: "industrialforegoing:machine_frame_advanced" } type: "item" }]
+			x: 0.0d
+			y: 2.0d
+		}
+		{
+			dependencies: ["1D0BCB2E7D3ED925", "14BD76FC2D6209A3", "7E28C2FF2CEBAE0A"]
+			id: "37C946B9E11F98EC"
+			rewards: [{ id: "6706DF612DC2AC58" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "1930C253792C6D16" item: { count: 1, id: "industrialforegoing:stasis_chamber" } type: "item" }]
+			x: 2.0d
+			y: 6.0d
+		}
+		{
+			dependencies: ["00A9750D11C08601", "4B96AE2352774081", "532F495217179193"]
+			id: "0DF30F0ECB7A53B9"
+			rewards: [{ id: "58538BEC385BE6D4" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "558C2EE52E96BC90" item: { count: 1, id: "ars_nouveau:planarium" } type: "item" }]
+			x: 0.0d
+			y: 4.0d
+		}
+		{
+			dependencies: ["72EBE60DB9DAB561", "1D427134CD615C79", "09B4A5432B8ED352", "2E9D5FE7F6CF191E", "12BBBE8926B9593C", "0DF30F0ECB7A53B9", "532F495217179193"]
+			id: "6885D6C2C3465F52"
+			rewards: [{ id: "42C78FBFAB426885" item: { count: 20, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "4C4376CCA5B858E3" item: { count: 1, id: "kubejs:end_focus" } type: "item" }]
+			x: 4.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["4AD9375F10947DD4"]
+			id: "36A61935093AC8EB"
+			rewards: [{ id: "4B4FDEA4457563D9" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "5DFB77C47632BE2D" item: { count: 1, id: "minecraft:elytra" } type: "item" }]
+			x: 2.0d
+			y: 8.0d
+		}
+	]
+}

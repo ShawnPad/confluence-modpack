@@ -16,6 +16,24 @@ const PLACEMENTS = [
   { path: 'uraninite_dense_mining', feature: 'confluence:uraninite_dense_mining', biomes: 'allthemodium:mining',
     size: 8, count: 4, exposed: false, min: { absolute: 65 }, max: { absolute: 250 },
     stone: 'powah:uraninite_ore_dense', deepslate: 'powah:deepslate_uraninite_ore_dense' },
+  // Vibranium: Undergarden only (D3.2), cave floors like the Allthemodium row (D77). Undergarden's stones are in no vanilla
+  // *_ore_replaceables tag (every installed jar checked, phase7-undergarden-worldgen-loot.md — "ug" below — §2), so this
+  // row names the mod's own tags. The y −55..−16 band is dreadrock end to end: The_Undergarden-1.21.1-0.9.6.jar!data/
+  // undergarden/worldgen/noise_settings/undergarden.json surface_rule entry [14] is a dimension-wide vertical_gradient
+  // depthrock → dreadrock below y = 0 (measured 67,636 dreadrock / 0 shiverstone / 0 depthrock in 16 chunks,
+  // research/phase7-v0.2-test-log.md §1). So allthemodium:vibranium_ore is the pack's one Vibranium block on every
+  // target (D90); the depthrock and shiverstone targets are insurance if the band ever moves, and ATM's own two
+  // Vibranium placements are disabled (ug §5). Band (D86): above the carver's lava floor at y ≤ −59 (ug §1), inside
+  // froststeel's range (ug §6). size from the Twilight row; count 3, not 12, because Undergarden's carver leaves ~4× the
+  // cave-floor area — count 12 measured 4.46 ore/chunk, count 3 averages 1.19 over five fresh 256-chunk squares, near
+  // the Twilight row's 1.11 (D77). Runs logged in research/phase7-v0.2-test-log.md §1.
+  { path: 'vibranium_undergarden', feature: 'confluence:vibranium_undergarden', biomes: IDS.undergarden.biomes,
+    size: 4, count: 3, exposed: true, min: { absolute: -55 }, max: { absolute: -16 },
+    targets: [
+      { tag: IDS.undergarden.depthrockReplaceables, block: IDS.allthemodium.vibraniumOre },
+      { tag: IDS.undergarden.shiverstoneReplaceables, block: IDS.allthemodium.vibraniumOre },
+      { tag: IDS.undergarden.dreadrockReplaceables, block: IDS.allthemodium.vibraniumOre },
+    ] },
 ]
 
 ServerEvents.generateData('after_mods', pack => {
@@ -24,10 +42,12 @@ ServerEvents.generateData('after_mods', pack => {
       type: 'minecraft:ore',
       config: {
         size: p.size, discard_chance_on_air_exposure: 0.0,
-        targets: [
-          { target: { predicate_type: 'minecraft:tag_match', tag: 'minecraft:stone_ore_replaceables' }, state: { Name: p.stone } },
-          { target: { predicate_type: 'minecraft:tag_match', tag: 'minecraft:deepslate_ore_replaceables' }, state: { Name: p.deepslate } },
-        ],
+        // A row may name its own stone tags (Undergarden, D86); otherwise the vanilla stone/deepslate pair. Tags keep the
+        // leading '#' (lib/ids.js convention) so tools/check_tags.py sees them; tagId() strips it for the raw JSON.
+        targets: (p.targets || [
+          { tag: '#minecraft:stone_ore_replaceables', block: p.stone },
+          { tag: '#minecraft:deepslate_ore_replaceables', block: p.deepslate },
+        ]).map(t => ({ target: { predicate_type: 'minecraft:tag_match', tag: tagId(t.tag) }, state: { Name: t.block } })),
       },
     })
     const placement = [

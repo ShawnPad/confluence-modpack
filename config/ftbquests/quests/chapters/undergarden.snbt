@@ -1,0 +1,110 @@
+{
+	default_hide_dependency_lines: false
+	default_quest_shape: "rsquare"
+	filename: "undergarden"
+	group: "0C0F1A0000000001"
+	icon: { id: "undergarden:catalyst" }
+	id: "2C3B87E1FC607085"
+	images: [ ]
+	order_index: 4
+	progression_mode: "flexible"
+	quest_links: [ ]
+	quests: [
+		{
+			dependencies: ["41A5B57830B98089", "34C4DC4DF5B82831", "14BD76FC2D6209A3", "2C69CB63F838AE13"]
+			id: "1FEF5F2F48909FF0"
+			rewards: [{ id: "43E122499FD52A30" item: { count: 15, id: "kubejs:coin" } type: "item" }, { id: "1C37DD947BEC2C38" table_id: 868942939919745027L type: "loot" }]
+			tasks: [{ id: "73307F1EE13FB1BA" item: { count: 1, id: "undergarden:catalyst" } type: "item" }]
+			x: 0.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["1FEF5F2F48909FF0"]
+			id: "07B54E9C005C5E21"
+			rewards: [{ id: "191F6D6F965AC67E" item: { count: 5, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ dimension: "undergarden:undergarden" id: "2E1A0C359C975D99" type: "dimension" }]
+			x: 2.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["1FEF5F2F48909FF0", "102CA469468F8E1A"]
+			id: "4D7ABB8D3D3668EF"
+			rewards: [{ id: "36D5F5E93EB27B6D" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "379D21DC6D9C6C74" item: { count: 1, id: "allthemodium:raw_vibranium" } type: "item" }]
+			x: 2.0d
+			y: 2.0d
+		}
+		{
+			dependencies: ["4D7ABB8D3D3668EF", "102CA469468F8E1A"]
+			id: "5C7B38CC9B640C57"
+			rewards: [{ id: "72D7A76FDA2D66E7" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "3048CA5D2DD42CA0" item: { count: 1, id: "allthemodium:vibranium_upgrade_smithing_template" } type: "item" }]
+			x: 4.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["1FEF5F2F48909FF0"]
+			id: "212C206BB74F7374"
+			rewards: [{ id: "4004053426D94937" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "1A12489360958830" item: { count: 1, id: "undergarden:forgotten_ingot" } type: "item" }]
+			x: 2.0d
+			y: 4.0d
+		}
+		{
+			dependencies: ["3C76069F96AE065B", "2053A3F99454EF66"]
+			id: "30182D96B88BDA83"
+			rewards: [{ id: "78AAD3B8A81DE467" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "0F86E14108436D7D" item: { count: 1, id: "powah:crystal_nitro" } type: "item" }]
+			x: 0.0d
+			y: 2.0d
+		}
+		{
+			dependencies: ["46F3EB94FA4C484A", "507D016CAAF0609B", "34C4DC4DF5B82831"]
+			id: "4B96AE2352774081"
+			rewards: [{ id: "299A3142E5CD95DA" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "0EE5F231B75B5498" item: { count: 1, id: "mekanism:elite_control_circuit" } type: "item" }]
+			x: 0.0d
+			y: 4.0d
+		}
+		{
+			dependencies: ["4B96AE2352774081"]
+			id: "00A9750D11C08601"
+			rewards: [{ id: "049F81773B556445" item: { count: 5, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "1F9CDE1E44E12686" item: { count: 1, id: "mekanism:teleportation_core" } type: "item" }]
+			x: 2.0d
+			y: 6.0d
+		}
+		{
+			dependencies: ["3C76069F96AE065B", "12BBBE8926B9593C", "532F495217179193"]
+			id: "2E9D5FE7F6CF191E"
+			rewards: [{ id: "46A0F41F0C455D3B" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "34498C139D43BE92" item: { count: 1, id: "ars_nouveau:ritual_brazier" } type: "item" }]
+			x: 0.0d
+			y: 6.0d
+		}
+		{
+			dependencies: ["34C4DC4DF5B82831"]
+			id: "4FD848E606994BB4"
+			rewards: [{ id: "512E8FBDA45C8001" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "35D582497AC3BAE0" item: { count: 1, id: "irons_spellbooks:lightning_upgrade_orb" } type: "item" }]
+			x: 0.0d
+			y: 8.0d
+		}
+		{
+			dependencies: ["03A64F0DB6424DEE", "00A9750D11C08601", "4B96AE2352774081", "4D7ABB8D3D3668EF"]
+			id: "2A9F87E95A613EC9"
+			rewards: [{ id: "4A9F5B5B13F6D86E" item: { count: 15, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "08E5C317911476A4" item: { count: 1, id: "mekanism:qio_dashboard" } type: "item" }]
+			x: 4.0d
+			y: 2.0d
+		}
+		{
+			dependencies: ["2E9D5FE7F6CF191E"]
+			id: "32436DD018617D3A"
+			rewards: [{ id: "44FEEE74C6042E95" item: { count: 3, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "0F4534291D24ED28" type: "checkmark" }]
+			x: 2.0d
+			y: 8.0d
+		}
+	]
+}

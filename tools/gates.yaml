@@ -1,4 +1,5 @@
 gates:
+  # v0.1 tiers 0–2
   - confluence:tier1/flint_and_steel
   - confluence:tier1/metallurgic_infuser
   - confluence:tier1/enchanting_apparatus
@@ -7,10 +8,33 @@ gates:
   - confluence:tier2/storage_terminal
   - confluence:tier2/inventory_connector
   - confluence:tier2/crystal_spirited
+  # v0.1 bypass
   - confluence:bypass/allthemodium_crystal_from_ore
   - confluence:bypass/allthemodium_crystal_from_raw_ore
   - confluence:bypass/allthemodium_crystal_from_raw_block
+  # v0.2 tier 3
+  - confluence:tier3/undergarden_catalyst
+  - confluence:tier3/crystal_nitro
+  - confluence:tier3/elite_control_circuit
+  - confluence:tier3/refined_obsidian_ingot
+  - confluence:tier3/ritual_brazier
+  - confluence:tier3/lightning_upgrade_orb
+  - confluence:tier3/qio_dashboard
+  - confluence:tier3/qio_drive_array
+  - confluence:tier3/qio_importer
+  - confluence:tier3/qio_exporter
+  # v0.2 tier 4
+  - confluence:tier4/ender_eye
+  - confluence:tier4/planarium
+  - confluence:tier4/end_focus
+  # in-place datapack override: the id is present with or without our file; inputs are checked in PLAYTEST H3
+  - industrialforegoing:dissolution_chamber/advanced_machine_frame
+  # v0.2 bypass
+  - confluence:bypass/vibranium_crystal_from_ore
+  - confluence:bypass/vibranium_crystal_from_raw_ore
+  - confluence:bypass/vibranium_crystal_from_raw_block
 removed:
+  # v0.1 tiers 0–2
   - minecraft:flint_and_steel
   - mekanism:metallurgic_infuser
   - ars_nouveau:enchanting_apparatus
@@ -22,6 +46,27 @@ removed:
   - powah:energizing/spirited_crystal
   - industrialforegoing:laser_drill_ore/ancient_debris
   - twilightforest:uncrafting_table
+  # v0.1 bypass
   - allthemodium:processing/allthemodium/slurry/dirty/from_ore
   - allthemodium:processing/allthemodium/slurry/dirty/from_raw_ore
   - allthemodium:processing/allthemodium/slurry/dirty/from_raw_block
+  # v0.2 tier 3
+  - undergarden:catalyst
+  - powah:energizing/nitro_crystal
+  - mekanism:control_circuit/elite
+  - mekanism:control_circuit/infused_elite
+  - mekanism:processing/refined_obsidian/ingot/from_dust
+  - ars_nouveau:ritual_brazier
+  - irons_spellbooks:lightning_upgrade_orb
+  - mekanism:qio_dashboard
+  - mekanism:qio_drive_array
+  - mekanism:qio_importer
+  - mekanism:qio_exporter
+  # v0.2 tier 4
+  - minecraft:ender_eye
+  - mysticalagriculture:essence/minecraft/ender_eye
+  - ars_nouveau:planarium
+  # v0.2 bypass
+  - allthemodium:processing/vibranium/slurry/dirty/from_ore
+  - allthemodium:processing/vibranium/slurry/dirty/from_raw_ore
+  - allthemodium:processing/vibranium/slurry/dirty/from_raw_block

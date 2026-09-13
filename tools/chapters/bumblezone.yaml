@@ -1,0 +1,23 @@
+chapter: bumblezone
+title: The Bumblezone
+group: 0C0F1A0000000002
+order: 13
+icon: the_bumblezone:essence_of_the_bees
+quests:
+  - node: D4.3
+    title: The Bumblezone
+    task: dimension:the_bumblezone:the_bumblezone
+    coins: 10
+    desc: "Push a beehive or bee nest with a piston, or throw an ender pearl at one, and you fall into the Bumblezone. No key here: the mod's own door stands."
+  - node: BZ.1
+    title: Throne Pillar
+    task: advancement:the_bumblezone:structures/enter_throne_pillar
+    deps: [D4.3]
+    coins: 5
+    desc: "Find the Throne Pillar and its Bee Queen - a honey compass locked onto the pillar points the way. Trade with her: she pays in treasures and, at the end of her line of requests, in Essence of the Bees."
+  - node: BZ.2
+    title: Essence of the Bees
+    task: item:the_bumblezone:essence_of_the_bees
+    deps: [BZ.1]
+    coins: 15
+    desc: "Eating it grants the bees' favour, but the key to The Other consumes one - and whether the Bee Queen gives out a second is unconfirmed. Build the key first; do not eat your first essence until it is done."

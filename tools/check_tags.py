@@ -33,6 +33,22 @@ ITEM_REGISTRY = "minecraft:item"
 NON_ITEM_TAGS = {
     # worldgen.js PLACEMENTS[0].biomes -> the `biomes` field of a neoforge:add_features biome modifier.
     "twilightforest:in_twilight_forest": "minecraft:worldgen/biome",
+    # ids.js IDS.undergarden.{depthrock,shiverstone,dreadrock}Replaceables: The_Undergarden-1.21.1-0.9.6.jar
+    # data/undergarden/tags/block/{depthrock,shiverstone,dreadrock}_ore_replaceables.json -- ore-gen replacement
+    # tags are block tags, not item tags (confirmed against the boot's .run/server/kubejs/exported/tags.json,
+    # where each is bound under minecraft:block with count 1, and absent from minecraft:item).
+    "undergarden:depthrock_ore_replaceables": "minecraft:block",
+    "undergarden:shiverstone_ore_replaceables": "minecraft:block",
+    "undergarden:dreadrock_ore_replaceables": "minecraft:block",
+    # ids.js IDS.undergarden.biomes: The_Undergarden-1.21.1-0.9.6.jar data/undergarden/tags/worldgen/biome/
+    # is_undergarden.json -- a biome tag (bound under minecraft:worldgen/biome with count 20 in the export).
+    "undergarden:is_undergarden": "minecraft:worldgen/biome",
+    # worldgen.js's default `targets` pair (the pair used by rows without their own `targets`, D86) -- vanilla's own
+    # ore-replacement tags, which are block tags: the boot's .run/server/kubejs/exported/tags.json binds
+    # minecraft:stone_ore_replaceables under minecraft:block with count 4 and
+    # minecraft:deepslate_ore_replaceables with count 2, and neither appears under minecraft:item.
+    "minecraft:stone_ore_replaceables": "minecraft:block",
+    "minecraft:deepslate_ore_replaceables": "minecraft:block",
 }
 
 # A tag literal: a quoted string whose first character is '#', followed by a well-formed resource location.

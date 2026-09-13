@@ -1,0 +1,24 @@
+chapter: otherside
+title: The Otherside
+group: 0C0F1A0000000002
+order: 12
+icon: deeperdarker:resonarium
+quests:
+  - node: D3.5
+    title: The Otherside
+    task: dimension:deeperdarker:otherside
+    deps: [D0.2]
+    coins: 15
+    desc: "The portal is the reinforced-deepslate frame already standing at the centre of every Ancient City; the block cannot be mined, crafted or replaced, so never break it. Clear its inside to bare air, hold exactly one Heart of the Deep (every Warden death drops one, and lighting eats the whole stack) and right-click a frame face from inside. Nothing happens on failure, so check for leftover blocks. The way back builds itself. Resonarium is here and nowhere else."
+  - node: OTHER.1
+    title: Resonarium
+    task: item:deeperdarker:resonarium
+    deps: [D3.5]
+    coins: 10
+    desc: "Only the smallest Sludges drop Resonarium, and they live in the Blooming Caverns biome. Each Eye of Ender takes one, so hunt the little ones."
+  - node: OTHER.2
+    title: Soul Crystal
+    task: item:deeperdarker:soul_crystal
+    deps: [D3.5]
+    coins: 5
+    desc: "The Stalker drops a Soul Crystal. With an elytra, four sculk bone and two soul dust it makes the Soul Elytra, which boosts without rockets. A prize, not a gate."

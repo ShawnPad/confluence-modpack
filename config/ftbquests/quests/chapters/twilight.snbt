@@ -99,7 +99,7 @@
 			y: 0.0d
 		}
 		{
-			dependencies: ["027FE16448966127"]
+			dependencies: ["027FE16448966127", "4D7ABB8D3D3668EF"]
 			id: "4CAFF05242DE1ACD"
 			rewards: [{ id: "1178CE84BE441DD2" item: { count: 3, id: "kubejs:coin" } type: "item" }]
 			tasks: [{ id: "69D3144EF74DBFEC" type: "checkmark" }]
