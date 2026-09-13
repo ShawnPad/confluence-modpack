@@ -1,6 +1,6 @@
-# Confluence v0.1 playtest
+# Confluence v0.2 playtest
 
-Tiers 0–2 are playable: Overworld → Nether → Twilight Forest. This page is the checklist; **report in [issue #1](https://github.com/ShawnPad/confluence-modpack/issues/1)** (one comment per session: probe id, PASS or FAIL, what you did, what happened, screenshots). Anything not listed here that feels wrong is worth reporting too.
+Tiers 0–4 are playable: Overworld → Nether → Twilight Forest → Undergarden → The End. **0.2.0 changes worldgen:** Undergarden chunks generated before 0.2.0 have no Vibranium; explore fresh chunks. This page is the checklist; **report in [issue #1](https://github.com/ShawnPad/confluence-modpack/issues/1)** (one comment per session: probe id, PASS or FAIL, what you did, what happened, screenshots). Anything not listed here that feels wrong is worth reporting too.
 
 ## Setup
 
@@ -58,13 +58,41 @@ Harmless and known: the log shows a couple of dozen "Couldn't load tag … missi
 | D3 | Twilight Forest caves, floors, y ≤ 10, freshly generated chunks. | Allthemodium ore present. |
 | D4 | Overworld deep dark, the Nether, the End. | No Allthemodium, Vibranium, Unobtainium or uraninite anywhere. |
 | D5 | `/give @s kubejs:mercury_ore` and `/give @s kubejs:glacio_ore`; place and break with a diamond-tier pickaxe. | Each drops its shard. |
+| D6 | `/execute in undergarden:undergarden run tp @s 0 -30 0`, dig around between y −55 and −16 in fresh chunks. | Vibranium ore in cave floors, about one per chunk; none above y −16 and none in any other dimension (Nether, The Other, End all clear). |
 
 ## E. Questbook and rewards (Creative)
 
 | # | Do | Expected |
 |---|---|---|
 | E1 | `/give @s ftbquests:lootcrate[ftbquests:loot_crate="common_bag"]`, then use it. | A crate that rolls three items. |
-| E2 | `/ftbquests reload` | No errors in chat or the log; the seven chapters are still there. |
+| E2 | `/ftbquests reload` | No errors in chat or the log; the eleven chapters are still there. |
+
+## G. Tier 3: the Undergarden
+
+| # | Kind | Do | Expected |
+|---|---|---|---|
+| G1 | Server | Look up the Undergarden Catalyst in JEI. | Knightmetal ingot, Allthemodium ingot, IF Simple Machine Frame, Iron's Upgrade Orb. Copper/stone/pearl recipe gone; the Crumbling Catalyst recipe still exists. |
+| G2 | Server | Light an Undergarden portal (stone-brick frame, catalyst on the bottom inner block) and go through. | You arrive; the questbook's "Into the Undergarden" completes by itself within a few seconds. |
+| G3 | Server | Undergarden caves below y −16, fresh chunks: look at floors with an Allthemodium pickaxe. | Vibranium ore in cave floors (about one per chunk); drops raw Vibranium. None above y −16, none in any other dimension. |
+| G4 | Server | Open catacombs chests. | The Vibranium upgrade template shows up about one chest in seven; the Forgotten template about one in five. |
+| G5 | Server | Powah Energizing Orb: nether star, redstone block, blazing crystal block, spirited crystal, arcane essence, uraninite. | 16 nitro crystals at 20,000,000 FE. The old four-item recipe does nothing. |
+| G6 | Server | JEI: elite control circuit, refined obsidian ingot. | Circuit needs an Allthemodium ingot; the infuser route is gone. Refined obsidian ingot is a Combiner recipe (dust + Allthemodium nugget); the Osmium Compressor route is gone. |
+| G7 | Server | JEI: Ritual Brazier, Lightning Upgrade Orb. | Brazier adds a spirited crystal and a second source gem block. Orb: 7 lightning runes + upgrade orb + Allthemodium ingot. |
+| G8 | Server | JEI: QIO Dashboard, Drive Array, Importer, Exporter. | Dashboard: Tom's crafting terminal + teleportation core + 3 refined obsidian + Vibranium. The other three each contain a Vibranium ingot; the Drive Array still crafts and places normally. |
+| G9 | Creative | Mekanism Combiner: Vibranium ore + Unobtainium ingot. Then look up Vibranium ore's uses. | 5 Vibranium crystals; the ore → dirty slurry route is gone. (Unobtainium is tier 5, so creative only.) |
+| G10 | Creative | Bind a Drygmy near a Forgotten Guardian, a Sludge, the Ender Guardian, a Wither, a Warden, the Bee Queen. | The Drygmy produces nothing from them (Ars' blacklist). Iron golems too, as in vanilla Ars. Other mobs work. |
+| G11 | Server | Coin Shop after the catalyst quest. | A Rare bag for 96 coins, repeatable; three items per bag. |
+
+## H. Tier 4: the End
+
+| # | Kind | Do | Expected |
+|---|---|---|---|
+| H1 | Server | Look up the Eye of Ender. | Vibranium ingot, forgotten ingot, Resonarium, nitro crystal, Ritual Brazier. No other eye recipe. |
+| H2 | Server | Otherside: find an Ancient City, check the centre frame's inside is air (dig out anything left), stand inside holding one Heart of the Deep and right-click a frame face; then kill the smallest Sludges in the Blooming Caverns. | Portal lights (the frame cannot be mined, so this is the only way in); a return portal is generated on the other side; small Sludges drop Resonarium (0–1 each). |
+| H3 | Server | JEI: IF Advanced Machine Frame. | Dissolution Chamber, 500 mB pink slime: plastic ×2, Simple frame, Vibranium ×2, Lightning Upgrade Orb, diamond gear, gold ingot. |
+| H4 | Server | JEI: Planarium, End Focus. | Planarium adds a teleportation core + refined obsidian on the pedestals. End Focus: Planarium reagent; essences ×4, dragon's breath, Gauntlet of Guard, Ritual Brazier, source gem block. |
+| H5 | Server | Kill the dragon; enter the Bumblezone via a piston on a beehive; find the Throne Pillar. | "The Dragon" quest completes on the kill; "The Bumblezone" on arrival; "Throne Pillar" when the advancement fires. |
+| H6 | Creative | `/ftbquests reload` | No errors; eleven chapters (Trunk: Start Here, Overworld, Nether, Twilight Forest, The Undergarden, The End; Spurs: The Aether, Cataclysm, The Otherside, The Bumblezone; Shop). |
 
 ## F. Opinions we want
 
@@ -74,3 +102,5 @@ Harmless and known: the log shows a couple of dozen "Couldn't load tag … missi
 | F2 | The Common bag can give osmium ingots and source gems, the two inputs of the Nether key. Too generous? |
 | F3 | The server runs on Easy right now. What difficulty do you want? |
 | F4 | Anything too grindy, too cheap, or confusing in the quest text. |
+
+

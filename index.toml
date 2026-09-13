@@ -54,7 +54,7 @@ hash = "daed85b108619d4dd9044df7c0e38984dd6aa44b53e776cb493f453399776b3f"
 
 [[files]]
 file = "config/ftbquests/quests/lang/en_us.snbt"
-hash = "c40ced55f8e811805eff46d9e162faef3db9c0ccc0f47a98020a353230aab8ba"
+hash = "28cdf20c66be1da90c1a92ba3f489a26f2b7cae17afa12f3dd725479cd59828d"
 
 [[files]]
 file = "config/ftbquests/quests/reward_tables/common_bag.snbt"
@@ -198,7 +198,7 @@ hash = "513125401cee98784accfb0f317786d06cc67c3c46c093dc24b1715413c1781e"
 
 [[files]]
 file = "kubejs/server_scripts/lib/ids.js"
-hash = "8a5caa3f2ae39951f4d2ec16a777593fc9f1a8255433ebc214ab4315547433db"
+hash = "4e3b88b10f2772c1c4b40ef653b7f46335d1aa146c3c3994ae6e775d2fc69fcf"
 
 [[files]]
 file = "kubejs/server_scripts/lib/loot.js"

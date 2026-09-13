@@ -10,7 +10,7 @@ quests:
     deps: [D2.4, D2.2, T2.1, M2.1]
     coins: 15
     bag: rare_bag
-    desc: "Craft the catalyst from a knightmetal ingot, an Allthemodium ingot, an Industrial Foregoing Simple Machine Frame and an Iron's Spells Upgrade Orb. Build a Nether-portal-shaped frame of stone bricks or deepslate bricks and right-click the bottom inner block with the catalyst. Vibranium and the forgotten metal wait below - and the Rare bag opens in the Coin Shop."
+    desc: "Craft the catalyst from a knightmetal ingot, an Allthemodium ingot, an Industrial Foregoing Simple Machine Frame and an Iron's Spells Upgrade Orb. The next quest shows the frame. Vibranium and the forgotten metal wait below - and the Rare bag opens in the Coin Shop."
   - node: UG.1
     title: Into the Undergarden
     task: dimension:undergarden:undergarden

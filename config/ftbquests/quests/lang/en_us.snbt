@@ -53,7 +53,7 @@
 	quest.1D0BCB2E7D3ED925.title: "Advanced Machine Frame"
 	quest.1D427134CD615C79.quest_desc: ["Slay the dragon. Bottle its breath for the End Focus and keep the egg: the key to The Other will want one, and Mystical Agradditions can grow more from dragon egg seeds."]
 	quest.1D427134CD615C79.title: "The Dragon"
-	quest.1FEF5F2F48909FF0.quest_desc: ["Craft the catalyst from a knightmetal ingot, an Allthemodium ingot, an Industrial Foregoing Simple Machine Frame and an Iron's Spells Upgrade Orb. Build a Nether-portal-shaped frame of stone bricks or deepslate bricks and right-click the bottom inner block with the catalyst. Vibranium and the forgotten metal wait below - and the Rare bag opens in the Coin Shop."]
+	quest.1FEF5F2F48909FF0.quest_desc: ["Craft the catalyst from a knightmetal ingot, an Allthemodium ingot, an Industrial Foregoing Simple Machine Frame and an Iron's Spells Upgrade Orb. The next quest shows the frame. Vibranium and the forgotten metal wait below - and the Rare bag opens in the Coin Shop."]
 	quest.1FEF5F2F48909FF0.title: "Undergarden Catalyst"
 	quest.2053A3F99454EF66.quest_desc: ["Arcane essence has no recipe: it drops from Iron's Spells casters - necromancers roam every Overworld biome, while cultists, priests and apothecarists drop more - and it turns up in many vanilla chests. It is the second magic root and nothing has to be unlocked first, so start collecting the moment you spawn."]
 	quest.2053A3F99454EF66.title: "Arcane Essence"
@@ -135,7 +135,7 @@
 	quest.5E1B6F2BBDE03DD1.title: "First Power"
 	quest.6091B4F5B7C86DA3.quest_desc: ["Good to know: this pack locks things in exactly three ways - a rewritten crafting recipe, a dimension you cannot enter yet, and a script check. Ticking a quest never unlocks anything by itself; the quests only mirror those locks so you can see every one coming. Read on for the ladder they guard."]
 	quest.6091B4F5B7C86DA3.title: "How gates work"
-	quest.623AA49C6273667B.quest_desc: ["Build a Nether-portal frame from reinforced deepslate - mine it out of an Ancient City - and light it with a Heart of the Deep; every Warden death drops exactly one. Resonarium is here and nowhere else."]
+	quest.623AA49C6273667B.quest_desc: ["The portal is the reinforced-deepslate frame already standing at the centre of every Ancient City; the block cannot be mined or crafted. Clear its inside to bare air, hold exactly one Heart of the Deep (every Warden death drops one, and lighting eats the whole stack) and right-click a frame face from inside. Nothing happens on failure, so check for leftover blocks. Resonarium is here and nowhere else."]
 	quest.623AA49C6273667B.title: "The Otherside"
 	quest.626CBAD11FDF4B21.quest_desc: ["Good to know: Regions Unexplored, Biomes We've Gone, YUNG's structures, Towns and Towers and When Dungeons Arise are here as content, not as gates. Nothing in the Overworld is locked, so wander and loot as freely as you like."]
 	quest.626CBAD11FDF4B21.title: "Explore the Overworld"
