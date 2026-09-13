@@ -43,6 +43,12 @@ NON_ITEM_TAGS = {
     # ids.js IDS.undergarden.biomes: The_Undergarden-1.21.1-0.9.6.jar data/undergarden/tags/worldgen/biome/
     # is_undergarden.json -- a biome tag (bound under minecraft:worldgen/biome with count 20 in the export).
     "undergarden:is_undergarden": "minecraft:worldgen/biome",
+    # worldgen.js's default `targets` pair (the fallback the Undergarden row overrides, D86) -- vanilla's own
+    # ore-replacement tags, which are block tags: the boot's .run/server/kubejs/exported/tags.json binds
+    # minecraft:stone_ore_replaceables under minecraft:block with count 4 and
+    # minecraft:deepslate_ore_replaceables with count 2, and neither appears under minecraft:item.
+    "minecraft:stone_ore_replaceables": "minecraft:block",
+    "minecraft:deepslate_ore_replaceables": "minecraft:block",
 }
 
 # A tag literal: a quoted string whose first character is '#', followed by a well-formed resource location.
