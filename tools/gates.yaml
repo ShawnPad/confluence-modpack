@@ -28,6 +28,10 @@ gates:
   - confluence:tier4/planarium
   - confluence:tier4/end_focus
   - industrialforegoing:dissolution_chamber/advanced_machine_frame
+  # v0.2 bypass
+  - confluence:bypass/vibranium_crystal_from_ore
+  - confluence:bypass/vibranium_crystal_from_raw_ore
+  - confluence:bypass/vibranium_crystal_from_raw_block
 removed:
   # v0.1 tiers 0–2
   - minecraft:flint_and_steel
@@ -61,3 +65,7 @@ removed:
   - minecraft:ender_eye
   - mysticalagriculture:essence/minecraft/ender_eye
   - ars_nouveau:planarium
+  # v0.2 bypass
+  - allthemodium:processing/vibranium/slurry/dirty/from_ore
+  - allthemodium:processing/vibranium/slurry/dirty/from_raw_ore
+  - allthemodium:processing/vibranium/slurry/dirty/from_raw_block

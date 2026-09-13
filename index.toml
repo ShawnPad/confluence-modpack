@@ -125,6 +125,10 @@ file = "kubejs/data/allthemodium/neoforge/biome_modifier/allthemodium/vibranium.
 hash = "2b925da45ae9ccc37f6f5ae1fd1f62fb64d9155a6df14a5d44e9d3ab6538cf9d"
 
 [[files]]
+file = "kubejs/data/ars_nouveau/tags/entity_type/drygmy_blacklist.json"
+hash = "80d972f27961acfcfe784ea73b2dca60b067d9fc66f83e14ad676919e4beb85a"
+
+[[files]]
 file = "kubejs/data/confluence/tags/item/ars_essences.json"
 hash = "278d63f098f69191a9248bcdc7d9b846f5f537aa696a5e087d3b963e714a70de"
 
@@ -158,7 +162,7 @@ hash = "2b925da45ae9ccc37f6f5ae1fd1f62fb64d9155a6df14a5d44e9d3ab6538cf9d"
 
 [[files]]
 file = "kubejs/server_scripts/bypass.js"
-hash = "2c500ed0e804ecaed6819921b6785d1a1eca054a9046cbf0d311959f935d1a36"
+hash = "7d9482016013e63f28181e3d9bcf2717ea158161db9d27e8e44fa0204ec68195"
 
 [[files]]
 file = "kubejs/server_scripts/dump.js"

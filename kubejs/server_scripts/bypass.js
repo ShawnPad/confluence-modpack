@@ -38,4 +38,31 @@ ServerEvents.recipes(event => {
     extra_input: vibranium,
     output: { count: 30, id: IDS.allthemodium.crystal },
   })
+
+  // [X2.2] (D62 pattern, v0.2): the Vibranium 5x chain's three entry recipes (allthemodium:processing/vibranium/slurry/dirty/
+  // {from_ore,from_raw_ore,from_raw_block}, type mekanism:dissolution; inputs c:ores/vibranium (1), c:raw_materials/vibranium (3),
+  // c:storage_blocks/raw_vibranium (1); phase7-tier3-ids.md §2) become mekanism:combining recipes whose extra input is one
+  // Unobtainium ingot, so the 5x route waits for [D5.2]. Same 5/10/30 crystal yields as the Allthemodium chain.
+  const unobtainium = { count: 1, tag: tagId(IDS.allthemodium.unobtainiumIngotTag) }
+  gate.remove(event, { id: IDS.mek.vibraniumChain.slurryDirtyFromOre })
+  gate.remove(event, { id: IDS.mek.vibraniumChain.slurryDirtyFromRawOre })
+  gate.remove(event, { id: IDS.mek.vibraniumChain.slurryDirtyFromRawBlock })
+  gate.custom(event, 'confluence:bypass/vibranium_crystal_from_ore', {
+    type: 'mekanism:combining',
+    main_input: { count: 1, tag: 'c:ores/vibranium' },
+    extra_input: unobtainium,
+    output: { count: 5, id: IDS.allthemodium.vibraniumCrystal },
+  })
+  gate.custom(event, 'confluence:bypass/vibranium_crystal_from_raw_ore', {
+    type: 'mekanism:combining',
+    main_input: { count: 3, tag: 'c:raw_materials/vibranium' },
+    extra_input: unobtainium,
+    output: { count: 10, id: IDS.allthemodium.vibraniumCrystal },
+  })
+  gate.custom(event, 'confluence:bypass/vibranium_crystal_from_raw_block', {
+    type: 'mekanism:combining',
+    main_input: { count: 1, tag: 'c:storage_blocks/raw_vibranium' },
+    extra_input: unobtainium,
+    output: { count: 30, id: IDS.allthemodium.vibraniumCrystal },
+  })
 })
