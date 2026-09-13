@@ -54,7 +54,7 @@ hash = "daed85b108619d4dd9044df7c0e38984dd6aa44b53e776cb493f453399776b3f"
 
 [[files]]
 file = "config/ftbquests/quests/lang/en_us.snbt"
-hash = "0faac2a08bc50472a29b3c44eaa01a4d126360f6ee76a69c67728e4e0e86831d"
+hash = "c40ced55f8e811805eff46d9e162faef3db9c0ccc0f47a98020a353230aab8ba"
 
 [[files]]
 file = "config/ftbquests/quests/reward_tables/common_bag.snbt"
@@ -62,7 +62,7 @@ hash = "b6e34fe221dacf1cc5c38711976e7e1a00288a87a55e9cc47e2af5addf59ed0e"
 
 [[files]]
 file = "config/ftbquests/quests/reward_tables/rare_bag.snbt"
-hash = "861cb93a702fa790a008dba78bb0b1689a8045c5b90f30078a229647bfade1d5"
+hash = "b0e9b674ea2543bf541ad0018016af3fec11d31e8bf134f1af7fc1abf67fa0d2"
 
 [[files]]
 file = "config/ftbquests/quests/reward_tables/uncommon_bag.snbt"

@@ -14,10 +14,10 @@ quests:
     task: advancement:the_bumblezone:structures/enter_throne_pillar
     deps: [D4.3]
     coins: 5
-    desc: "Find the Throne Pillar and its Bee Queen. Trade with her - she pays in treasures and, at the end of her line of requests, in Essence of the Bees."
+    desc: "Find the Throne Pillar and its Bee Queen - a honey compass locked onto the pillar points the way. Trade with her: she pays in treasures and, at the end of her line of requests, in Essence of the Bees."
   - node: BZ.2
     title: Essence of the Bees
     task: item:the_bumblezone:essence_of_the_bees
     deps: [BZ.1]
     coins: 15
-    desc: "Eating it grants the bees' favour, but the key to The Other consumes one too - earn a spare before you eat."
+    desc: "Eating it grants the bees' favour, but the key to The Other consumes one - and whether the Bee Queen gives out a second is unconfirmed. Build the key first; do not eat your first essence until it is done."

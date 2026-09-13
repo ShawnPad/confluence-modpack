@@ -9,7 +9,7 @@ quests:
     task: dimension:deeperdarker:otherside
     deps: [D0.2]
     coins: 15
-    desc: "Frame reinforced deepslate in the Nether-portal shape and light it with a Heart of the Deep from a Warden; unlit portals also stand in Ancient Cities. Resonarium is here and nowhere else."
+    desc: "Build a Nether-portal frame from reinforced deepslate - mine it out of an Ancient City - and light it with a Heart of the Deep; every Warden death drops exactly one. Resonarium is here and nowhere else."
   - node: OTHER.1
     title: Resonarium
     task: item:deeperdarker:resonarium
@@ -21,4 +21,4 @@ quests:
     task: item:deeperdarker:soul_crystal
     deps: [D3.5]
     coins: 5
-    desc: "The Stalker drops a Soul Crystal; with an elytra it makes the Soul Elytra. A prize, not a gate."
+    desc: "The Stalker drops a Soul Crystal. With an elytra, four sculk bone and two soul dust it makes the Soul Elytra, which boosts without rockets. A prize, not a gate."

@@ -16,7 +16,7 @@ quests:
     task: dimension:undergarden:undergarden
     deps: [D3.1]
     coins: 5
-    desc: "Step through. The Undergarden has no sky; bring light, food and an Allthemodium pickaxe."
+    desc: "Build the frame in the Nether-portal shape from stone bricks or deepslate bricks, then right-click a bottom inner block with the catalyst. The Undergarden has no sky: bring light, food and an Allthemodium pickaxe."
   - node: D3.2
     title: Vibranium Ore
     task: item:allthemodium:raw_vibranium
@@ -46,7 +46,7 @@ quests:
     task: item:mekanism:elite_control_circuit
     deps: [T1.2, T1.1, D2.2]
     coins: 10
-    desc: "Elite circuits and refined obsidian both cost Allthemodium now: the circuit takes an ingot above the usual reinforced alloys and advanced circuit, and refined obsidian dust becomes ingots in the Combiner with an Allthemodium nugget instead of in the Osmium Compressor. Both feed the QIO dashboard and the Planarium."
+    desc: "Elite circuits and refined obsidian both cost Allthemodium now: the circuit takes an ingot above the usual reinforced alloys and advanced circuit, and refined obsidian dust becomes ingots in the Combiner with an Allthemodium nugget instead of in the Osmium Compressor. The obsidian feeds the QIO dashboard and the Planarium; the circuit becomes the ultimate control circuit the drive array, importer and exporter each want."
   - node: T3.3
     title: Teleportation Core
     task: item:mekanism:teleportation_core
@@ -58,7 +58,7 @@ quests:
     task: item:ars_nouveau:ritual_brazier
     deps: [X2.1, M2.2, M1.1]
     coins: 10
-    desc: "The brazier now needs a Powah spirited crystal and a source gem block alongside the arcane pedestal, source block and gold. It runs every Ars ritual - and every Eye of Ender and the End Focus consume one, so build several."
+    desc: "Ars' shapeless recipe grows: an arcane pedestal, two source gem blocks and three gold ingots, plus a Powah spirited crystal. The second source gem block is ours. It runs every Ars ritual - and every Eye of Ender and the End Focus consume one, so build several."
   - node: M3.2
     title: Lightning Upgrade Orb
     task: item:irons_spellbooks:lightning_upgrade_orb
@@ -70,7 +70,7 @@ quests:
     task: item:mekanism:qio_dashboard
     deps: [S2.1, T3.3, T3.2, D3.2]
     coins: 15
-    desc: "The dashboard is built from Tom's crafting terminal, a teleportation core, three refined obsidian ingots and a Vibranium ingot; the drive array, importer and exporter each add a Vibranium ingot to Mekanism's recipe. This is the top of the storage line before Applied Energistics."
+    desc: "The dashboard is built from Tom's crafting terminal, a teleportation core, three refined obsidian ingots and a Vibranium ingot; the drive array swaps its bottom ender pearl for Vibranium, and the importer and exporter each swap one of their two lead ingots. This is the top of the storage line before Applied Energistics."
   - node: X3.4
     title: No Henge Boss Loot
     task: checkmark
