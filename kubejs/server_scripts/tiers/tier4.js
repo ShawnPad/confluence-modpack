@@ -8,13 +8,13 @@ ServerEvents.recipes(event => {
 
   // M4.1 Planarium: Ars' Apparatus recipe (reagent mob jar; pedestals stable warp scroll, conjuration essence, diamond) plus a
   // Mekanism teleportation core and a refined obsidian ingot on the pedestals. Removed by id, re-added as raw JSON — the same
-  // five keys as ars_nouveau-1.21.1-5.13.1.jar!data/ars_nouveau/recipe/planarium.json (phase7-tier4-ids.md §3).
+  // six keys (type, keepNbtOfReagent, pedestalItems, reagent, result, sourceCost) as ars_nouveau-1.21.1-5.13.1.jar!data/ars_nouveau/recipe/planarium.json (phase7-tier4-ids.md §3).
   gate.remove(event, { id: IDS.ars.planarium })
   gate.custom(event, 'confluence:tier4/planarium', {
     type: IDS.ars.apparatusType, keepNbtOfReagent: false, sourceCost: 0,
     reagent: { item: IDS.ars.mobJar },
     pedestalItems: [{ item: IDS.ars.stableWarpScroll }, { item: IDS.ars.conjurationEssence }, { item: IDS.vanilla.diamond },
-                    { item: IDS.mek.teleportationCore }, { tag: IDS.mek.refinedObsidianIngotTag.slice(1) }],
+                    { item: IDS.mek.teleportationCore }, { tag: tagId(IDS.mek.refinedObsidianIngotTag) }],
     result: { count: 1, id: IDS.ars.planarium },
   })
 

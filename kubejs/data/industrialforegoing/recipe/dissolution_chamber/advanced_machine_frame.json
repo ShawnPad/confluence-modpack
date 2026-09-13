@@ -27,6 +27,9 @@
     },
     {
       "tag": "c:gears/diamond"
+    },
+    {
+      "tag": "c:ingots/gold"
     }
   ],
   "inputFluid": {

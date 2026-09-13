@@ -16,7 +16,7 @@ ServerEvents.recipes(event => {
   //   {"type":"mekanism:combining","extra_input":{"count":1,"tag":"c:cobblestones/deepslate"},
   //    "main_input":{"count":4,"tag":"c:dusts/obsidian"},"output":{"count":1,"id":"minecraft:obsidian"}}
   // (same three keys as the KubeJS Mekanism combining schema, syntax report §5). Raw JSON tags carry no leading '#'.
-  const vibranium = { count: 1, tag: IDS.allthemodium.vibraniumIngotTag.slice(1) }
+  const vibranium = { count: 1, tag: tagId(IDS.allthemodium.vibraniumIngotTag) }
   gate.remove(event, { id: IDS.mek.allthemodiumChain.slurryDirtyFromOre })
   gate.remove(event, { id: IDS.mek.allthemodiumChain.slurryDirtyFromRawOre })
   gate.remove(event, { id: IDS.mek.allthemodiumChain.slurryDirtyFromRawBlock })
