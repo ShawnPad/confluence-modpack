@@ -146,7 +146,7 @@ hash = "2b925da45ae9ccc37f6f5ae1fd1f62fb64d9155a6df14a5d44e9d3ab6538cf9d"
 
 [[files]]
 file = "kubejs/data/ars_nouveau/tags/entity_type/drygmy_blacklist.json"
-hash = "80d972f27961acfcfe784ea73b2dca60b067d9fc66f83e14ad676919e4beb85a"
+hash = "14da5ae2aba2d4269bde8d061906ef37b6a46fa8e5c49bf5e1a810d5068a9b7b"
 
 [[files]]
 file = "kubejs/data/confluence/tags/item/ars_essences.json"
@@ -182,7 +182,7 @@ hash = "2b925da45ae9ccc37f6f5ae1fd1f62fb64d9155a6df14a5d44e9d3ab6538cf9d"
 
 [[files]]
 file = "kubejs/server_scripts/bypass.js"
-hash = "7d9482016013e63f28181e3d9bcf2717ea158161db9d27e8e44fa0204ec68195"
+hash = "067d44714d44518e84b729bba5eb98c8107dbea2564d69c4c7d8ac51319439af"
 
 [[files]]
 file = "kubejs/server_scripts/dump.js"
@@ -194,11 +194,11 @@ hash = "18e8f28fd8b30c3c7b9916248cb73c61418a8f25fd134337f6220bad295db19e"
 
 [[files]]
 file = "kubejs/server_scripts/lib/gates.js"
-hash = "7026bc20f8e1f3b09db37945f9480e00d229df9821ea576fe42ad9c226889093"
+hash = "513125401cee98784accfb0f317786d06cc67c3c46c093dc24b1715413c1781e"
 
 [[files]]
 file = "kubejs/server_scripts/lib/ids.js"
-hash = "4ae033218a27fb9cbfbb4e5e54a86260197bffc65f661f6c5d8df4c5de254e74"
+hash = "ee0ad41fc919c00bf964cfc361a00ee563e73a56be9b4434121b76f014414c08"
 
 [[files]]
 file = "kubejs/server_scripts/loot.js"
@@ -226,7 +226,7 @@ hash = "09c200713f2e0b9a7f78b56d1d3c1d3864e5d790f213e9fb63d4e6da1f517ed0"
 
 [[files]]
 file = "kubejs/server_scripts/tiers/tier4.js"
-hash = "33f8b03e774bec0e93f0a4802f84f9b77479c9537a2833ce14765c645d9fbe5a"
+hash = "0bce97fcea6e10522098d2ba81252b465204b1064228418060aa6fa7424d61e3"
 
 [[files]]
 file = "kubejs/server_scripts/worldgen.js"

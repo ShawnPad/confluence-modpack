@@ -9,7 +9,7 @@ ServerEvents.recipes(event => {
   // M4.1 Planarium: Ars' Apparatus recipe (reagent mob jar; pedestals stable warp scroll, conjuration essence, diamond) plus a
   // Mekanism teleportation core and a refined obsidian ingot on the pedestals. Removed by id, re-added as raw JSON — the same
   // six keys (type, keepNbtOfReagent, pedestalItems, reagent, result, sourceCost) as ars_nouveau-1.21.1-5.13.1.jar!data/ars_nouveau/recipe/planarium.json (phase7-tier4-ids.md §3).
-  gate.remove(event, { id: IDS.ars.planarium })
+  gate.remove(event, { id: IDS.ars.planariumRecipe })
   gate.custom(event, 'confluence:tier4/planarium', {
     type: IDS.ars.apparatusType, keepNbtOfReagent: false, sourceCost: 0,
     reagent: { item: IDS.ars.mobJar },
@@ -19,12 +19,14 @@ ServerEvents.recipes(event => {
   })
 
   // M4.2 End Focus: reagent Planarium; eight pedestals — the four essences, dragon's breath, Gauntlet of Guard, a Ritual Brazier
-  // (D84) and a source gem block. The Apparatus has eight pedestals (the drygmy_charm recipe lists eight, phase7-tier3-ids §5).
+  // (D84) and a source gem block (as #c:storage_blocks/source, its single member, like tier3's brazier). The Apparatus has
+  // eight pedestals (the drygmy_charm recipe lists eight, phase7-tier3-ids §5).
+  // sourceCost 0: no default to inherit; the gate is the ingredients, not Source (D84).
   gate.custom(event, 'confluence:tier4/end_focus', {
     type: IDS.ars.apparatusType, keepNbtOfReagent: false, sourceCost: 0,
     reagent: { item: IDS.ars.planarium },
     pedestalItems: IDS.ars.essences.map(e => ({ item: e })).concat([
-      { item: IDS.vanilla.dragonBreath }, { item: IDS.cataclysm.gauntletOfGuard }, { item: IDS.ars.ritualBrazier }, { item: IDS.ars.sourceGemBlock }]),
+      { item: IDS.vanilla.dragonBreath }, { item: IDS.cataclysm.gauntletOfGuard }, { item: IDS.ars.ritualBrazier }, { tag: tagId(IDS.ars.sourceBlockTag) }]),
     result: { count: 1, id: IDS.pack.endFocus },
   })
 })

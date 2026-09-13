@@ -27,6 +27,7 @@ gates:
   - confluence:tier4/ender_eye
   - confluence:tier4/planarium
   - confluence:tier4/end_focus
+  # in-place datapack override: the id is present with or without our file; inputs are checked in PLAYTEST H3
   - industrialforegoing:dissolution_chamber/advanced_machine_frame
   # v0.2 bypass
   - confluence:bypass/vibranium_crystal_from_ore

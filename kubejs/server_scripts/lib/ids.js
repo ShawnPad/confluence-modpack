@@ -43,6 +43,11 @@ IDS.allthemodium.crystal = 'allthemodium:allthemodium_crystal'
 // Jar check for this task: data/c/tags/item/ingots/vibranium.json exists in allthemodium-3.0.1_mc_1.21.1.jar
 // ({"values":["allthemodium:vibranium_ingot"]}), so the tag form is used. Raw recipe JSON drops the leading '#'.
 IDS.allthemodium.vibraniumIngotTag = '#c:ingots/vibranium'
+// The 5x chain's three item_input tags, all in allthemodium-3.0.1_mc_1.21.1.jar!data/c/tags/item/:
+// ores/allthemodium.json, raw_materials/allthemodium.json, storage_blocks/raw_allthemodium.json.
+IDS.allthemodium.oreTag = '#c:ores/allthemodium'
+IDS.allthemodium.rawTag = '#c:raw_materials/allthemodium'
+IDS.allthemodium.rawBlockTag = '#c:storage_blocks/raw_allthemodium'
 // §A3: the three 5x-chain entry recipes (type mekanism:dissolution, registered by Allthemodium itself under
 // data/allthemodium/recipe/processing/allthemodium/). Removed and replaced by mekanism:combining in bypass.js (D62).
 IDS.mek.allthemodiumChain = {
@@ -60,7 +65,7 @@ IDS.cataclysm.monstrosity = 'cataclysm:netherite_monstrosity'
 IDS.powah.spiritedRecipe = 'powah:energizing/spirited_crystal'
 
 // ---- v0.2 (tiers 3–4). Citations: research/phase7-tier3-ids.md (§ numbers "t3"), phase7-tier4-ids.md ("t4"),
-// phase7-undergarden-worldgen-loot.md ("ug"). Tags keep the leading '#'; raw-JSON call sites slice(1).
+// phase7-undergarden-worldgen-loot.md ("ug"). Tags keep the leading '#'; raw-JSON call sites wrap it in tagId().
 // t3 §1: The_Undergarden-1.21.1-0.9.6.jar data/undergarden/{recipe/catalyst.json, dimension/undergarden.json,
 // recipe/forgotten_nugget_to_ingot.json, loot_table/entities/forgotten_guardian.json}.
 IDS.undergarden = { catalyst: 'undergarden:catalyst', dimension: 'undergarden:undergarden', forgottenIngot: 'undergarden:forgotten_ingot',
@@ -75,7 +80,12 @@ IDS.allthemodium.otherVibraniumOre = 'allthemodium:other_vibranium_ore'   // the
 IDS.allthemodium.rawVibranium = 'allthemodium:raw_vibranium'
 IDS.allthemodium.vibraniumTemplate = 'allthemodium:vibranium_upgrade_smithing_template'
 IDS.allthemodium.vibraniumCrystal = 'allthemodium:vibranium_crystal'
-IDS.allthemodium.unobtainiumIngotTag = '#c:ingots/unobtainium'   // checked in Task 5 Step 1 against the jar
+IDS.allthemodium.unobtainiumIngotTag = '#c:ingots/unobtainium'   // allthemodium-3.0.1_mc_1.21.1.jar!data/c/tags/item/ingots/unobtainium.json
+// The Vibranium chain's three item_input tags, all in allthemodium-3.0.1_mc_1.21.1.jar!data/c/tags/item/:
+// ores/vibranium.json, raw_materials/vibranium.json, storage_blocks/raw_vibranium.json.
+IDS.allthemodium.vibraniumOreTag = '#c:ores/vibranium'
+IDS.allthemodium.vibraniumRawTag = '#c:raw_materials/vibranium'
+IDS.allthemodium.vibraniumRawBlockTag = '#c:storage_blocks/raw_vibranium'
 IDS.mek.vibraniumChain = {
   slurryDirtyFromOre: 'allthemodium:processing/vibranium/slurry/dirty/from_ore',
   slurryDirtyFromRawOre: 'allthemodium:processing/vibranium/slurry/dirty/from_raw_ore',
@@ -112,20 +122,20 @@ IDS.ars.ritualBrazier = 'ars_nouveau:ritual_brazier'
 IDS.ars.arcanePedestal = 'ars_nouveau:arcane_pedestal'
 IDS.ars.sourceBlockTag = '#c:storage_blocks/source'
 IDS.ars.planarium = 'ars_nouveau:planarium'
+IDS.ars.planariumRecipe = 'ars_nouveau:planarium'   // ars_nouveau-1.21.1-5.13.1.jar!data/ars_nouveau/recipe/planarium.json
 IDS.ars.mobJar = 'ars_nouveau:mob_jar'
 IDS.ars.stableWarpScroll = 'ars_nouveau:stable_warp_scroll'
 IDS.ars.conjurationEssence = 'ars_nouveau:conjuration_essence'
 IDS.ars.apparatusType = 'ars_nouveau:enchanting_apparatus'
-IDS.ars.drygmyBlacklistTag = 'ars_nouveau:drygmy_blacklist'   // entity_type tag, not an item tag: not for check_tags
 // t3 §6: irons_spellbooks-1.21.1-3.16.3.jar data/irons_spellbooks/recipe/lightning_upgrade_orb.json (8 lightning_rune round an upgrade_orb).
 IDS.irons.lightningOrb = 'irons_spellbooks:lightning_upgrade_orb'
 IDS.irons.lightningRune = 'irons_spellbooks:lightning_rune'
 // t4 §2: industrialforegoing-1.21-3.6.39.jar data/industrialforegoing/recipe/dissolution_chamber/advanced_machine_frame.json.
-IDS.ifg.advancedFrame = 'industrialforegoing:machine_frame_advanced'
+// Only the two tags: the recipe itself is an in-place datapack override (kubejs/data/industrialforegoing/recipe/
+// dissolution_chamber/advanced_machine_frame.json), which cannot read IDS, so these exist to put both tags under
+// tools/check_tags.py's boot-time coverage.
 IDS.ifg.advancedFrameTag = '#industrialforegoing:machine_frame/advanced'
-IDS.ifg.pinkSlime = 'industrialforegoing:pink_slime'
 IDS.ifg.diamondGearTag = '#c:gears/diamond'
-IDS.ifg.stasisChamber = 'industrialforegoing:stasis_chamber'
 // t4 §4–§6: L_Ender's Cataclysm 1.21.1-3.33.jar!data/cataclysm/loot_table/entities/ender_guardian.json;
 // deeperdarker-neoforge-1.21.1-1.4.1.jar!data/deeperdarker/{dimension/otherside.json, loot_table/entities/{sludge,stalker}.json};
 // the_bumblezone-7.15.3+1.21.1-neoforge.jar!data/the_bumblezone/{dimension/the_bumblezone.json, advancement/structures/enter_throne_pillar.json}.
@@ -133,6 +143,8 @@ IDS.cataclysm.gauntletOfGuard = 'cataclysm:gauntlet_of_guard'
 IDS.cataclysm.enderGuardian = 'cataclysm:ender_guardian'
 IDS.dd = { resonarium: 'deeperdarker:resonarium', dimension: 'deeperdarker:otherside', sludge: 'deeperdarker:sludge', stalker: 'deeperdarker:stalker',
   soulCrystal: 'deeperdarker:soul_crystal', heartOfTheDeep: 'deeperdarker:heart_of_the_deep' }
+// beeQueen is the entity id: the_bumblezone-7.15.3+1.21.1-neoforge.jar!data/the_bumblezone/loot_table/entities/bee_queen.json
+// and assets/the_bumblezone/lang/en_us.json key `entity.the_bumblezone.bee_queen` ("Bee Queen").
 IDS.bumblezone = { dimension: 'the_bumblezone:the_bumblezone', essence: 'the_bumblezone:essence_of_the_bees', beeQueen: 'the_bumblezone:bee_queen',
   thronePillarAdvancement: 'the_bumblezone:structures/enter_throne_pillar' }
 IDS.vanilla.enderEye = 'minecraft:ender_eye'
