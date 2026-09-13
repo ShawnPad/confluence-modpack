@@ -217,12 +217,62 @@ def test_advancement_task_renders_advancement_and_optional_criterion():
     q = {"task": "advancement:the_bumblezone:structures/enter_throne_pillar", "consume": False}
     assert _task(q, "0000000000000002") == '{ advancement: "the_bumblezone:structures/enter_throne_pillar" id: "0000000000000002" type: "advancement" }'
     q2 = {"task": "advancement:minecraft:nether/root:entered_nether", "consume": False}
-    assert 'criterion: "entered_nether"' in _task(q2, "0000000000000002")
+    assert _task(q2, "0000000000000002") == '{ advancement: "minecraft:nether/root" criterion: "entered_nether" id: "0000000000000002" type: "advancement" }'
 
 
-# dimension/kill/advancement tasks auto-submit on a player tick (task-shapes §1-§3, §9); `repeat: true` on one
-# would re-complete itself every few seconds once its deps are met, so validate_chapter flags it.
-def test_validate_flags_repeat_on_an_auto_completing_task():
-    ch = parse_chapter(YAML.replace("task: item:minecraft:netherite_ingot", "task: dimension:minecraft:the_end\n    repeat: true"))
+# The same advancement task through the whole pipeline (the shape bumblezone.yaml BZ.1 ships).
+ADVANCEMENT_YAML = """
+chapter: bumblezone
+title: The Bumblezone
+group: 0C0F1A0000000002
+order: 13
+icon: the_bumblezone:essence_of_the_bees
+quests:
+  - node: BZ.1
+    title: Throne Pillar
+    task: advancement:the_bumblezone:structures/enter_throne_pillar
+    coins: 5
+"""
+
+
+def test_advancement_task_renders_end_to_end():
+    ch = parse_chapter(ADVANCEMENT_YAML)
+    assert validate_chapter(ch, tables={}) == []
+    s = render_snbt(ch, TABLES)
+    assert 'type: "advancement"' in s
+    assert f'tasks: [{{ advancement: "the_bumblezone:structures/enter_throne_pillar" id: "{quest_id("BZ.1:task")}" type: "advancement" }}]' in s
+
+
+# `dimension` and `advancement` auto-submit on a player tick (task-shapes §1: 100 ticks, §3: 5 ticks), so a repeatable
+# one re-completes itself as soon as its deps are met. `kill` is NOT one of them: KillTask has no
+# autoSubmitOnPlayerTick and accrues kills toward `value` (§2), so a repeatable kill bounty is legitimate.
+def _repeat_problems(task: str) -> list[str]:
+    ch = parse_chapter(YAML)
+    ch["group"] = quest_id("chapter:nether")   # a parseable group, so only the task lints can fire
+    ch["quests"][1]["task"] = task             # node X1.1
+    ch["quests"][1]["repeat"] = True
+    return validate_chapter(ch, tables={})
+
+
+def test_validate_flags_repeat_on_a_dimension_task():
+    problems = _repeat_problems("dimension:minecraft:the_end")
+    assert len(problems) == 1 and "X1.1" in problems[0] and "repeat" in problems[0]
+
+
+def test_validate_flags_repeat_on_an_advancement_task():
+    problems = _repeat_problems("advancement:minecraft:story/root")
+    assert len(problems) == 1 and "X1.1" in problems[0] and "repeat" in problems[0]
+
+
+def test_validate_allows_repeat_on_a_kill_task():
+    assert _repeat_problems("kill:minecraft:blaze:10") == []
+
+
+# An unnamespaced advancement id is a silent never-completes: AdvancementTask.canSubmit looks the id up on the
+# server and returns false forever when it misses (§3).
+def test_validate_flags_an_advancement_task_without_a_namespace():
+    ch = parse_chapter(YAML)
+    ch["group"] = quest_id("chapter:nether")
+    ch["quests"][1]["task"] = "advancement:story/root"
     problems = validate_chapter(ch, tables={})
-    assert any("X1.1" in p and "repeat" in p for p in problems)
+    assert len(problems) == 1 and "X1.1" in problems[0] and "namespace" in problems[0]

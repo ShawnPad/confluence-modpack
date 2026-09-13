@@ -22,6 +22,10 @@ CHAPTERS_DIR = ROOT / "tools" / "chapters"
 # Chapter-group titles. Ids are the ones committed in config/ftbquests/quests/chapter_groups.snbt (D63); the key shape
 # is `chapter_group.<%016X id>.title` (TranslationManager.makeKey, QuestObjectType.CHAPTER_GROUP, report §2).
 GROUPS = {"0C0F1A0000000001": "Trunk", "0C0F1A0000000002": "Spurs", "0C0F1A0000000003": "Shop"}
+# Tasks that complete on their own on a player tick and would instantly re-complete if repeatable:
+# DimensionTask.autoSubmitOnPlayerTick() == 100, AdvancementTask == 5 (research/phase7-ftbquests-task-shapes.md §1, §3).
+# KillTask is not one: it accrues kills toward `value` (§2), so a repeatable kill bounty is legitimate.
+AUTO_SUBMITTING_TASKS = ("dimension", "advancement")
 
 
 def quest_id(node: str) -> str:
@@ -112,8 +116,14 @@ def parse_chapter(text: str) -> dict:
     return ch
 
 
+def _kind(q: dict) -> str:
+    """A quest's task kind: the part of `task:` before the first colon (`item`, `dimension`, `kill`, ...)."""
+    return q["task"].partition(":")[0]
+
+
 def validate_chapter(ch: dict, tables: dict[str, int] | None = None) -> list[str]:
-    """Problems that FTB Quests would swallow silently (no log line) rather than reject."""
+    """Problems that FTB Quests would swallow silently (no log line) rather than reject, plus design lints that
+    should block scaffolding: main() treats every problem here as fatal."""
     tables = load_reward_tables() if tables is None else tables
     problems = []
     if not parseable_id(str(ch.get("group", ""))):
@@ -121,19 +131,27 @@ def validate_chapter(ch: dict, tables: dict[str, int] | None = None) -> list[str
         # and `group:` resolves via parseCodeString -> 0L -> the default chapter group.
         problems.append(f'group "{ch.get("group")}" is not a parseable FTB Quests id (16 hex digits, first digit 0-7, not 0 or 1)')
     for q in ch["quests"]:
-        if q["consume"] and not q["task"].startswith("item:"):
+        kind = _kind(q)
+        if q["consume"] and kind != "item":
             problems.append(f'{q["node"]}: consume is only meaningful on an item task (ItemTask.consume_items)')
         if q["bag"] and q["bag"] not in tables:
             # An unknown table_id resolves to null in RandomReward.readData and the reward silently pays nothing.
             problems.append(f'{q["node"]}: no reward table named "{q["bag"]}" in config/ftbquests/quests/reward_tables/')
-        if q["repeat"] and q["task"].split(":", 1)[0] in ("dimension", "kill", "advancement"):
-            # These tasks auto-submit on a player tick (task-shapes §1-§3); a repeatable one re-completes every few seconds.
-            problems.append(f'{q["node"]}: repeat on a {q["task"].split(":", 1)[0]} task would re-complete itself')
+        if q["repeat"] and kind in AUTO_SUBMITTING_TASKS:
+            problems.append(f'{q["node"]}: repeat on a {kind} task re-completes itself every tick '
+                            f'({kind.capitalize()}Task.autoSubmitOnPlayerTick); drop repeat')
+        if kind == "advancement":
+            # AdvancementTask.canSubmit looks the id up in the server's advancement registry and returns false forever
+            # when it misses -- an unnamespaced id is a silent never-completes, no log line (task-shapes §3).
+            ident = q["task"].partition(":")[2].split(":")
+            if len(ident) < 2 or not ident[0] or not ident[1]:
+                problems.append(f'{q["node"]}: advancement task needs "<namespace>:<path>[:<criterion>]", got {q["task"]!r}')
     return problems
 
 
 def _task(q: dict, tid: str) -> str:
-    kind, _, rest = q["task"].partition(":")
+    kind = _kind(q)
+    rest = q["task"].partition(":")[2]
     if kind == "item":
         parts = rest.split(":")
         count = int(parts[2]) if len(parts) == 3 else 1
