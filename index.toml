@@ -54,7 +54,7 @@ hash = "daed85b108619d4dd9044df7c0e38984dd6aa44b53e776cb493f453399776b3f"
 
 [[files]]
 file = "config/ftbquests/quests/lang/en_us.snbt"
-hash = "28cdf20c66be1da90c1a92ba3f489a26f2b7cae17afa12f3dd725479cd59828d"
+hash = "72d17081adaace767ead78a219abd8987a30e0da94f0cbfcfc7e39b3339a22a9"
 
 [[files]]
 file = "config/ftbquests/quests/reward_tables/common_bag.snbt"

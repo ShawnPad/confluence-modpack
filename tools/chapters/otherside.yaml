@@ -9,7 +9,7 @@ quests:
     task: dimension:deeperdarker:otherside
     deps: [D0.2]
     coins: 15
-    desc: "The portal is the reinforced-deepslate frame already standing at the centre of every Ancient City; the block cannot be mined or crafted. Clear its inside to bare air, hold exactly one Heart of the Deep (every Warden death drops one, and lighting eats the whole stack) and right-click a frame face from inside. Nothing happens on failure, so check for leftover blocks. Resonarium is here and nowhere else."
+    desc: "The portal is the reinforced-deepslate frame already standing at the centre of every Ancient City; the block cannot be mined or crafted. Clear its inside to bare air, hold exactly one Heart of the Deep (every Warden death drops one, and lighting eats the whole stack) and right-click a frame face from inside. Nothing happens on failure, so check for leftover blocks. The way back builds itself. Resonarium is here and nowhere else."
   - node: OTHER.1
     title: Resonarium
     task: item:deeperdarker:resonarium
