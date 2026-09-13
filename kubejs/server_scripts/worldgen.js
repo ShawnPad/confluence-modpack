@@ -27,9 +27,8 @@ const PLACEMENTS = [
   // biomes are undergarden:icy_sea / frosty_smogstem_forest per /locate biome): 67,636 dreadrock, 0 shiverstone,
   // 0 depthrock. The band is dreadrock end to end, so only the dreadrock target fires; depthrock (above y = 5) and
   // shiverstone (entry [13], frost biomes) are inert here and kept only as insurance if the band ever moves.
-  // Consequence to know: other_vibranium_ore therefore does not generate — ATM's own two Vibranium placements are
-  // disabled (§5) — so Vibranium is one block in this pack. Both blocks share one loot table (§5), so which one sits
-  // on which tag is cosmetic; the split is left in place for the orchestrator to keep or collapse.
+  // Consequence: allthemodium:vibranium_ore is the pack's one Vibranium block on every target (D90); other_vibranium_ore
+  // would never generate here and ATM's own two Vibranium placements are disabled (§5). Both drop raw Vibranium (§5).
   // y −55..−16 (D86): below froststeel, above the carver's lava floor at y ≤ −59 (§1). size from the Twilight row;
   // count 3, not the Twilight's 12, because Undergarden's carver leaves ~4× the cave-floor area — count 12 measured
   // 4.46 ore/chunk, count 3 measures 1.22 / 1.27 / 1.39 / 0.54 across four fresh 256-chunk squares, averaging 1.11
@@ -38,7 +37,7 @@ const PLACEMENTS = [
     size: 4, count: 3, exposed: true, min: { absolute: -55 }, max: { absolute: -16 },
     targets: [
       { tag: IDS.undergarden.depthrockReplaceables, block: IDS.allthemodium.vibraniumOre },
-      { tag: IDS.undergarden.shiverstoneReplaceables, block: IDS.allthemodium.otherVibraniumOre },
+      { tag: IDS.undergarden.shiverstoneReplaceables, block: IDS.allthemodium.vibraniumOre },
       { tag: IDS.undergarden.dreadrockReplaceables, block: IDS.allthemodium.vibraniumOre },
     ] },
 ]

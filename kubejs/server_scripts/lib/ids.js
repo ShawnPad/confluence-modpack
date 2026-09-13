@@ -83,7 +83,8 @@ IDS.powah.nitroRecipe = 'powah:energizing/nitro_crystal'
 IDS.powah.blazingCrystalBlock = 'powah:blazing_crystal_block'
 // t3 §4: Mekanism-1.21.1-10.7.19.85.jar data/mekanism/recipe/{control_circuit/elite.json, control_circuit/infused_elite.json,
 // processing/refined_obsidian/ingot/from_dust.json, teleportation_core.json, qio_*.json}; tags data/mekanism/tags/item/alloys/reinforced.json,
-// data/c/tags/item/{circuits/advanced,circuits/ultimate,dusts/refined_obsidian,ingots/refined_obsidian,ender_pearls,glass_panes,ingots/lead}.json.
+// data/c/tags/item/{circuits/advanced,circuits/ultimate,dusts/refined_obsidian,ingots/refined_obsidian,ingots/lead}.json. (c:ender_pearls and
+// c:glass_panes are only referenced by Mekanism's recipes; they are bound by NeoForge / other jars — see IDS.vanilla below.)
 IDS.mek.eliteCircuit = 'mekanism:elite_control_circuit'
 IDS.mek.eliteCircuitRecipes = ['mekanism:control_circuit/elite', 'mekanism:control_circuit/infused_elite']
 IDS.mek.reinforcedAlloyTag = '#mekanism:alloys/reinforced'
@@ -120,7 +121,8 @@ IDS.ifg.advancedFrameTag = '#industrialforegoing:machine_frame/advanced'
 IDS.ifg.pinkSlime = 'industrialforegoing:pink_slime'
 IDS.ifg.diamondGearTag = '#c:gears/diamond'
 IDS.ifg.stasisChamber = 'industrialforegoing:stasis_chamber'
-// t4 §4–§6: cataclysm ender_guardian.json loot; deeperdarker dimension/otherside.json, loot_table/entities/{sludge,stalker}.json;
+// t4 §4–§6: L_Ender's Cataclysm 1.21.1-3.33.jar loot_table/entities/ender_guardian.json; deeperdarker-neoforge-1.21.1-1.4.1.jar
+// dimension/otherside.json, loot_table/entities/{sludge,stalker}.json; the_bumblezone-7.15.3+1.21.1-neoforge.jar
 // the_bumblezone dimension/the_bumblezone.json, advancement/structures/enter_throne_pillar.json.
 IDS.cataclysm.gauntletOfGuard = 'cataclysm:gauntlet_of_guard'
 IDS.cataclysm.enderGuardian = 'cataclysm:ender_guardian'
