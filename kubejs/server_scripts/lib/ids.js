@@ -1,4 +1,7 @@
-// Verified registry ids and tags (research/phase6-tier0-2-ids.md §A). Keep alphabetical by mod.
+// priority: 1
+// Verified registry ids and tags (research/phase6-tier0-2-ids.md §A). Keep alphabetical by mod. The priority header makes
+// this file load before every other server script (ScriptFile.compareTo: priority descending, then path), so top-level
+// IDS uses such as worldgen.js PLACEMENTS do not depend on file-name order.
 const IDS = {
   // zanite: the only zanite gem tag in any installed jar is aether-1.21.1-1.5.10-neoforge.jar!data/aether/tags/
   // item/gems/zanite.json ({"values":["aether:zanite_gemstone"]}) = tag id aether:gems/zanite. No jar ships
@@ -84,7 +87,8 @@ IDS.powah.blazingCrystalBlock = 'powah:blazing_crystal_block'
 // t3 §4: Mekanism-1.21.1-10.7.19.85.jar data/mekanism/recipe/{control_circuit/elite.json, control_circuit/infused_elite.json,
 // processing/refined_obsidian/ingot/from_dust.json, teleportation_core.json, qio_*.json}; tags data/mekanism/tags/item/alloys/reinforced.json,
 // data/c/tags/item/{circuits/advanced,circuits/ultimate,dusts/refined_obsidian,ingots/refined_obsidian,ingots/lead}.json. (c:ender_pearls and
-// c:glass_panes are only referenced by Mekanism's recipes; they are bound by NeoForge / other jars — see IDS.vanilla below.)
+// c:glass_panes are only referenced by Mekanism's recipes, not defined in its jar; tools/check_tags.py proves both bound and
+// non-empty against the boot-time tag export every run — see IDS.vanilla below.)
 IDS.mek.eliteCircuit = 'mekanism:elite_control_circuit'
 IDS.mek.eliteCircuitRecipes = ['mekanism:control_circuit/elite', 'mekanism:control_circuit/infused_elite']
 IDS.mek.reinforcedAlloyTag = '#mekanism:alloys/reinforced'
@@ -121,9 +125,9 @@ IDS.ifg.advancedFrameTag = '#industrialforegoing:machine_frame/advanced'
 IDS.ifg.pinkSlime = 'industrialforegoing:pink_slime'
 IDS.ifg.diamondGearTag = '#c:gears/diamond'
 IDS.ifg.stasisChamber = 'industrialforegoing:stasis_chamber'
-// t4 §4–§6: L_Ender's Cataclysm 1.21.1-3.33.jar loot_table/entities/ender_guardian.json; deeperdarker-neoforge-1.21.1-1.4.1.jar
-// dimension/otherside.json, loot_table/entities/{sludge,stalker}.json; the_bumblezone-7.15.3+1.21.1-neoforge.jar
-// the_bumblezone dimension/the_bumblezone.json, advancement/structures/enter_throne_pillar.json.
+// t4 §4–§6: L_Ender's Cataclysm 1.21.1-3.33.jar!data/cataclysm/loot_table/entities/ender_guardian.json;
+// deeperdarker-neoforge-1.21.1-1.4.1.jar!data/deeperdarker/{dimension/otherside.json, loot_table/entities/{sludge,stalker}.json};
+// the_bumblezone-7.15.3+1.21.1-neoforge.jar!data/the_bumblezone/{dimension/the_bumblezone.json, advancement/structures/enter_throne_pillar.json}.
 IDS.cataclysm.gauntletOfGuard = 'cataclysm:gauntlet_of_guard'
 IDS.cataclysm.enderGuardian = 'cataclysm:ender_guardian'
 IDS.dd = { resonarium: 'deeperdarker:resonarium', dimension: 'deeperdarker:otherside', sludge: 'deeperdarker:sludge', stalker: 'deeperdarker:stalker',
@@ -141,3 +145,9 @@ IDS.vanilla.stickyPiston = 'minecraft:sticky_piston'
 IDS.vanilla.piston = 'minecraft:piston'
 IDS.vanilla.theEnd = 'minecraft:the_end'
 IDS.vanilla.enderDragon = 'minecraft:ender_dragon'
+
+// Raw recipe/worldgen JSON wants a tag id without the leading '#'. Fails loudly instead of silently mangling a plain id.
+function tagId(tag) {
+  if (typeof tag !== 'string' || tag[0] !== '#') throw new Error('tagId: expected a #tag, got ' + tag)
+  return tag.slice(1)
+}
