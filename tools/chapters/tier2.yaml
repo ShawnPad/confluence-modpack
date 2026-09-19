@@ -22,7 +22,10 @@ quests:
     task: item:allthemodium:allthemodium_upgrade_smithing_template
     deps: [D2.2, X1.1]
     coins: 10
-    desc: "The template is in the Twilight stronghold cache loot, so it stays inside the dimension with the ore - go raid one. Then take it to a smithing table with netherite gear and Allthemodium ingots to upgrade your kit."
+    # Structure names are the mod's own: structure.twilightforest.knight_stronghold = "Knight Stronghold",
+    # structure.twilightforest.labyrinth = "Minotaur Labyrinth" (twilightforest-1.21.1-4.8.3345 assets/twilightforest/lang/en_us.json);
+    # chest table twilightforest:stronghold_cache, Dark Forest only (research/phase4-dimension-mods.md s2). Issue #2 tester note.
+    desc: "The template is in the chests of the Knight Stronghold - the goblin-held ruin under the Dark Forest, not the Minotaur Labyrinth - so it stays inside the dimension with the ore. Go raid one, then take it to a smithing table with netherite gear and Allthemodium ingots to upgrade your kit."
   - node: D2.4
     title: Knightmetal
     task: item:twilightforest:knightmetal_ingot
