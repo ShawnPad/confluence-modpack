@@ -1,4 +1,5 @@
-"""Assert the gate manifest (tools/gates.yaml) against the KubeJS recipe dump."""
+"""Assert the gate manifest (tools/gates.yaml) against the KubeJS recipe dump, and that every dump row carries its recipe
+body (the `json` column dump.js writes since v0.3; a missing or empty one means the dump itself broke)."""
 import json
 import sys
 from collections import Counter
@@ -15,6 +16,7 @@ class Result:
     missing: list = field(default_factory=list)
     still_present: list = field(default_factory=list)
     duplicates: list = field(default_factory=list)
+    no_json: list = field(default_factory=list)   # ids of rows with no `json` key or an empty one (v0.3 dump.js)
 
 
 def load_manifest(path: Path) -> tuple[list[str], list[str]]:
@@ -41,10 +43,11 @@ def run_checks(dump: list[dict], gates: list[str], removed: list[str]) -> Result
     res.still_present = [r for r in removed if r in ids]
     counts = Counter((r["type"], r["output"]) for r in dump if r["output"] and not r["type"].startswith("minecraft:crafting"))
     res.duplicates = sorted(k for k, n in counts.items() if n > 1)
+    res.no_json = [r["id"] for r in dump if not r.get("json")]
     return res
 
 
-if __name__ == "__main__":
+def main() -> int:
     dump = json.loads(DUMP.read_text())
     gates, removed = load_manifest(MANIFEST)
     r = run_checks(dump, gates, removed)
@@ -53,7 +56,13 @@ if __name__ == "__main__":
         print("  MISSING", m)
     for p in r.still_present:
         print("  STILL PRESENT", p)
+    if r.no_json:
+        print(f"  NO JSON {len(r.no_json)} rows have no recipe body (dump.js `json` column): {', '.join(r.no_json[:10])}")
     print(f"non-crafting duplicate outputs: {len(r.duplicates)} (informational; crafting-grid conflicts are Polymorph's job)")
     for d in r.duplicates[:50]:
         print("  dup", d)
-    sys.exit(1 if (r.missing or r.still_present) else 0)
+    return 1 if (r.missing or r.still_present or r.no_json) else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

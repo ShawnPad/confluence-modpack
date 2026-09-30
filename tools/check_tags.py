@@ -4,7 +4,8 @@ An ingredient that points at a tag no mod defines loads with zero KubeJS errors,
 dump, passes tools/check_recipes.py -- and is uncraftable in game (the `#c:gems/zanite` defect, D69).
 This checker closes that hole: kubejs/server_scripts/tagcheck.js exports every bound tag with its element
 count at ServerEvents.loaded, and this script asserts that every tag the pack *references* is in there
-with a count > 0.
+with a count > 0. A tag that passes in its registry but is bound with 0 entries in another one (the "empty twin", e.g. a
+block tag missing from NON_ITEM_TAGS that passes as an item tag of the same id) fails too.
 
 References are collected from three places:
   1. every `'#namespace:path'` / `"#namespace:path"` literal in kubejs/{server,startup,client}_scripts/**/*.js
@@ -84,11 +85,12 @@ class Result:
     checked: dict = field(default_factory=dict)   # tag -> element count (passing tags)
     absent: list = field(default_factory=list)    # (tag, registry, sources) -- no such tag is bound
     empty: list = field(default_factory=list)     # (tag, registry, sources) -- bound but 0 elements
+    empty_twin: list = field(default_factory=list)   # (tag, other registries, sources) -- non-empty where checked, 0 elsewhere
     no_registry: list = field(default_factory=list)
 
     @property
     def failures(self):
-        return self.absent + self.empty + self.no_registry
+        return self.absent + self.empty + self.empty_twin + self.no_registry
 
 
 def strip_js_comments(text: str) -> str:
@@ -178,7 +180,14 @@ def run_checks(refs: dict, export: dict) -> Result:
         elif export[registry][tag] == 0:
             res.empty.append(row)
         else:
-            res.checked[tag] = export[registry][tag]
+            # The empty twin: a block tag missing from NON_ITEM_TAGS passes as a non-empty item tag of the same id, while
+            # the tag the script means is bound with 0 entries in its own registry. Flag any other registry binding the id
+            # with 0 entries; a real item tag that also has an empty twin elsewhere is rare enough to check by hand.
+            twins = sorted(other for other, tags in export.items() if other != registry and tags.get(tag) == 0)
+            if twins:
+                res.empty_twin.append((tag, ", ".join(twins), refs[tag]))
+            else:
+                res.checked[tag] = export[registry][tag]
     return res
 
 
@@ -200,6 +209,10 @@ def main() -> int:
         print(f"  ABSENT #{tag} not bound in {registry} <- {', '.join(sources)}")
     for tag, registry, sources in res.empty:
         print(f"  EMPTY #{tag} bound in {registry} with 0 elements <- {', '.join(sources)}")
+    for tag, registries, sources in res.empty_twin:
+        checked_in = NON_ITEM_TAGS.get(tag, ITEM_REGISTRY)
+        print(f"  EMPTY TWIN #{tag} bound in {registries} with 0 elements, though {checked_in} has "
+              f"{export[checked_in][tag]}; map its registry in NON_ITEM_TAGS <- {', '.join(sources)}")
     return 1 if res.failures else 0
 
 

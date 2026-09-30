@@ -104,10 +104,10 @@ def test_collect_references_walks_scripts_and_data(tmp_path):
     assert refs["c:ingots/osmium"] == ["kubejs/server_scripts/lib/ids.js"]
 
 
-def test_v03_block_tags_map_to_the_block_registry():
-    """v0.3 (spec §7 D112, §8): the ATM tool-tier tags, the boss-immunity tags and the three ore-target stone tags that
-    lib/ids.js names are block tags. Looked up as item tags, ten would report ABSENT; allthemodium:ancient_stone would
-    pass by accident in minecraft:item (it is also a 1-entry item tag), so this test pins its registry."""
+def test_v03_block_tags_are_checked_in_the_block_registry():
+    """v0.3 (spec §7 D112, §8): allthemodium:ancient_stone is also a 1-entry item tag, so looked up in minecraft:item it
+    would pass even when the block tag lib/ids.js means is empty. Checked in minecraft:block, an empty one fails. The
+    pin: all eleven v0.3 block tags (ATM tool tiers, boss immunity, ore-target stones) map to minecraft:block."""
     v03 = [
         "c:needs_allthemodium_tool", "c:needs_vibranium_tool", "c:needs_unobtainium_tool",
         "minecraft:wither_immune", "cataclysm:ignis_immune", "cataclysm:maledictus_immune",
@@ -115,6 +115,10 @@ def test_v03_block_tags_map_to_the_block_registry():
         "allthemodium:ancient_stone", "ad_astra:mercury_stone_replaceables", "ad_astra:glacio_stone_replaceables",
     ]
     assert {t: NON_ITEM_TAGS.get(t) for t in v03} == {t: "minecraft:block" for t in v03}
+    export = {"minecraft:item": {"allthemodium:ancient_stone": 1}, "minecraft:block": {"allthemodium:ancient_stone": 0}}
+    res = run_checks({"allthemodium:ancient_stone": ["kubejs/server_scripts/lib/ids.js"]}, export)
+    assert res.empty == [("allthemodium:ancient_stone", "minecraft:block", ["kubejs/server_scripts/lib/ids.js"])]
+    assert res.checked == {}
 
 
 def test_bare_tag_ids_are_not_references():
@@ -124,3 +128,13 @@ def test_bare_tag_ids_are_not_references():
     src = ("IDS.tierOres = { t: ['undergarden:incorrect_for_forgotten_tool'], a: 'c:needs_allthemodiumalloy_tool' }\n"
            "event.add(IDS.tierOres.t[0], '#' + IDS.tierOres.a)\n")
     assert tags_from_script(src) == set()
+
+
+def test_empty_twin_in_another_registry_fails():
+    """A block tag missing from NON_ITEM_TAGS is looked up as an item tag. If an item tag of the same id is non-empty
+    it passes by accident, while the block tag the script means is bound with 0 entries: report that 'empty twin'."""
+    export = {"minecraft:item": {"mod:stone": 1, "c:ingots/osmium": 3}, "minecraft:block": {"mod:stone": 0, "c:ingots/osmium": 2}}
+    res = run_checks({"mod:stone": ["lib/ids.js"], "c:ingots/osmium": ["a.js"]}, export)
+    assert res.empty_twin == [("mod:stone", "minecraft:block", ["lib/ids.js"])]
+    assert res.checked == {"c:ingots/osmium": 3}
+    assert res.failures == [("mod:stone", "minecraft:block", ["lib/ids.js"])]

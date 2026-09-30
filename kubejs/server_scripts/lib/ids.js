@@ -1,5 +1,6 @@
 // priority: 1
-// Verified registry ids and tags (research/phase6-tier0-2-ids.md §A). Keep alphabetical by mod. The priority header makes
+// Verified registry ids and tags (research/phase6-tier0-2-ids.md §A). Order: the IDS literal below, then one block per
+// release appended after it ("Task 11 additions", v0.2, v0.3); new ids go in a new block at the end. The priority header makes
 // this file load before every other server script (ScriptFile.compareTo: priority descending, then path), so top-level
 // IDS uses such as worldgen.js PLACEMENTS do not depend on file-name order.
 const IDS = {
@@ -183,7 +184,7 @@ IDS.other = { dimension: 'allthemodium:the_other', beyond: 'allthemodium:the_bey
 // Vanilla items the v0.3 recipes name (spec §4.1, §5, §6): lang block.minecraft.{dragon_egg,redstone_torch,crafting_table,
 // lightning_rod,furnace} and item.minecraft.{bucket,elytra} in server-1.21.1-20240808.144430-extra.jar. The two c: tags are
 // NeoForge's: neoforge-21.1.250-universal.jar!data/c/tags/item/ingots/{copper,iron}.json. #minecraft:wool is the space suit's
-// W (AA §1.2); 337 items in tags.json.
+// W (AA §1.2); 337 items in tags.json at 0.2.1.
 IDS.vanilla.dragonEgg = 'minecraft:dragon_egg'
 IDS.vanilla.redstoneTorch = 'minecraft:redstone_torch'
 IDS.vanilla.craftingTable = 'minecraft:crafting_table'
@@ -198,7 +199,7 @@ IDS.vanilla.woolTag = '#minecraft:wool'
 // T5 §1.1–1.5: Mekanism-1.21.1-10.7.19.85.jar!data/mekanism/recipe/{control_circuit/ultimate,control_circuit/infused_ultimate,
 // digital_miner,qio_drive_base,qio_redstone_adapter,quantum_entangloporter,chemical_dissolution_chamber,chemical_washer,
 // chemical_crystallizer}.json; tags data/c/tags/item/circuits/elite.json, data/mekanism/tags/item/alloys/atomic.json,
-// data/c/tags/item/gems/fluorite.json (1 entry each in tags.json). Items: lang item.mekanism.* / block.mekanism.*.
+// data/c/tags/item/gems/fluorite.json (1 entry each in tags.json at 0.2.1). Items: lang item.mekanism.* / block.mekanism.*.
 IDS.mek.ultimateCircuit = 'mekanism:ultimate_control_circuit'
 IDS.mek.ultimateCircuitRecipes = ['mekanism:control_circuit/ultimate', 'mekanism:control_circuit/infused_ultimate']
 IDS.mek.eliteCircuitTag = '#c:circuits/elite'
@@ -225,7 +226,8 @@ IDS.mek.chemicalWasher = 'mekanism:chemical_washer'
 IDS.mek.chemicalCrystallizer = 'mekanism:chemical_crystallizer'
 IDS.mek.eliteSwapRecipes = ['mekanism:qio_drive_base', 'mekanism:qio_redstone_adapter', 'mekanism:quantum_entangloporter',
   'mekanism:chemical_dissolution_chamber', 'mekanism:chemical_washer', 'mekanism:chemical_crystallizer']
-// Raw-JSON recipe types (serializer ids as the dump's `type` column prints them: 89 mekanism:combining, 86 mekanism:mek_data rows).
+// Raw-JSON recipe types (serializer ids as the dump's `type` column prints them; at 0.2.1, 89 mekanism:combining and
+// 86 mekanism:mek_data rows).
 IDS.mek.combiningType = 'mekanism:combining'
 IDS.mek.mekDataType = 'mekanism:mek_data'
 // BA §1.1, §1.3: the Unobtainium 5x chain's three entry recipes (type mekanism:dissolution; allthemodium-3.0.1_mc_1.21.1.jar!
@@ -238,12 +240,12 @@ IDS.mek.unobtainiumChain = {
 
 // T5 §3.1: industrialforegoing-1.21-3.6.39.jar!data/industrialforegoing/recipe/dissolution_chamber/supreme_machine_frame.json
 // (the id the T5.2 datapack override replaces; dump type industrialforegoing:dissolution_chamber) and
-// data/industrialforegoing/tags/item/machine_frame/supreme.json (1 entry). Item: lang block.industrialforegoing.machine_frame_supreme.
+// data/industrialforegoing/tags/item/machine_frame/supreme.json (1 entry at 0.2.1). Item: lang block.industrialforegoing.machine_frame_supreme.
 IDS.ifg.supremeFrame = 'industrialforegoing:machine_frame_supreme'
 IDS.ifg.supremeFrameTag = '#industrialforegoing:machine_frame/supreme'
 IDS.ifg.supremeFrameRecipe = 'industrialforegoing:dissolution_chamber/supreme_machine_frame'
 
-// T5 §2.1–2.2: Powah-6.2.10.jar (lang block.powah.nitro_crystal_block); energizing is the dump type of 19 rows.
+// T5 §2.1–2.2: Powah-6.2.10.jar (lang block.powah.nitro_crystal_block); energizing is the dump type of 19 rows at 0.2.1.
 IDS.powah.nitroBlock = 'powah:nitro_crystal_block'
 IDS.powah.energizingType = 'powah:energizing'
 
@@ -261,26 +263,26 @@ IDS.allthemodium.unobVibAlloy = 'allthemodium:unobtainium_vibranium_alloy_ingot'
 IDS.allthemodium.piglichHeart = 'allthemodium:piglich_heart'
 
 // Tier-ore closures (spec §7 D112; GAP §2.2 tags the ores are in, §2.4 the nine empty incorrect_for tags). Block-tag
-// counts are the boot's tags.json, registry minecraft:block.
+// counts are the boot's tags.json at 0.2.1, registry minecraft:block.
 IDS.tierOres = {
   // D112b: the five ore blocks (lang block.allthemodium.* and assets/allthemodium/blockstates/*.json).
   blocks: [IDS.allthemodium.ore, IDS.allthemodium.slateOre, IDS.allthemodium.vibraniumOre, IDS.allthemodium.otherVibraniumOre,
     IDS.allthemodium.unobtainiumOre],
   // D112a: ATM's three non-empty tool-tier tags (allthemodium jar data/c/tags/block/needs_{allthemodium,vibranium,unobtainium}_tool.json;
-  // 4, 3 and 20 blocks).
+  // 4, 3 and 20 blocks at 0.2.1).
   needsToolTags: ['#c:needs_allthemodium_tool', '#c:needs_vibranium_tool', '#c:needs_unobtainium_tool'],
   // The spec's fourth tag is bound but EMPTY: allthemodium jar data/c/tags/block/needs_allthemodiumalloy_tool.json is
-  // {"values": []} and tags.json counts 0. Bare on purpose, because check_tags fails on an empty '#' literal. D112a still
+  // {"values": []} and tags.json counts 0 at 0.2.1. Bare on purpose, because check_tags fails on an empty '#' literal. D112a still
   // nests all four: Task 8 writes '#' + IDS.tierOres.alloyToolTagEmpty, which check_tags does not see, by design.
   alloyToolTagEmpty: 'c:needs_allthemodiumalloy_tool',
-  // The nine tags D112a fills. Each is bare because it is bound but empty until then (0 blocks in tags.json; GAP §2.4), so
+  // The nine tags D112a fills. Each is bare because it is bound but empty until then (0 blocks in tags.json at 0.2.1; GAP §2.4), so
   // a '#' literal would fail check_tags. Bare is also the form event.add(tag, ...) takes as its first argument.
   incorrectForTags: ['cataclysm:needs_monstrosity_tool', 'cataclysm:needs_black_steel_tool', 'undergarden:incorrect_for_forgotten_tool',
     'deeperdarker:incorrect_for_resonarium_tool', 'deeperdarker:incorrect_for_warden_tool', 'mekanism:incorrect_for_disassembler',
     'mekanism:incorrect_for_meka_tool', 'mysticalagriculture:incorrect_for_supremium_tool',
     'mysticalagriculture:incorrect_for_awakened_supremium_tool'],
-  // D112b: block tags the five ores join. All bound and non-empty (wither_immune 102; ignis, maledictus, scylla 26 each;
-  // netherite_monstrosity 39): server-1.21.1-20240808.144430-extra.jar!data/minecraft/tags/block/wither_immune.json and
+  // D112b: block tags the five ores join. All bound and non-empty at 0.2.1 (wither_immune 102; ignis, maledictus, scylla
+  // 26 each; netherite_monstrosity 39): server-1.21.1-20240808.144430-extra.jar!data/minecraft/tags/block/wither_immune.json and
   // L_Ender's Cataclysm 1.21.1-3.33.jar!data/cataclysm/tags/block/{ignis,maledictus,scylla,netherite_monstrosity}_immune.json.
   // Non-empty, so kept with '#' for check_tags. Task 8 passes tagId(t) as the first argument of event.add:
   // kubejs-neoforge-2101.7.2-build.377.jar TagKubeEvent.add(ResourceLocation, Object...) converts a JS string with
@@ -295,9 +297,9 @@ IDS.tierOres = {
 
 // Spec §8 worldgen. OD §1: The Other's biome_source lists exactly these seven biomes (allthemodium jar
 // data/allthemodium/dimension/the_other.json; each at data/allthemodium/worldgen/biome/<name>.json) and its stone is
-// allthemodium:ancient_stone (tag data/allthemodium/tags/block/ancient_stone.json, 1 block). AA §4.1–4.4:
+// allthemodium:ancient_stone (tag data/allthemodium/tags/block/ancient_stone.json, 1 block at 0.2.1). AA §4.1–4.4:
 // adastra-1.21.1-1.16.25-neoforge.jar data/ad_astra/worldgen/biome/{mercury_deltas,glacio_ice_peaks,glacio_snowy_barrens}.json
-// and data/ad_astra/tags/block/{mercury,glacio}_stone_replaceables.json (1 and 2 blocks). Biome lists are plain ids.
+// and data/ad_astra/tags/block/{mercury,glacio}_stone_replaceables.json (1 and 2 blocks at 0.2.1). Biome lists are plain ids.
 IDS.worldgen = {
   otherBiomes: ['allthemodium:soul_sand_valley', 'allthemodium:the_other', 'allthemodium:desert', 'allthemodium:basalt_deltas',
     'allthemodium:warped_forest', 'allthemodium:desert_hills', 'allthemodium:crimson_forest'],
@@ -324,7 +326,7 @@ IDS.ars.waterEssence = 'ars_nouveau:water_essence'
 IDS.ars.fireEssence = 'ars_nouveau:fire_essence'
 // SS §1.1: irons_spellbooks-1.21.1-3.16.3.jar lang item.irons_spellbooks.divine_soulshard (M6.1 pedestal).
 IDS.irons.divineSoulshard = 'irons_spellbooks:divine_soulshard'
-// ES §3.7: eternalstarlight-0.9.0+1.21.1+neoforge.jar!data/c/tags/item/ingots/unrealium.json (1 entry; D6.1's W).
+// ES §3.7: eternalstarlight-0.9.0+1.21.1+neoforge.jar!data/c/tags/item/ingots/unrealium.json (1 entry at 0.2.1; D6.1's W).
 IDS.starlight = { unrealiumIngotTag: '#c:ingots/unrealium' }
 
 // AE2 §1.1–1.2, §3, §5: appliedenergistics2-19.2.17.jar lang block.ae2.* / item.ae2.*. The default recipes are removed BY ID:
@@ -350,10 +352,10 @@ IDS.ae2 = {
 }
 
 // AA §1.1–1.4, §2, §3.2: adastra-1.21.1-1.16.25-neoforge.jar lang item.ad_astra.* / block.ad_astra.*; tags
-// data/ad_astra/tags/item/{steel_plates,steel_blocks}.json (1 and 2 entries) and data/c/tags/item/ingots/{desh,ostrum,calorite}.json
-// (1 each); recipe types from ModRecipeTypes (AA §2; dump types ad_astra:alloying 1 row, ad_astra:compressing 10). No Etrium
-// tag exists (AA §2.3), so Etrium is named by item. Each machine's item id is also its default recipe id (dump rows, all
-// minecraft:crafting_shaped).
+// data/ad_astra/tags/item/{steel_plates,steel_blocks}.json (1 and 2 entries at 0.2.1) and data/c/tags/item/ingots/{desh,ostrum,
+// calorite}.json (1 each at 0.2.1); recipe types from ModRecipeTypes (AA §2; dump types at 0.2.1: ad_astra:alloying 1 row,
+// ad_astra:compressing 10). No Etrium tag exists (AA §2.3), so Etrium is named by item. Each machine's item id is also its
+// default recipe id (dump rows, all minecraft:crafting_shaped).
 IDS.adastra = {
   nasaWorkbench: 'ad_astra:nasa_workbench', spaceSuit: 'ad_astra:space_suit', oxygenLoader: 'ad_astra:oxygen_loader',
   fuelRefinery: 'ad_astra:fuel_refinery', steelEngine: 'ad_astra:steel_engine',
