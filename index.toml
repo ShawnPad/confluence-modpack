@@ -186,7 +186,7 @@ hash = "067d44714d44518e84b729bba5eb98c8107dbea2564d69c4c7d8ac51319439af"
 
 [[files]]
 file = "kubejs/server_scripts/dump.js"
-hash = "17858d7c7694e6edd6180977ad80eeb7bbad9b33c392a70603054c705822479a"
+hash = "faf61916cd8117e807b0c8601eb2b38f1226a673da4fbbc5ee1894164ea07379"
 
 [[files]]
 file = "kubejs/server_scripts/events.js"
