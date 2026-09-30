@@ -49,6 +49,28 @@ NON_ITEM_TAGS = {
     # minecraft:deepslate_ore_replaceables with count 2, and neither appears under minecraft:item.
     "minecraft:stone_ore_replaceables": "minecraft:block",
     "minecraft:deepslate_ore_replaceables": "minecraft:block",
+    # v0.3, spec §7 D112a: ids.js IDS.tierOres.needsToolTags, ATM's three tool-tier tags, are block tags:
+    # allthemodium-3.0.1_mc_1.21.1.jar!data/c/tags/block/needs_{allthemodium,vibranium,unobtainium}_tool.json; the boot's
+    # tags.json binds them under minecraft:block with counts 4, 3 and 20. The fourth, needs_allthemodiumalloy_tool, is bound
+    # with 0 blocks, so ids.js keeps it bare and the tier-ore script builds it as '#' + ..., which is never looked up.
+    "c:needs_allthemodium_tool": "minecraft:block",
+    "c:needs_vibranium_tool": "minecraft:block",
+    "c:needs_unobtainium_tool": "minecraft:block",
+    # v0.3, spec §7 D112b: ids.js IDS.tierOres.immuneTags, the blocks a boss may not break:
+    # server-1.21.1-20240808.144430-extra.jar!data/minecraft/tags/block/wither_immune.json and L_Ender's Cataclysm
+    # 1.21.1-3.33.jar!data/cataclysm/tags/block/{ignis,maledictus,scylla,netherite_monstrosity}_immune.json; tags.json
+    # minecraft:block counts 102, 26, 26, 26 and 39.
+    "minecraft:wither_immune": "minecraft:block",
+    "cataclysm:ignis_immune": "minecraft:block",
+    "cataclysm:maledictus_immune": "minecraft:block",
+    "cataclysm:scylla_immune": "minecraft:block",
+    "cataclysm:netherite_monstrosity_immune": "minecraft:block",
+    # v0.3, spec §8: ids.js IDS.worldgen ore-target stone tags: allthemodium-3.0.1_mc_1.21.1.jar!data/allthemodium/tags/
+    # block/ancient_stone.json and adastra-1.21.1-1.16.25-neoforge.jar!data/ad_astra/tags/block/
+    # {mercury,glacio}_stone_replaceables.json; tags.json minecraft:block counts 1, 1 and 2.
+    "allthemodium:ancient_stone": "minecraft:block",
+    "ad_astra:mercury_stone_replaceables": "minecraft:block",
+    "ad_astra:glacio_stone_replaceables": "minecraft:block",
 }
 
 # A tag literal: a quoted string whose first character is '#', followed by a well-formed resource location.

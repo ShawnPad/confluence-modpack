@@ -4,6 +4,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from check_tags import (
+    NON_ITEM_TAGS,
     collect_references,
     run_checks,
     strip_js_comments,
@@ -101,3 +102,25 @@ def test_collect_references_walks_scripts_and_data(tmp_path):
     assert set(refs) == {"c:ingots/osmium", "c:plastics", "c:circuits/basic"}
     assert refs["c:circuits/basic"] == ["kubejs/data/mod/recipe/x.json"]
     assert refs["c:ingots/osmium"] == ["kubejs/server_scripts/lib/ids.js"]
+
+
+def test_v03_block_tags_map_to_the_block_registry():
+    """v0.3 (spec §7 D112, §8): the ATM tool-tier tags, the boss-immunity tags and the three ore-target stone tags that
+    lib/ids.js names are block tags. Looked up as item tags, ten would report ABSENT; allthemodium:ancient_stone would
+    pass by accident in minecraft:item (it is also a 1-entry item tag), so this test pins its registry."""
+    v03 = [
+        "c:needs_allthemodium_tool", "c:needs_vibranium_tool", "c:needs_unobtainium_tool",
+        "minecraft:wither_immune", "cataclysm:ignis_immune", "cataclysm:maledictus_immune",
+        "cataclysm:scylla_immune", "cataclysm:netherite_monstrosity_immune",
+        "allthemodium:ancient_stone", "ad_astra:mercury_stone_replaceables", "ad_astra:glacio_stone_replaceables",
+    ]
+    assert {t: NON_ITEM_TAGS.get(t) for t in v03} == {t: "minecraft:block" for t in v03}
+
+
+def test_bare_tag_ids_are_not_references():
+    """Bound-but-empty tags stay bare in lib/ids.js (IDS.tierOres.incorrectForTags, alloyToolTagEmpty), so the
+    checker never looks them up; only a leading '#' inside one literal makes a reference. Task 8 nests the empty
+    alloy tag as '#' + IDS.tierOres.alloyToolTagEmpty (spec §7 D112a), which must stay invisible too."""
+    src = ("IDS.tierOres = { t: ['undergarden:incorrect_for_forgotten_tool'], a: 'c:needs_allthemodiumalloy_tool' }\n"
+           "event.add(IDS.tierOres.t[0], '#' + IDS.tierOres.a)\n")
+    assert tags_from_script(src) == set()
