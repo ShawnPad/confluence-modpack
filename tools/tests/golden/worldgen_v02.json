@@ -1,0 +1,353 @@
+{
+  "confluence:neoforge/biome_modifier/allthemodium_twilight.json": {
+    "biomes": "#twilightforest:in_twilight_forest",
+    "features": [
+      "confluence:allthemodium_twilight"
+    ],
+    "step": "underground_ores",
+    "type": "neoforge:add_features"
+  },
+  "confluence:neoforge/biome_modifier/uraninite_dense_mining.json": {
+    "biomes": "allthemodium:mining",
+    "features": [
+      "confluence:uraninite_dense_mining"
+    ],
+    "step": "underground_ores",
+    "type": "neoforge:add_features"
+  },
+  "confluence:neoforge/biome_modifier/uraninite_mining.json": {
+    "biomes": "allthemodium:mining",
+    "features": [
+      "confluence:uraninite_mining"
+    ],
+    "step": "underground_ores",
+    "type": "neoforge:add_features"
+  },
+  "confluence:neoforge/biome_modifier/uraninite_poor_mining.json": {
+    "biomes": "allthemodium:mining",
+    "features": [
+      "confluence:uraninite_poor_mining"
+    ],
+    "step": "underground_ores",
+    "type": "neoforge:add_features"
+  },
+  "confluence:neoforge/biome_modifier/vibranium_undergarden.json": {
+    "biomes": "#undergarden:is_undergarden",
+    "features": [
+      "confluence:vibranium_undergarden"
+    ],
+    "step": "underground_ores",
+    "type": "neoforge:add_features"
+  },
+  "confluence:worldgen/configured_feature/allthemodium_twilight.json": {
+    "config": {
+      "discard_chance_on_air_exposure": 0,
+      "size": 4,
+      "targets": [
+        {
+          "state": {
+            "Name": "allthemodium:allthemodium_ore"
+          },
+          "target": {
+            "predicate_type": "minecraft:tag_match",
+            "tag": "minecraft:stone_ore_replaceables"
+          }
+        },
+        {
+          "state": {
+            "Name": "allthemodium:allthemodium_slate_ore"
+          },
+          "target": {
+            "predicate_type": "minecraft:tag_match",
+            "tag": "minecraft:deepslate_ore_replaceables"
+          }
+        }
+      ]
+    },
+    "type": "minecraft:ore"
+  },
+  "confluence:worldgen/configured_feature/uraninite_dense_mining.json": {
+    "config": {
+      "discard_chance_on_air_exposure": 0,
+      "size": 8,
+      "targets": [
+        {
+          "state": {
+            "Name": "powah:uraninite_ore_dense"
+          },
+          "target": {
+            "predicate_type": "minecraft:tag_match",
+            "tag": "minecraft:stone_ore_replaceables"
+          }
+        },
+        {
+          "state": {
+            "Name": "powah:deepslate_uraninite_ore_dense"
+          },
+          "target": {
+            "predicate_type": "minecraft:tag_match",
+            "tag": "minecraft:deepslate_ore_replaceables"
+          }
+        }
+      ]
+    },
+    "type": "minecraft:ore"
+  },
+  "confluence:worldgen/configured_feature/uraninite_mining.json": {
+    "config": {
+      "discard_chance_on_air_exposure": 0,
+      "size": 8,
+      "targets": [
+        {
+          "state": {
+            "Name": "powah:uraninite_ore"
+          },
+          "target": {
+            "predicate_type": "minecraft:tag_match",
+            "tag": "minecraft:stone_ore_replaceables"
+          }
+        },
+        {
+          "state": {
+            "Name": "powah:deepslate_uraninite_ore"
+          },
+          "target": {
+            "predicate_type": "minecraft:tag_match",
+            "tag": "minecraft:deepslate_ore_replaceables"
+          }
+        }
+      ]
+    },
+    "type": "minecraft:ore"
+  },
+  "confluence:worldgen/configured_feature/uraninite_poor_mining.json": {
+    "config": {
+      "discard_chance_on_air_exposure": 0,
+      "size": 8,
+      "targets": [
+        {
+          "state": {
+            "Name": "powah:uraninite_ore_poor"
+          },
+          "target": {
+            "predicate_type": "minecraft:tag_match",
+            "tag": "minecraft:stone_ore_replaceables"
+          }
+        },
+        {
+          "state": {
+            "Name": "powah:deepslate_uraninite_ore_poor"
+          },
+          "target": {
+            "predicate_type": "minecraft:tag_match",
+            "tag": "minecraft:deepslate_ore_replaceables"
+          }
+        }
+      ]
+    },
+    "type": "minecraft:ore"
+  },
+  "confluence:worldgen/configured_feature/vibranium_undergarden.json": {
+    "config": {
+      "discard_chance_on_air_exposure": 0,
+      "size": 4,
+      "targets": [
+        {
+          "state": {
+            "Name": "allthemodium:vibranium_ore"
+          },
+          "target": {
+            "predicate_type": "minecraft:tag_match",
+            "tag": "undergarden:depthrock_ore_replaceables"
+          }
+        },
+        {
+          "state": {
+            "Name": "allthemodium:vibranium_ore"
+          },
+          "target": {
+            "predicate_type": "minecraft:tag_match",
+            "tag": "undergarden:shiverstone_ore_replaceables"
+          }
+        },
+        {
+          "state": {
+            "Name": "allthemodium:vibranium_ore"
+          },
+          "target": {
+            "predicate_type": "minecraft:tag_match",
+            "tag": "undergarden:dreadrock_ore_replaceables"
+          }
+        }
+      ]
+    },
+    "type": "minecraft:ore"
+  },
+  "confluence:worldgen/placed_feature/allthemodium_twilight.json": {
+    "feature": "confluence:allthemodium_twilight",
+    "placement": [
+      {
+        "count": 12,
+        "type": "minecraft:count"
+      },
+      {
+        "type": "minecraft:in_square"
+      },
+      {
+        "height": {
+          "max_inclusive": {
+            "absolute": 10
+          },
+          "min_inclusive": {
+            "above_bottom": 0
+          },
+          "type": "minecraft:uniform"
+        },
+        "type": "minecraft:height_range"
+      },
+      {
+        "allowed_search_condition": {
+          "blocks": [
+            "minecraft:air",
+            "minecraft:cave_air"
+          ],
+          "type": "minecraft:matching_blocks"
+        },
+        "direction_of_search": "down",
+        "max_steps": 12,
+        "target_condition": {
+          "direction": "up",
+          "type": "minecraft:has_sturdy_face"
+        },
+        "type": "minecraft:environment_scan"
+      },
+      {
+        "type": "minecraft:biome"
+      }
+    ]
+  },
+  "confluence:worldgen/placed_feature/uraninite_dense_mining.json": {
+    "feature": "confluence:uraninite_dense_mining",
+    "placement": [
+      {
+        "count": 4,
+        "type": "minecraft:count"
+      },
+      {
+        "type": "minecraft:in_square"
+      },
+      {
+        "height": {
+          "max_inclusive": {
+            "absolute": 250
+          },
+          "min_inclusive": {
+            "absolute": 65
+          },
+          "type": "minecraft:trapezoid"
+        },
+        "type": "minecraft:height_range"
+      },
+      {
+        "type": "minecraft:biome"
+      }
+    ]
+  },
+  "confluence:worldgen/placed_feature/uraninite_mining.json": {
+    "feature": "confluence:uraninite_mining",
+    "placement": [
+      {
+        "count": 8,
+        "type": "minecraft:count"
+      },
+      {
+        "type": "minecraft:in_square"
+      },
+      {
+        "height": {
+          "max_inclusive": {
+            "absolute": 250
+          },
+          "min_inclusive": {
+            "absolute": 65
+          },
+          "type": "minecraft:trapezoid"
+        },
+        "type": "minecraft:height_range"
+      },
+      {
+        "type": "minecraft:biome"
+      }
+    ]
+  },
+  "confluence:worldgen/placed_feature/uraninite_poor_mining.json": {
+    "feature": "confluence:uraninite_poor_mining",
+    "placement": [
+      {
+        "count": 8,
+        "type": "minecraft:count"
+      },
+      {
+        "type": "minecraft:in_square"
+      },
+      {
+        "height": {
+          "max_inclusive": {
+            "absolute": 250
+          },
+          "min_inclusive": {
+            "absolute": 65
+          },
+          "type": "minecraft:trapezoid"
+        },
+        "type": "minecraft:height_range"
+      },
+      {
+        "type": "minecraft:biome"
+      }
+    ]
+  },
+  "confluence:worldgen/placed_feature/vibranium_undergarden.json": {
+    "feature": "confluence:vibranium_undergarden",
+    "placement": [
+      {
+        "count": 3,
+        "type": "minecraft:count"
+      },
+      {
+        "type": "minecraft:in_square"
+      },
+      {
+        "height": {
+          "max_inclusive": {
+            "absolute": -16
+          },
+          "min_inclusive": {
+            "absolute": -55
+          },
+          "type": "minecraft:uniform"
+        },
+        "type": "minecraft:height_range"
+      },
+      {
+        "allowed_search_condition": {
+          "blocks": [
+            "minecraft:air",
+            "minecraft:cave_air"
+          ],
+          "type": "minecraft:matching_blocks"
+        },
+        "direction_of_search": "down",
+        "max_steps": 12,
+        "target_condition": {
+          "direction": "up",
+          "type": "minecraft:has_sturdy_face"
+        },
+        "type": "minecraft:environment_scan"
+      },
+      {
+        "type": "minecraft:biome"
+      }
+    ]
+  }
+}

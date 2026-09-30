@@ -1,7 +1,13 @@
 // Spec §4.2 placement table, extended by the v0.3 spec §8 (docs/superpowers/specs/2026-09-25-v0.3-tiers-5-6-design.md).
-// One row → configured_feature + placed_feature + add_features modifier (D14, D58). Optional row fields: `targets` (a row's own
-// stone tags, D86), `discard` (discard_chance_on_air_exposure, default 0.0, D121). `biomes` is a biome id, a '#tag' or a list
-// of biome ids; it goes into the modifier unchanged (see the modifier line below).
+// One row → configured_feature + placed_feature + add_features modifier (D14, D58). Row fields:
+// - `exposed`: true seats the vein in a cave floor: a uniform height_range, then the downward environment_scan in the loop
+//   below (D77). false buries it: a trapezoid height_range and no scan.
+// - `biomes`: one biome id, a '#tag', or a non-empty list of plain biome ids (no '#' entries; a tag goes in as the whole
+//   field). It goes into the modifier unchanged (see the modifier line below).
+// - Optional: `targets` (a row's own stone tags, D86; otherwise `stone` / `deepslate` on the vanilla stone/deepslate pair)
+//   and `discard` (discard_chance_on_air_exposure, default 0.0, D121).
+// The loop throws, naming the row's path, on any other `biomes` shape (an empty list would place nowhere) and on an
+// `exposed` row with discard > 0: the floor scan seats the vein against air, which a discard chance would thin.
 const PLACEMENTS = [
   // Allthemodium: Twilight Forest, exposed in cave floors, vein 4, 6 attempts per chunk (see the exposed branch below)
   { path: 'allthemodium_twilight', feature: 'confluence:allthemodium_twilight', biomes: '#twilightforest:in_twilight_forest',
@@ -53,8 +59,9 @@ const PLACEMENTS = [
   // '#allthemodium:mining_features/mining_biomes' (adds allthemodium:mining; count 7). The Other's caves are plain
   // minecraft:air (aquifers_enabled false, default_fluid air; OD §1), which the floor scan's [air, cave_air] list accepts.
   // Band: uniform 8..128, the top of ATM's own placed_feature/unobtainium_ore.json. size 4 as the other floor rows; count
-  // tuned by probe toward ~1.1 ore blocks per chunk (D111): count 16 averages 1.29 ore/chunk over three fresh 256-chunk
-  // squares (research/phase7-v0.3-test-log.md §1).
+  // tuned by probe toward ~1.1 ore blocks per chunk (D111): count 16 averages 1.29 ore/chunk in y 8..128 over three fresh
+  // 256-chunk squares (1.00–1.46 per square; about 1.32 over all y, counting veins the floor scan seats in y 1–7)
+  // (research/phase7-v0.3-test-log.md §1).
   { path: 'unobtainium_other', feature: 'confluence:unobtainium_other', biomes: IDS.worldgen.otherBiomes,
     size: 4, count: 16, exposed: true, min: { absolute: 8 }, max: { absolute: 128 },
     targets: [{ tag: IDS.worldgen.ancientStone, block: IDS.allthemodium.unobtainiumOre }] },
@@ -63,7 +70,10 @@ const PLACEMENTS = [
   // ad_astra/tags/block/mercury_stone_replaceables.json = [ad_astra:mercury_stone] and glacio_stone_replaceables.json =
   // [ad_astra:glacio_stone, ad_astra:permafrost] (AA §4.3). Glacio turns to deepslate below y 8 (worldgen/noise_settings/
   // glacio.json vertical_gradient true at and below y 0, false at and above y 8; AA §4.2), so its row adds the vanilla
-  // deepslate tag, Ad Astra's own glacio_* / glacio_deepslate_* split. Mercury has no deepslate layer. Biomes: each
+  // deepslate tag as a second target. That copies only the two hosts of Ad Astra's own Glacio ores, which ship one feature
+  // and block per host (worldgen/configured_feature/glacio_iron_ore.json on glacio_stone_replaceables;
+  // glacio_deepslate_iron_ore.json placing minecraft:deepslate_iron_ore on deepslate_ore_replaceables; AA §4.3). This row
+  // is one feature that places the same kubejs:glacio_ore in both hosts. Mercury has no deepslate layer. Biomes: each
   // dimension's whole biome_source (dimension/mercury.json: mercury_deltas; dimension/glacio.json: glacio_ice_peaks,
   // glacio_snowy_barrens; AA §4.1). discard 0.5 is Ad Astra's own planet-metal value: worldgen/configured_feature/
   // {moon_desh_ore,mars_ostrum_ore,venus_calorite_ore}.json all set "discard_chance_on_air_exposure": 0.5 (AA §4.4, D121).
@@ -84,6 +94,16 @@ const PLACEMENTS = [
 
 ServerEvents.generateData('after_mods', pack => {
   PLACEMENTS.forEach(p => {
+    // Row check, failing loudly like tagId (lib/ids.js); the two rules are in the header.
+    let listOk = Array.isArray(p.biomes) && p.biomes.length > 0 &&
+      p.biomes.every(b => typeof b === 'string' && b.charAt(0) !== '#')
+    if (typeof p.biomes !== 'string' && !listOk) {
+      throw new Error('worldgen: row ' + p.path + ': biomes must be a biome id, a #tag or a non-empty list of biome ids, got ' +
+        JSON.stringify(p.biomes))
+    }
+    if (p.exposed && p.discard > 0) {
+      throw new Error('worldgen: row ' + p.path + ': exposed (floor-scan) rows keep discard 0, got ' + p.discard)
+    }
     const configured = JsonIO.toObject({
       type: 'minecraft:ore',
       config: {
