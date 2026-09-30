@@ -1,8 +1,9 @@
 // Tier 5 — The Other (v0.3 spec, docs/superpowers/specs/2026-09-25-v0.3-tiers-5-6-design.md §5). Ids: lib/ids.js, v0.3 block.
 // Report keys as in the spec: T5 = research/phase7-tier5-ids.md, AE2 = phase7-ae2-ids.md, OD = phase7-other-dimension.md,
 // BA = phase7-tier5-6-bypass-audit.md. Each group of rows is its own recipes-event handler under a '// ----' heading; KubeJS
-// runs every handler registered for the event, in script load order. No top-level const or function in this file: all server
-// scripts share one scope (HANDOFF §6). This comment must not spell out the event call: later tasks count the handlers with grep.
+// runs every handler registered for the event, in script load order (EventHandlerContainer.add/handle, as dump.js cites). No
+// top-level const or function in this file: all server scripts share one scope (HANDOFF §6). Later tasks count the handlers
+// with grep -c '^ServerEvents\.recipes(', so each handler begins its line with that call and no other line may.
 
 // ---- Mekanism: T5.1 ultimate control circuit, X5.3 Digital Miner.
 ServerEvents.recipes(event => {

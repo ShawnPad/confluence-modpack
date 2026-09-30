@@ -50,7 +50,7 @@ ServerEvents.recipes(event => {
   // has an ultimate one, so the QIO line stays at tier 3 once tier5.js puts the ultimate circuit behind Unobtainium.
   gate.remove(event, { id: IDS.mek.qioDriveArrayRecipe })
   gate.custom(event, 'confluence:tier3/qio_drive_array', {
-    type: 'mekanism:mek_data', category: 'misc',
+    type: IDS.mek.mekDataType, category: 'misc',
     key: { '#': { tag: tagId(IDS.mek.personalStorageTag) }, C: { tag: tagId(IDS.mek.eliteCircuitTag) }, G: { tag: tagId(IDS.vanilla.glassPaneTag) },
            T: { item: IDS.mek.teleportationCore }, V: { tag: tagId(IDS.allthemodium.vibraniumIngotTag) } },
     pattern: ['TGT', 'C#C', 'TVT'],
@@ -66,11 +66,12 @@ ServerEvents.recipes(event => {
 
   // v0.3 (D113, v0.3 spec §5 "T5.1 side"): six more tier-3 tree items whose Mekanism default takes ultimate circuits. Each default
   // is removed by id and rewritten here with its own pattern and result; only the circuit key changes, to #c:circuits/elite.
-  // Bodies: Mekanism-1.21.1-10.7.19.85.jar!data/mekanism/recipe/<name>.json (T5 §1.5, re-read for the v0.3 plan); no other recipe
-  // in the 118 jars outputs these six items. The four minecraft:crafting_shaped defaults go through gate.shaped, which loads as
-  // kubejs:shaped (the dump's json column, boot 2026-09-29), a crafting-grid shaped recipe all the same (ShapedKubeJSRecipe extends
-  // ShapedRecipe, kubejs-neoforge-2101.7.2-build.377.jar): pattern, keys and result are the default's, and only the serializer id
-  // changes, minecraft:crafting_shaped -> kubejs:shaped. The two mekanism:mek_data defaults stay raw JSON (D87) and keep their type.
+  // Bodies: Mekanism-1.21.1-10.7.19.85.jar!data/mekanism/recipe/<name>.json (T5 §1.5). Each default is its item's only producer
+  // in the 118 jars (v0.3 plan Task 4 Fact 4), and ours is the only one loaded (research/phase7-v0.3-test-log.md §2, Step 7).
+  // The four minecraft:crafting_shaped defaults go through gate.shaped and load as kubejs:shaped (test log §2), a crafting-grid
+  // shaped recipe all the same (ShapedKubeJSRecipe extends ShapedRecipe, kubejs-neoforge-2101.7.2-build.377.jar); the omitted
+  // category decodes to misc, the defaults' value (ShapedKubeJSRecipe$SerializerKJS: orElse(MISC)). Only the serializer id
+  // changes. The two mekanism:mek_data defaults stay raw JSON (D87) and keep their type.
   IDS.mek.eliteSwapRecipes.forEach(id => gate.remove(event, { id: id }))
   // [S3.1] QIO drive (the base of every QIO drive tier): ICI/C#C/ICI; C was mekanism:ultimate_control_circuit by item, 4 cells.
   gate.shaped(event, 'confluence:tier3/qio_drive_base', IDS.mek.qioDriveBase, ['ICI', 'C#C', 'ICI'],

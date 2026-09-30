@@ -8,6 +8,10 @@ Digital Miner with Mekanism's own defaults (DEFAULTS, checked against the jar by
 that tier3.js no longer asks for an ultimate circuit. A missing IDS key shows up before any boot, as '<undefined>' or as a
 tagId error in `errors`. Later tasks append their own handlers to tier5.js; one that throws here (an API this stub lacks) is
 listed in `errors` and does not hide the others' records.
+
+The harness runs under node's V8, not the pack's Rhino: it pins the recipes the handlers record, not that the files load in
+KubeJS. tools/server_boot.sh (KubeJS `0 errors`, `0 failed recipes`) is the load proof; tools/tests/test_rhino_hazards.py lints
+one known Rhino trap.
 """
 import json
 import os
@@ -22,7 +26,8 @@ ROOT = Path(__file__).resolve().parents[2]
 TIER3 = "kubejs/server_scripts/tiers/tier3.js"
 TIER5 = "kubejs/server_scripts/tiers/tier5.js"
 SCRIPTS = ["kubejs/server_scripts/lib/ids.js", "kubejs/server_scripts/lib/gates.js", TIER3, TIER5]
-MEK_JAR = ROOT / ".run" / "server" / "mods" / "Mekanism-1.21.1-10.7.19.85.jar"
+MODS = ROOT / ".run" / "server" / "mods"
+MEK_JAR = MODS / "Mekanism-1.21.1-10.7.19.85.jar"
 
 HARNESS = r"""
 const fs = require('fs'), path = require('path'), vm = require('vm')
@@ -103,6 +108,19 @@ REWRITES = {
 # Miner's default and the six D113 defaults.
 REMOVED_BY_ID = ["mekanism:control_circuit/ultimate", "mekanism:control_circuit/infused_ultimate", "mekanism:digital_miner"] + [
     "mekanism:" + name for name in DEFAULTS if name != "digital_miner"]
+# The 26 default consumers of the circuit that move to tier 5 with it and stay loaded: `moved` in the v0.3 plan's Task 4 Step 7
+# script (T5 §1.5's 35 consumers minus D113's nine).
+MOVED_TO_TIER5 = [
+    "mekanism:antiprotonic_nucleosynthesizer", "mekanism:bin/ultimate", "mekanism:dimensional_stabilizer",
+    "mekanism:induction/provider/ultimate", "mekanism:isotopic_centrifuge", "mekanism:meka_tool", "mekanism:mekasuit_bodyarmor",
+    "mekanism:mekasuit_boots", "mekanism:mekasuit_helmet", "mekanism:mekasuit_pants", "mekanism:modification_station",
+    "mekanism:module_blasting_unit", "mekanism:sps_port", "mekanism:supercharged_coil", "mekanism:tier_installer/ultimate",
+    "mekanismgenerators:reactor/controller", "mekanismgenerators:reactor/port"] + [
+    "mekanism:factory/ultimate/" + k for k in ("combining", "compressing", "crushing", "enriching", "infusing", "injecting",
+                                               "purifying", "sawing", "smelting")]
+# A recipe's loaded type, keyed by its jar default's type: gate.shaped loads as kubejs:shaped (research/phase7-v0.3-test-log.md
+# §2); raw-JSON types load as written.
+LOADED_AS = {"minecraft:crafting_shaped": "kubejs:shaped"}
 
 
 @pytest.fixture(scope="module")
@@ -123,15 +141,13 @@ def ingredient(v):
 
 
 def view(r):
-    """(kind, pattern, key, (result id, count)) of a recorded gate.shaped or gate.custom recipe: the harness checks a
-    crafting-grid shaped recipe with this pattern, key and result. For gate.shaped, kind is the literal
-    'minecraft:crafting_shaped', the default's type as DEFAULTS spells it, compared as the recipe kind only. It is not the
-    serializer the recipe loads with, which is kubejs:shaped (the dump's json column, boot 2026-09-29; ShapedKubeJSRecipe
-    extends ShapedRecipe in kubejs-neoforge-2101.7.2-build.377.jar). For gate.custom, kind is the JSON's own type
-    (mekanism:mek_data), which is also its loaded type."""
+    """(loaded_type, pattern, key, (result id, count)) of a recorded gate.shaped or gate.custom recipe. A gate.shaped recipe
+    loads as kubejs:shaped (research/phase7-v0.3-test-log.md §2), a crafting-grid shaped recipe all the same (javap,
+    kubejs-neoforge-2101.7.2-build.377.jar: ShapedKubeJSRecipe extends net.minecraft.world.item.crafting.ShapedRecipe).
+    A gate.custom recipe loads with its JSON's own type."""
     if r["kind"] == "shaped":
         out = r["output"] if isinstance(r["output"], dict) else {"id": r["output"], "count": None}
-        return ("minecraft:crafting_shaped", r["pattern"], {k: ingredient(v) for k, v in r["keys"].items()},
+        return ("kubejs:shaped", r["pattern"], {k: ingredient(v) for k, v in r["keys"].items()},
                 (out["id"], out["count"]))
     j = r["json"]
     return (j["type"], j["pattern"], {k: ingredient(v) for k, v in j["key"].items()}, (j["result"]["id"], j["result"]["count"]))
@@ -149,13 +165,13 @@ def test_rewrite_keeps_the_default_except_the_circuit(recorded, rid):
     r = one(recorded, rid)
     assert r["file"] == (TIER5 if rid.startswith("confluence:tier5/") else TIER3)
     typ, pattern, key, result = DEFAULTS[name]
-    assert view(r) == (typ, pattern, {**key, letter: circuit}, result)
+    assert view(r) == (LOADED_AS.get(typ, typ), pattern, {**key, letter: circuit}, result)
 
 
 def test_t51_ultimate_control_circuit(recorded):
     r = one(recorded, "confluence:tier5/ultimate_control_circuit")
     assert r["file"] == TIER5
-    assert view(r) == ("minecraft:crafting_shaped", ["EAE", "UTU", "EAE"],
+    assert view(r) == ("kubejs:shaped", ["EAE", "UTU", "EAE"],
                        {"E": ELITE, "A": "#mekanism:alloys/atomic", "U": "#c:ingots/unobtainium", "T": "ars_nouveau:wilden_tribute"},
                        (ULTIMATE_ITEM, 4))
 
@@ -163,6 +179,10 @@ def test_t51_ultimate_control_circuit(recorded):
 def test_defaults_removed_by_id(recorded):
     removed = {e["filter"].get("id") for e in recorded["removed"] if isinstance(e["filter"], dict)}
     assert sorted(set(REMOVED_BY_ID) - removed) == []
+    # No over-removal: no MOVED_TO_TIER5 id is removed, and nothing is removed by the circuit as output.
+    filters = [e["filter"] if isinstance(e["filter"], dict) else {"id": e["filter"]} for e in recorded["removed"]]
+    over = [f for f in filters if f.get("id") in MOVED_TO_TIER5 or f.get("output") in (ULTIMATE_ITEM, ULTIMATE)]
+    assert over == []
 
 
 @pytest.mark.parametrize("rid,cells", [("confluence:tier3/qio_drive_array", 2), ("confluence:tier3/qio_importer", 1),
@@ -181,10 +201,14 @@ def test_tier3_asks_for_no_ultimate_circuit(recorded):
 
 
 def test_defaults_match_the_jar():
-    if not MEK_JAR.exists():
-        pytest.skip(f"{MEK_JAR} is not present (no server has been booted on this machine)")
-    jar = zipfile.ZipFile(MEK_JAR)
-    for name, want in DEFAULTS.items():
-        d = json.loads(jar.read(f"data/mekanism/recipe/{name}.json"))
-        got = (d["type"], d["pattern"], {k: ingredient(v) for k, v in d["key"].items()}, (d["result"]["id"], d["result"]["count"]))
-        assert got == want, name
+    if not MODS.is_dir():
+        pytest.skip(f"{MODS} does not exist (no server has been booted from this clone)")
+    # 'Mekanism-*.jar' does not match MekanismGenerators-*.jar or MekanismAdditions-*.jar: the hyphen follows 'Mekanism'.
+    found = sorted(MODS.glob("Mekanism-*.jar"))
+    assert found == [MEK_JAR], f"DEFAULTS were read from {MEK_JAR.name}; {MODS} holds {[p.name for p in found]}"
+    with zipfile.ZipFile(MEK_JAR) as jar:
+        for name, want in DEFAULTS.items():
+            d = json.loads(jar.read(f"data/mekanism/recipe/{name}.json"))
+            got = (d["type"], d["pattern"], {k: ingredient(v) for k, v in d["key"].items()},
+                   (d["result"]["id"], d["result"]["count"]))
+            assert got == want, name
