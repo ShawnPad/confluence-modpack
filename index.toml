@@ -234,7 +234,7 @@ hash = "d75c37df6f3a34c84b37d28141165584f3236083c9eb2b7ded107d26b7c3a8e5"
 
 [[files]]
 file = "kubejs/server_scripts/tiers/tier3.js"
-hash = "0627211e81f91f65dca38d4c4361c76e6b94592cbe0a32c317d4772c22e2060f"
+hash = "a1c1434343324f3ebc3988b3736d29bbb68ff989b6705ff21e5d4a4c7d85f1ab"
 
 [[files]]
 file = "kubejs/server_scripts/tiers/tier4.js"
@@ -242,7 +242,7 @@ hash = "0bce97fcea6e10522098d2ba81252b465204b1064228418060aa6fa7424d61e3"
 
 [[files]]
 file = "kubejs/server_scripts/tiers/tier5.js"
-hash = "0e0ce28c70ba5ecc38a8a0360c1e9c89bf092b45c1bc432b3bd33bdd5cd74095"
+hash = "5186574a130b1a4badbb17eeaebe4f68a5aa169791e6d25dee3812f36de00ac0"
 
 [[files]]
 file = "kubejs/server_scripts/worldgen.js"
