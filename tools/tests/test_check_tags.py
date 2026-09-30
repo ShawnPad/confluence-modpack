@@ -2,10 +2,16 @@ import json
 from pathlib import Path
 import sys
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from check_tags import (
+    IDS_JS,
     NON_ITEM_TAGS,
+    check_deny_tags,
     collect_references,
+    ids_value,
+    read_tier_ore_tags,
     run_checks,
     strip_js_comments,
     tags_from_json,
@@ -142,3 +148,72 @@ def test_empty_twin_in_another_registry_fails(monkeypatch):
     monkeypatch.setitem(NON_ITEM_TAGS, "mod:mapped", "minecraft:block")
     mapped = run_checks({"mod:mapped": ["lib/ids.js"]}, {"minecraft:item": {"mod:mapped": 0}, "minecraft:block": {"mod:mapped": 2}})
     assert mapped.empty_twin == [] and mapped.checked == {"mod:mapped": 2}
+
+
+# D112(a) (v0.3 plan Task 8): the nine deny tags and ATM's four needs tags, as lib/ids.js names them.
+DENY_NINE = [
+    "cataclysm:needs_monstrosity_tool", "cataclysm:needs_black_steel_tool", "undergarden:incorrect_for_forgotten_tool",
+    "deeperdarker:incorrect_for_resonarium_tool", "deeperdarker:incorrect_for_warden_tool", "mekanism:incorrect_for_disassembler",
+    "mekanism:incorrect_for_meka_tool", "mysticalagriculture:incorrect_for_supremium_tool",
+    "mysticalagriculture:incorrect_for_awakened_supremium_tool",
+]
+ATM_NEEDS = ["c:needs_allthemodium_tool", "c:needs_vibranium_tool", "c:needs_unobtainium_tool", "c:needs_allthemodiumalloy_tool"]
+
+
+def deny_export(deny=27, **overrides):
+    """A synthetic tags.json: the four needs tags at their 0.3.0 counts (4, 3, 20, 0) and every deny tag at `deny`. An
+    override of None drops that tag from the export."""
+    block = {"c:needs_allthemodium_tool": 4, "c:needs_vibranium_tool": 3, "c:needs_unobtainium_tool": 20,
+             "c:needs_allthemodiumalloy_tool": 0, "minecraft:wither_immune": 107}
+    block.update({t: deny for t in DENY_NINE})
+    for tag, count in overrides.items():
+        tag = tag.replace("__", ":")
+        if count is None:
+            block.pop(tag)
+        else:
+            block[tag] = count
+    return {"minecraft:item": {}, "minecraft:block": block}
+
+
+def test_deny_tags_holding_the_needs_sum_pass():
+    assert check_deny_tags(deny_export(), DENY_NINE, ATM_NEEDS) == (27, [])
+
+
+def test_deny_tag_at_zero_fails():
+    """The 0.2.1 state (each deny tag ships empty), for one tag, and for all nine."""
+    expected, bad = check_deny_tags(deny_export(**{"mekanism__incorrect_for_meka_tool": 0}), DENY_NINE, ATM_NEEDS)
+    assert (expected, bad) == (27, ["DENY TAG #mekanism:incorrect_for_meka_tool holds 0 blocks, expected 27"])
+    assert len(check_deny_tags(deny_export(deny=0), DENY_NINE, ATM_NEEDS)[1]) == 9
+
+
+def test_deny_or_needs_tag_missing_from_the_export_fails():
+    """A deny tag that is not bound at all fails. So does a missing needs tag: if ATM stopped shipping the empty
+    needs_allthemodiumalloy_tool, vanilla would build none of the nine (they reference it), and the sum is unknown."""
+    expected, bad = check_deny_tags(deny_export(**{"cataclysm__needs_black_steel_tool": None}), DENY_NINE, ATM_NEEDS)
+    assert (expected, bad) == (27, ["ABSENT #cataclysm:needs_black_steel_tool (a D112a deny tag) not bound in minecraft:block"])
+    gone = deny_export(**{"c__needs_allthemodiumalloy_tool": None}, **{t.replace(":", "__"): None for t in DENY_NINE})
+    expected, bad = check_deny_tags(gone, DENY_NINE, ATM_NEEDS)
+    assert expected is None and len(bad) == 10
+    assert bad[0] == "ABSENT #c:needs_allthemodiumalloy_tool (an ATM needs tag) not bound in minecraft:block"
+    no_block = check_deny_tags({"minecraft:item": {}}, DENY_NINE, ATM_NEEDS)
+    assert no_block == (None, ["NO SUCH REGISTRY minecraft:block in the export"])
+
+
+def test_needs_tags_summing_to_zero_fail():
+    """Deny tags equal to an empty sum would deny nothing, so a pass there would be vacuous."""
+    empty = {t.replace(":", "__"): 0 for t in ATM_NEEDS}
+    expected, bad = check_deny_tags(deny_export(deny=0, **empty), DENY_NINE, ATM_NEEDS)
+    assert expected == 0 and bad == ["the ATM needs tags hold 0 blocks between them, so the deny tags would deny nothing"]
+
+
+def test_deny_and_needs_tags_are_read_from_ids_js():
+    assert read_tier_ore_tags(IDS_JS.read_text()) == (DENY_NINE, ATM_NEEDS)
+
+
+def test_ids_value_fails_closed():
+    """A missing, repeated or computed key raises, so the boot check can never pass by checking nothing."""
+    assert ids_value("a: ['x:y', \"x:z\"], b: 'q:r'", "a") == ["x:y", "x:z"]
+    assert ids_value("a: ['x:y'], b: 'q:r'", "b") == "q:r"
+    for src in ("b: ['x:y']", "a: ['x:y'], a: ['x:z']", "a: [IDS.x.y, 'x:z']", "a: []", "a: IDS.x.y"):
+        with pytest.raises(ValueError):
+            ids_value(src, "a")

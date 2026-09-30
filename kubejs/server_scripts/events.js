@@ -36,5 +36,9 @@ ServerEvents.tags('block', event => {
   // minecraft:wither_immune and drop the raw item with no tool; GAP §2.3c) and the four Cataclysm boss immune tags
   // (L_Ender's Cataclysm 1.21.1-3.33.jar!data/cataclysm/tags/block/{ignis,maledictus,scylla,netherite_monstrosity}_immune.json).
   // No jar lists an ATM block in any of the five today (every wither_immune.json and the four Cataclysm files were read).
+  // Benign spillover: two tags nest #minecraft:wither_immune, so they gain the five ores too (tags.json 142 -> 147, 265 -> 270).
+  // twilightforest-1.21.1-4.8.3345-universal.jar!data/twilightforest/tags/block/block_and_chain_never_breaks.json (ChainBlock
+  // .canBreakBlockAt refuses its blocks; GAP §2.3) and the_bumblezone-7.15.3+1.21.1-neoforge.jar!data/the_bumblezone/tags/
+  // block/sentry_watcher/forced_never_destroy.json (SentryWatcherEntity stops at its blocks): both only protect a block.
   IDS.tierOres.immuneTags.forEach(tag => event.add(tagId(tag), IDS.tierOres.blocks))
 })

@@ -76,6 +76,8 @@ ServerEvents.recipes(event => {
   // Mekanism-1.21.1-10.7.19.85.jar!data/mekanism/recipe/combining/muddy_mangrove_roots.json: "extra_input":{"count":1,
   // "item":"minecraft:mud"}; kubejs-mekanism-neoforge-2101.1.7-build.18.jar!data/mekanism/kubejs/recipe_schema/combining.json
   // types extra_input as flat_sized_ingredient (NeoForge SizedIngredient.FLAT_CODEC), which reads that form.
+  // Orphaned on purpose, as in the two chains above: ATM's processing/unobtainium/slurry/clean and crystal/from_slurry stay
+  // registered, but no recipe makes allthemodium:dirty_unobtainium any more (boot dump), so nothing can feed them.
   const etriumIngot = { count: 1, item: IDS.adastra.etriumIngot }
   gate.remove(event, { id: IDS.mek.unobtainiumChain.slurryDirtyFromOre })
   gate.remove(event, { id: IDS.mek.unobtainiumChain.slurryDirtyFromRawOre })
@@ -106,8 +108,8 @@ ServerEvents.recipes(event => {
   // {allthemodium,vibranium,unobtainium}_ingot_from_{ore,raw}_smelting.json; no other jar has a smelting recipe for these
   // ores or raw items. Kept on purpose: *_ingot_from_{ore,raw}_blasting (a blast furnace still works) and
   // *_ingot_from_dust_{smelting,blasting} (dust comes from Mekanism processing of a mined ore, never from a breaker).
-  // Side effect, a change to 0.2 play that spec §7 does not list (plan Task 8 hand-off to the changelog, PLAYTEST and
-  // decisions log): Mekanism's Energized Smelter and smelting factories read the same minecraft:smelting list
+  // Side effect, a change to 0.2 play that spec §7 does not list (D130): Mekanism's Energized Smelter and smelting
+  // factories read the same minecraft:smelting list
   // (Mekanism-1.21.1-10.7.19.85.jar MekanismRecipeType.getRecipesUncached: RecipeManager.getAllRecipesFor(RecipeType.SMELTING);
   // TileEntityEnergizedSmelter and TileEntityItemStackToItemStackFactory use MekanismRecipeType.SMELTING), so they stop
   // cooking tier ore and raw metal too. Tier dusts still cook there through the kept *_ingot_from_dust_smelting.

@@ -80,10 +80,23 @@ gates:
   - ae2:network/crafting/molecular_assembler
   - ae2:network/parts/terminals_pattern_encoding
   - ae2:network/parts/terminals_crafting
-  # v0.3 bypass (Task 8): X2.2 Unobtainium 5x chain waits for Etrium (D125)
+  # v0.3 bypass: X2.2 Unobtainium 5x chain waits for Etrium (bypass.js); D125
   - confluence:bypass/unobtainium_crystal_from_ore
   - confluence:bypass/unobtainium_crystal_from_raw_ore
   - confluence:bypass/unobtainium_crystal_from_raw_block
+  # v0.3 bypass: tier-ore recipes D112(c) keeps, blast furnace and dust (bypass.js); D112, D130
+  - allthemodium:allthemodium_ingot_from_ore_blasting
+  - allthemodium:allthemodium_ingot_from_raw_blasting
+  - allthemodium:allthemodium_ingot_from_dust_smelting
+  - allthemodium:allthemodium_ingot_from_dust_blasting
+  - allthemodium:vibranium_ingot_from_ore_blasting
+  - allthemodium:vibranium_ingot_from_raw_blasting
+  - allthemodium:vibranium_ingot_from_dust_smelting
+  - allthemodium:vibranium_ingot_from_dust_blasting
+  - allthemodium:unobtainium_ingot_from_ore_blasting
+  - allthemodium:unobtainium_ingot_from_raw_blasting
+  - allthemodium:unobtainium_ingot_from_dust_smelting
+  - allthemodium:unobtainium_ingot_from_dust_blasting
 removed:
   # v0.1 tiers 0–2
   - minecraft:flint_and_steel
@@ -154,11 +167,11 @@ removed:
   - ae2:network/wireless_part
   - ae2:network/crafting/cpu_crafting_unit
   - ae2:network/blocks/pattern_providers_interface
-  # v0.3 bypass (Task 8): X2.2 Unobtainium 5x chain entry recipes (D125)
+  # v0.3 bypass: X2.2 Unobtainium 5x chain entry recipes (bypass.js); D125
   - allthemodium:processing/unobtainium/slurry/dirty/from_ore
   - allthemodium:processing/unobtainium/slurry/dirty/from_raw_ore
   - allthemodium:processing/unobtainium/slurry/dirty/from_raw_block
-  # v0.3 bypass (Task 8): D112(c) tier-ore and raw-drop smelting (blasting and dust recipes stay)
+  # v0.3 bypass: tier-ore and raw-drop smelting; blasting and dust stay (bypass.js); D112(c), D130
   - allthemodium:allthemodium_ingot_from_ore_smelting
   - allthemodium:vibranium_ingot_from_ore_smelting
   - allthemodium:unobtainium_ingot_from_ore_smelting

@@ -13,6 +13,13 @@ References are collected from three places:
   2. every `"tag": "<id>"` value, at any depth, in kubejs/data/**/*.json (recipe ingredients drop the '#');
   3. nothing else -- a tag the pack neither names in a script nor in a datapack file is not its problem.
 
+A second, closed check proves spec §7 D112(a) at every boot (v0.3 plan Task 8; events.js). The nine tool-tier deny tags that
+ship empty get ATM's four netherite-tier tags, so each must hold exactly the sum of those four (4 + 3 + 20 + 0 = 27 at 0.3.0).
+Both lists are read from lib/ids.js (IDS.tierOres.incorrectForTags, needsToolTags and alloyToolTagEmpty). The export holds
+counts, not members, so the check is that arithmetic, and a deny tag or needs tag missing from the export fails as well.
+Its result is printed on its own line after the reference lines, and its failures are also added to the first line's bad
+count, so that line reads "0 bad" exactly when the exit status is 0 (later steps read it with `head -1`).
+
 Run after tools/server_boot.sh:  python3 tools/check_tags.py
 """
 import json
@@ -23,6 +30,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 EXPORT = ROOT / ".run" / "server" / "kubejs" / "exported" / "tags.json"
+IDS_JS = ROOT / "kubejs" / "server_scripts" / "lib" / "ids.js"
 
 SCRIPT_DIRS = ("kubejs/server_scripts", "kubejs/startup_scripts", "kubejs/client_scripts")
 DATA_DIR = "kubejs/data"
@@ -192,6 +200,58 @@ def run_checks(refs: dict, export: dict) -> Result:
     return res
 
 
+# D112(a). The four needs tags are disjoint (allthemodium-3.0.1_mc_1.21.1.jar!data/c/tags/block/needs_*.json), so a deny tag
+# that nests all four holds their sum. A deny tag missing from the export fails too: vanilla builds no tag with a missing
+# reference (server-1.21.1-20240808.144430-srg.jar net.minecraft.tags.TagLoader.build logs "Couldn't load tag {} as it is
+# missing following references" and does not put it). The nine are created in code (Tool$Rule.forTag ->
+# DefaultedRegistry.getOrCreateTag), so they stay in the export at 0 even when unbuilt: if ATM stopped shipping the empty
+# needs_allthemodiumalloy_tool, the nine would read 0 and that needs tag would be absent. Both fail this check.
+DENY_REGISTRY = "minecraft:block"
+QUOTED = re.compile(r"'([^'\\]*)'|\"([^\"\\]*)\"")
+
+
+def ids_value(src: str, key: str):
+    """The literal value of `key:` in comment-stripped JS source: a list of strings for an array of string literals, or a
+    string. Raises ValueError unless the key appears exactly once with a literal value, so a renamed or computed key fails
+    the check instead of checking nothing."""
+    found = re.findall(r"\b" + re.escape(key) + r"\s*:\s*(\[[^\]]*\]|'[^']*'|\"[^\"]*\")", src)
+    if len(found) != 1:
+        raise ValueError(f"expected one literal `{key}:` in lib/ids.js, found {len(found)}")
+    value = found[0]
+    if not value.startswith("["):
+        return value[1:-1]
+    items = [a or b for a, b in QUOTED.findall(value)]
+    if QUOTED.sub("", value[1:-1]).replace(",", "").strip() or not items:
+        raise ValueError(f"`{key}:` in lib/ids.js is not a non-empty array of string literals")
+    return items
+
+
+def read_tier_ore_tags(ids_js_text: str):
+    """(the nine deny tags, the four ATM needs tags) from lib/ids.js's IDS.tierOres, without the leading '#'."""
+    src = strip_js_comments(ids_js_text)
+    nine = ids_value(src, "incorrectForTags")
+    needs = [t.lstrip("#") for t in ids_value(src, "needsToolTags")] + [ids_value(src, "alloyToolTagEmpty")]
+    return nine, needs
+
+
+def check_deny_tags(export: dict, nine: list, needs: list):
+    """(expected count or None, bad lines) for D112(a): each of `nine` must be bound in minecraft:block with exactly the sum
+    of the `needs` counts, and that sum must be above 0."""
+    block = export.get(DENY_REGISTRY)
+    if block is None:
+        return None, [f"NO SUCH REGISTRY {DENY_REGISTRY} in the export"]
+    bad = [f"ABSENT #{t} (an ATM needs tag) not bound in {DENY_REGISTRY}" for t in needs if t not in block]
+    expected = None if bad else sum(block[t] for t in needs)
+    if expected == 0:
+        bad.append("the ATM needs tags hold 0 blocks between them, so the deny tags would deny nothing")
+    for t in nine:
+        if t not in block:
+            bad.append(f"ABSENT #{t} (a D112a deny tag) not bound in {DENY_REGISTRY}")
+        elif expected is not None and block[t] != expected:
+            bad.append(f"DENY TAG #{t} holds {block[t]} blocks, expected {expected}")
+    return expected, bad
+
+
 def main() -> int:
     if not EXPORT.exists():
         print(f"MISSING EXPORT {EXPORT}")
@@ -200,8 +260,13 @@ def main() -> int:
     export = json.loads(EXPORT.read_text())
     refs = collect_references(ROOT)
     res = run_checks(refs, export)
+    try:
+        nine, needs = read_tier_ore_tags(IDS_JS.read_text())
+        expected, deny_bad = check_deny_tags(export, nine, needs)
+    except (OSError, ValueError) as e:
+        nine, needs, expected, deny_bad = [], [], None, [f"CANNOT READ IDS.tierOres from {IDS_JS.relative_to(ROOT)}: {e}"]
 
-    print(f"tags: {len(refs)} referenced, {len(res.checked)} verified non-empty, {len(res.failures)} bad")
+    print(f"tags: {len(refs)} referenced, {len(res.checked)} verified non-empty, {len(res.failures) + len(deny_bad)} bad")
     for tag, count in sorted(res.checked.items()):
         print(f"  ok {tag} ({count})")
     for tag, registry, sources in res.no_registry:
@@ -214,7 +279,13 @@ def main() -> int:
         checked_in = NON_ITEM_TAGS.get(tag, ITEM_REGISTRY)
         print(f"  EMPTY TWIN #{tag} bound in {registries} with 0 elements, though {checked_in} has "
               f"{export[checked_in][tag]}; map its registry in NON_ITEM_TAGS <- {', '.join(sources)}")
-    return 1 if res.failures else 0
+    sums = " + ".join(f"#{t} ({export.get(DENY_REGISTRY, {}).get(t, 'absent')})" for t in needs)
+    total = "an unknown count" if expected is None else expected
+    print(f"deny tags (D112a): {len(nine)} checked in {DENY_REGISTRY}, each must hold {total} = {sums or '?'}; "
+          f"{len(deny_bad)} bad")
+    for line in deny_bad:
+        print(f"  {line}")
+    return 1 if res.failures or deny_bad else 0
 
 
 if __name__ == "__main__":

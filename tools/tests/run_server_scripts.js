@@ -5,13 +5,17 @@
 // test_server_script_top_level_names_are_unique checks name uniqueness. The harness then fires every ServerEvents.recipes
 // handler and every ServerEvents.tags('block') handler those scripts registered, and prints one JSON object on stdout:
 //   { handlers: { recipes: n, blockTags: n }, removed: [id | '/regex/' | 'output:<id>' | 'filter:<json>'], custom: [{ id, json }],
-//     blockTags: [{ tag, values }], errors: [string] }
+//     blockTags: [{ tag, op: 'add' | 'remove' | 'removeAll', values }], errors: [string] }
 // stdout carries that object and nothing else: the scripts' console (log, info, warn, error, debug) goes to stderr.
 // Usage, from pack/:  node tools/tests/run_server_scripts.js kubejs/server_scripts/bypass.js [more scripts]
-// Every kubejs/server_scripts/lib/*.js loads too (the scripts call IDS, tagId() and gate.*). Load order is KubeJS's own:
-// the '// priority: N' header on the first line, higher first, then the path (lib/ids.js comment, ScriptFile.compareTo).
-// Only the event members the tested scripts call are modelled: remove/custom/shaped/shapeless on the recipes event, and
-// add/get(...).add on the tags event. Any other KubeJS global a script touches while loading is an inert stand-in.
+// Every kubejs/server_scripts/lib/*.js loads too (the scripts call IDS, tagId() and gate.*). Load order is KubeJS's own; see
+// `priority` below.
+// Only these event members are modelled: remove/custom/shaped/shapeless on the recipes event, and add/remove/removeAll,
+// called on the event or on the wrapper get(tag) returns, on the tags event (the edit members of
+// kubejs-neoforge-2101.7.2-build.377.jar TagKubeEvent and TagWrapper, javap; removeAllTagsFrom, also an edit member, is not
+// modelled). Calling any other member of either event throws a TypeError, which lands in `errors`. Any other KubeJS global a script touches while loading is an inert stand-in.
+// Not recorded yet (plan Task 8b records both): shaped and shapeless recipes, and an event.custom(json) whose .id(...) is
+// never called. A script that adds a recipe either way passes the node tests unseen; only the boot's recipe dump lists it.
 // node runs V8, NOT the pack's Rhino (rhino-2101.2.7-build.85.jar under KubeJS 2101.7.2). A script that loads and runs here can
 // still fail in KubeJS: for example Rhino throws `redeclaration of var` for a `const` directly inside a `try` block, which V8
 // accepts (tools/tests/test_rhino_hazards.py lints that one case). So this harness pins what the scripts ask KubeJS to do, not
@@ -58,8 +62,32 @@ const load = rel => {
 const LIB = 'kubejs/server_scripts/lib'
 const files = fs.readdirSync(path.join(ROOT, LIB)).filter(f => f.endsWith('.js')).map(f => LIB + '/' + f)
 process.argv.slice(2).forEach(f => { if (!files.includes(f)) files.push(f) })
-const priority = rel => { const m = /^\s*\/\/ priority: (-?\d+)/.exec(fs.readFileSync(path.join(ROOT, rel), 'utf8')); return m ? Number(m[1]) : 0 }
-files.sort((a, b) => priority(b) - priority(a) || (a < b ? -1 : a > b ? 1 : 0)).forEach(load)
+// KubeJS's load order, mirrored (kubejs-neoforge-2101.7.2-build.377.jar, javap -c). ScriptFile.<init> reads every line of the
+// file (Files.readAllLines). Each line is String.trim()med; one that starts with '//' has the rest, trimmed, matched against
+// PROPERTY_PATTERN ^(\w+)\s*[:=]?\s*(-?\w+)$, and each match is appended to that property's list. getProperty returns the
+// list's LAST value, and <init> sets priority = Integer.parseInt(getProperty('priority', '0')). ScriptFile.compareTo sorts
+// priority descending, then ScriptFileInfo.locationPath (the path inside server_scripts/) by String.compareToIgnoreCase;
+// lower-casing both sides matches that for the pack's ASCII paths.
+const PROPERTY = /^(\w+)\s*[:=]?\s*(-?\w+)$/
+const javaTrim = s => s.replace(/^[\u0000-\u0020]+|[\u0000-\u0020]+$/g, '')   // String.trim: code points <= U+0020 only
+const priority = rel => {
+  let value = '0'
+  for (const raw of fs.readFileSync(path.join(ROOT, rel), 'utf8').split(/\r\n|\r|\n/)) {
+    const line = javaTrim(raw)
+    const m = line.startsWith('//') ? PROPERTY.exec(javaTrim(line.slice(2))) : null
+    if (m && m[1] === 'priority') value = m[2]
+  }
+  if (/^-?\d+$/.test(value)) return Number(value)
+  out.errors.push(rel + ': priority ' + value + ' is not an integer (KubeJS Integer.parseInt throws)')
+  return 0
+}
+const locationPath = rel => rel.replace(/^kubejs\/server_scripts\//, '').toLowerCase()
+const priorities = new Map(files.map(f => [f, priority(f)]))   // once per file, as ScriptFile.<init> does
+const byLoadOrder = (a, b) => {
+  const la = locationPath(a), lb = locationPath(b)
+  return priorities.get(b) - priorities.get(a) || (la < lb ? -1 : la > lb ? 1 : 0)
+}
+files.sort(byLoadOrder).forEach(load)
 
 // A removal filter is recorded by its exact shape: {id: 'string'} as the id, {id: /regex/} as '/regex/', {output: x} as
 // 'output:<x>', and any other filter (another key, more than one key, a non-object) as 'filter:' + its JSON, with each RegExp
@@ -79,12 +107,22 @@ const recipeEvent = {
   shaped: () => ({ id: () => {} }),
   shapeless: () => ({ id: () => {} }),
 }
-const record = (tag, values) => { out.blockTags.push({ tag: String(tag), values: flat(values).map(String) }) }
+// Every tag edit is recorded with its op, whether it is called on the event or on the wrapper get(tag) returns. As in KubeJS,
+// the event's add/remove/removeAll return that wrapper, so a chained call is recorded too.
+const record = (op, tag, values) => { out.blockTags.push({ tag: String(tag), op: op, values: flat(values).map(String) }) }
+const wrapper = tag => {
+  const w = {
+    add: (...values) => { record('add', tag, values); return w },
+    remove: (...values) => { record('remove', tag, values); return w },
+    removeAll: () => { record('removeAll', tag, []); return w },
+  }
+  return w
+}
 const tagEvent = {
-  add: (tag, ...values) => record(tag, values),
-  get: tag => { const w = { add: (...v) => { record(tag, v); return w }, remove: () => w, removeAll: () => w }; return w },
-  remove: () => {},
-  removeAll: () => {},
+  get: tag => wrapper(tag),
+  add: (tag, ...values) => wrapper(tag).add(...values),
+  remove: (tag, ...values) => wrapper(tag).remove(...values),
+  removeAll: tag => wrapper(tag).removeAll(),
 }
 out.handlers.recipes = handlers.recipes.length
 out.handlers.blockTags = (handlers.tags.block || []).length

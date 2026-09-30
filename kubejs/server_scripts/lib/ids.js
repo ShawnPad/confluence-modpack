@@ -289,7 +289,8 @@ IDS.tierOres = {
   // ID.mc -> ID.of(o, false) -> ResourceLocation.parse, which does not strip a '#', so a '#' id there throws at load.
   immuneTags: ['#minecraft:wither_immune', '#cataclysm:ignis_immune', '#cataclysm:maledictus_immune', '#cataclysm:scylla_immune',
     '#cataclysm:netherite_monstrosity_immune'],
-  // D112c: the six plain-furnace recipes removed (dump type minecraft:smelting). The *_from_raw_blasting rows stay.
+  // D112c: the six plain-furnace recipes removed (dump type minecraft:smelting). The ore and raw blasting recipes and both dust
+  // recipes stay (*_ingot_from_{ore,raw}_blasting, *_ingot_from_dust_{smelting,blasting}); tools/gates.yaml gates all twelve.
   smeltingRecipes: ['allthemodium:allthemodium_ingot_from_ore_smelting', 'allthemodium:vibranium_ingot_from_ore_smelting',
     'allthemodium:unobtainium_ingot_from_ore_smelting', 'allthemodium:allthemodium_ingot_from_raw_smelting',
     'allthemodium:vibranium_ingot_from_raw_smelting', 'allthemodium:unobtainium_ingot_from_raw_smelting'],
