@@ -1,15 +1,23 @@
-// Tier 6 — Space (v0.3 spec docs/superpowers/specs/2026-09-25-v0.3-tiers-5-6-design.md §6; D107, D117–D120). Ids: lib/ids.js
-// (AA = research/phase7-tier6-adastra.md, AE2 = research/phase7-ae2-ids.md). One recipes-event block per plan task:
-// Space (Task 6) first, then AE2 S6.1–S6.2 (Task 7). Keep every name inside its callback: all server scripts share one
-// scope, so a top-level const or function here would collide with any other script's.
+// Tier 6 — Space (v0.3 spec, docs/superpowers/specs/2026-09-25-v0.3-tiers-5-6-design.md §6; D107, D117–D120, D123). Ids:
+// lib/ids.js, v0.3 block. Report keys as in the spec: AA = research/phase7-tier6-adastra.md, AE2 = phase7-ae2-ids.md,
+// SS = phase7-soulshard-essence.md, GAP = phase7-v0.3-gaps.md. Each group of rows is its own recipes-event handler under a
+// '// ----' heading: Space (plan Task 6) first, then AE2 S6.1–S6.2 (Task 7). KubeJS runs every handler registered for the
+// event, in script load order (EventHandlerContainer.add/handle, as dump.js cites); the two handlers touch disjoint ids, so
+// neither depends on order. No top-level const or function in this file: all server scripts share one scope (HANDOFF §6).
+// Later tasks count the handlers with grep -c '^ServerEvents\.recipes(', so each handler begins its line with that call and no
+// other line may.
 
 // ---- Space: D6.1, D6.3, T6.1, T6.2, D6.9, M6.1 (plan Task 6)
 ServerEvents.recipes(event => {
-  // The five Ad Astra machines below each have exactly one recipe: one row per output in the boot dump
-  // (.run/server/kubejs/exported/recipes.json, minecraft:crafting_shaped, recipe id = item id), and no other data/*/recipe/**
-  // file in any of the 118 jars has one of these items as its result. So replaceShaped (remove by output) removes only Ad
-  // Astra's own recipe. Each pattern is the default (adastra-1.21.1-1.16.25-neoforge.jar!data/ad_astra/recipe/<item>.json,
-  // quoted in AA §1.1–1.4) with only the spec's slot changes; all five fill the 3x3 grid, so KubeJS's pattern shrink changes nothing.
+  // The five Ad Astra machines below each have exactly one recipe (minecraft:crafting_shaped, recipe id = item id), and no
+  // other data/*/recipe/** file in any of the 118 jars has one of these items as its result (v0.3 plan Task 6 Fact 2). So
+  // replaceShaped (remove by output) removes only Ad Astra's own recipe. Each pattern is the default
+  // (adastra-1.21.1-1.16.25-neoforge.jar!data/ad_astra/recipe/<item>.json, quoted in AA §1.1–1.4) with only the spec's slot
+  // changes. All five fill the 3x3 grid, so the load-time trim of empty edge rows and columns changes nothing: kubejs:shaped
+  // decodes through vanilla's ShapedRecipePattern.MAP_CODEC (ShapedKubeJSRecipe$SerializerKJS,
+  // kubejs-neoforge-2101.7.2-build.377.jar), whose unpack calls shrink (net.minecraft.world.item.crafting.ShapedRecipePattern,
+  // server-1.21.1-20240808.144430-srg.jar).
+  // The kubejs:shaped serializer and the category these recipes omit: see the note in tiers/tier3.js's v0.3 D113 block.
 
   // D6.1 NASA Workbench. Default |#| / TCT / #B# (| = #ad_astra:iron_rods, T = minecraft:redstone_torch). The four gate
   // items take the two iron-rod and two torch slots (AA §1.8, option a): X ultimate circuit, Y Unobtainium-Allthemodium alloy
@@ -50,7 +58,8 @@ ServerEvents.recipes(event => {
   // ad_astra:alloying runs only in the Etrionic Blast Furnace, and every ingredient consumes exactly one item; matches() checks
   // at most four ingredients (AA §2.1), so this recipe has four. Field names: the jar's only alloying recipe
   // (recipe/alloying/steel_ingot_from_alloying_iron_ingot_and_barrier.json) and AlloyingRecipe's codec (cookingtime, energy,
-  // ingredients, result; earth/terrarium/adastra/common/recipes/machines/AlloyingRecipe.class).
+  // ingredients, result; earth/terrarium/adastra/common/recipes/machines/AlloyingRecipe.class). Numbers (cookingtime 200,
+  // energy 40): spec §6 D6.9, not the jar recipe's (100, 20).
   gate.custom(event, 'confluence:tier6/etrium_ingot', {
     type: IDS.adastra.alloyingType, cookingtime: 200, energy: 40,
     ingredients: [{ tag: tagId(IDS.adastra.deshIngotTag) }, { tag: tagId(IDS.adastra.ostrumIngotTag) },

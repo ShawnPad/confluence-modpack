@@ -15,22 +15,24 @@ later fails to parse is still listed.
 applyChanges; a codec failure reaches RecipeManagerMixin.catchFailingRecipes -> handleFailedRecipe, which
 logs "Error parsing recipe %s" as an ERROR when DevProperties log_erroring_recipes is set, default true, and
 adds one to the failed count that finishEvent prints.)
-The dump check in plan Task 6 Step 6 imports SHAPED and CUSTOM from this module, so these two dicts are
-the only copy of the expectations.
+The dump check in plan Task 6 Step 6 imports SHAPED and CUSTOM from this module and keeps no copy of its
+own, so a slot fix touches tier6.js, SHAPED and SLOT_CHANGES, and a custom-recipe fix touches tier6.js and
+CUSTOM. The jar tests read adastra-1.21.1-1.16.25-neoforge.jar from .run/server/mods: each machine must be
+that jar's default with exactly its SLOT_CHANGES cells changed, and the Etrium recipes must keep the fields
+of Ad Astra's own alloying and compressing recipes. They skip only when .run/server/mods does not exist,
+and fail on any other Ad Astra jar. node must be on PATH: the `recorded` fixture asserts it (plan Step 2:
+this test must run, not skip).
 """
 import json
 import os
 import shutil
 import subprocess
 import zipfile
-from functools import lru_cache
 from pathlib import Path
 
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-NODE = shutil.which("node")
-pytestmark = pytest.mark.skipif(NODE is None, reason="node is not on PATH")
 
 HARNESS = r"""
 const fs = require('fs'), vm = require('vm'), path = require('path')
@@ -48,7 +50,10 @@ const event = {
   custom: json => ({ id: id => calls.push({ kind: 'custom', id: id, json: json }) }),
 }
 handlers.forEach(h => h(event))
-process.stdout.write(JSON.stringify(calls))
+// JSON.stringify writes a RegExp as {}. Write it as {"RegExp": "/…/"} instead, so a regex filter stays visible and never
+// passes for a plain string id. instanceof RegExp is false across vm realms, so test the internal class instead.
+const isRegExp = v => Object.prototype.toString.call(v) === '[object RegExp]'
+process.stdout.write(JSON.stringify(calls, (k, v) => (isRegExp(v) ? { RegExp: String(v) } : v)))
 """
 
 PLATE = "#ad_astra:steel_plates"
@@ -128,37 +133,52 @@ SLOT_CHANGES = {
 }
 
 
-@lru_cache(maxsize=None)
-def recorded() -> str:
-    out = subprocess.run([NODE, "-e", HARNESS], capture_output=True, text=True, env={**os.environ, "PACK_ROOT": str(ROOT)})
+@pytest.fixture(scope="module")
+def recorded():
+    node = shutil.which("node")
+    assert node, "node is not on PATH; `node --version` must print a version (v22.3.0 was used when this test was written)"
+    env = {**os.environ, "PACK_ROOT": str(ROOT)}
+    out = subprocess.run([node, "-e", HARNESS], env=env, capture_output=True, text=True, timeout=60)
     assert out.returncode == 0, out.stderr
-    return out.stdout
+    return json.loads(out.stdout)
 
 
-def calls(kind: str) -> list:
-    return [c for c in json.loads(recorded()) if c["kind"] == kind]
+def calls(recorded, kind):
+    return [c for c in recorded if c["kind"] == kind]
 
 
-def test_space_shaped_rows():
-    shaped = {c["id"]: c for c in calls("shaped")}
+def test_space_shaped_rows(recorded):
+    shaped = calls(recorded, "shaped")
+    by_id = {c["id"]: c for c in shaped}
     for rid, (output, pattern, keys) in SHAPED.items():
-        assert rid in shaped, rid
-        c = shaped[rid]
+        assert rid in by_id, rid
+        c = by_id[rid]
         assert (c["output"], c["pattern"], c["keys"]) == (output, pattern, keys), rid
+        # One maker per machine: a second shaped call with this output would load a second recipe for it.
+        assert [s["id"] for s in shaped if s["output"] == output] == [rid], output
 
 
-def test_space_removals_are_the_five_defaults_only():
-    filters = [c["filter"] for c in calls("remove")]
-    removed_outputs = sorted(f["output"] for f in filters if isinstance(f.get("output"), str) and f["output"].startswith("ad_astra:"))
-    assert removed_outputs == sorted(v[0] for v in SHAPED.values())
-    # D6.2 / D118: rockets, the launch pad and the desh, ostrum and calorite engines keep their default recipes.
-    assert not [f for f in filters if isinstance(f.get("id"), str) and f["id"].startswith("ad_astra:")]
-    # Etrium and the Astral Focus have no default to remove (AA §2.3; kubejs:astral_focus is a pack item).
-    assert not [f for f in filters if f.get("output") in ("ad_astra:etrium_ingot", "ad_astra:etrium_plate", "kubejs:astral_focus")]
+def test_space_removals_are_the_five_defaults_only(recorded):
+    """Two filter shapes only: {output: <one of the five machines>} and {id: <a string id outside ad_astra:>} (plan Task 7's
+    AE2 block removes by id). Anything else fails: a filter by type, mod or input, a regex or ad_astra: id, another output,
+    or a combined filter. So D6.2 / D118 hold (rockets, the launch pad and the desh, ostrum and calorite engines keep their
+    default recipes), and Etrium and the Astral Focus lose nothing (no default exists, AA §2.3)."""
+    filters = [c["filter"] for c in calls(recorded, "remove")]
+    outputs = {v[0] for v in SHAPED.values()}
+
+    def by_machine_output(f):
+        return isinstance(f, dict) and set(f) == {"output"} and f["output"] in outputs
+
+    def by_other_id(f):
+        return isinstance(f, dict) and set(f) == {"id"} and isinstance(f["id"], str) and not f["id"].startswith("ad_astra:")
+
+    odd = [f for f in filters if not by_machine_output(f) and not by_other_id(f)]
+    assert odd == [], f"filters other than {{output: <one of the five machines>}} or {{id: <id outside ad_astra:>}}: {odd}"
+    assert sorted(f["output"] for f in filters if by_machine_output(f)) == sorted(outputs)
 
 
-def test_space_custom_json():
-    custom = {c["id"]: c["json"] for c in calls("custom")}
+def test_space_custom_json(recorded):
+    custom = {c["id"]: c["json"] for c in calls(recorded, "custom")}
     for rid, body in CUSTOM.items():
         assert custom.get(rid) == body, rid
 
@@ -172,35 +192,70 @@ def ingredient(v):
 
 
 def grid(pattern, key):
-    """{(row, col): cell} of a 3x3 shaped pattern. Every symbol in the pattern is in the key and every key symbol is used."""
+    """{(row, col): cell} of a 3x3 shaped pattern. Every symbol in the pattern is in the key and every key symbol is used
+    (vanilla rejects an unused one: "Key defines symbols that aren't used in pattern", ShapedRecipePattern.unpack,
+    server-1.21.1-20240808.144430-srg.jar)."""
     assert len(pattern) == 3 and all(len(row) == 3 for row in pattern), pattern
     assert set("".join(pattern)) - {" "} == set(key), (pattern, sorted(key))
     return {(r, c): EMPTY if ch == " " else ingredient(key[ch]) for r, row in enumerate(pattern) for c, ch in enumerate(row)}
 
 
-@pytest.mark.parametrize("rid", list(SLOT_CHANGES))
-def test_space_machine_is_the_jar_default_plus_spec_slots(rid):
-    """Each of the five machines tier6.js records is Ad Astra's jar default with exactly the SLOT_CHANGES cells changed. It
-    fails when Ad Astra moves the id (remove-by-output would then miss it, or a second recipe appears) or changes the default
-    (ours would silently drop the change), and when tier6.js changes a slot spec §6 keeps."""
+def adastra_jar():
+    """ADASTRA_JAR, after the checks every jar test shares: skip only when no server has been booted from this clone, and
+    fail on any other Ad Astra jar."""
     if not MODS.is_dir():
         pytest.skip(f"{MODS} does not exist (no server has been booted from this clone)")
     # 'adastra-*.jar' needs the hyphen right after the mod id, so an add-on jar with a longer name does not match.
     found = sorted(MODS.glob("adastra-*.jar"))
-    assert found == [ADASTRA_JAR], f"SLOT_CHANGES were read against {ADASTRA_JAR.name}; {MODS} holds {[p.name for p in found]}"
+    assert found == [ADASTRA_JAR], (
+        f"the jar tests were written against {ADASTRA_JAR.name}; {MODS} holds {[p.name for p in found]}")
+    return ADASTRA_JAR
+
+
+def jar_json(jar, entry, what):
+    try:
+        return json.loads(jar.read(entry))
+    except KeyError:
+        pytest.fail(f"id moved: {ADASTRA_JAR.name} has no {entry}, so {what}")
+
+
+@pytest.mark.parametrize("rid", list(SLOT_CHANGES))
+def test_space_machine_is_the_jar_default_plus_spec_slots(recorded, rid):
+    """Each of the five machines tier6.js records is Ad Astra's jar default with exactly the SLOT_CHANGES cells changed. It
+    fails when Ad Astra moves the id (remove-by-output would then miss it, or a second recipe appears) or changes the default
+    (ours would silently drop the change), and when tier6.js changes a slot spec §6 keeps."""
     output = SHAPED[rid][0]
     ns, name = output.split(":")
     entry = f"data/{ns}/recipe/{name}.json"
-    with zipfile.ZipFile(ADASTRA_JAR) as jar:
-        try:
-            default = json.loads(jar.read(entry))
-        except KeyError:
-            pytest.fail(f"id moved: {ADASTRA_JAR.name} has no {entry}, so SLOT_CHANGES no longer describe Ad Astra's default")
+    with zipfile.ZipFile(adastra_jar()) as jar:
+        default = jar_json(jar, entry, "SLOT_CHANGES no longer describe Ad Astra's default")
     assert default["type"] == "minecraft:crafting_shaped" and default["result"] == {"count": 1, "id": output}, default
-    ours = {c["id"]: c for c in calls("shaped")}.get(rid)
+    ours = {c["id"]: c for c in calls(recorded, "shaped")}.get(rid)
     assert ours is not None and ours["output"] == output, (rid, ours)
     before, after = grid(default["pattern"], default["key"]), grid(ours["pattern"], ours["keys"])
-    # KubeJS's shrink trims an empty edge row or column; ours has none, so the grid it loads is this one.
+    # The recipe loads through vanilla's ShapedRecipePattern.unpack, which shrinks the pattern: it trims empty edge rows and
+    # columns (see the tier6.js comment above the five machines). Ours has none, so the grid that loads is this one.
     assert all(any(after[r, c] for c in range(3)) and any(after[c, r] for c in range(3)) for r in range(3)), ours["pattern"]
     changed = {cell: (before[cell], after[cell]) for cell in before if before[cell] != after[cell]}
     assert changed == SLOT_CHANGES[rid], f"{rid}: cells that differ from {ADASTRA_JAR.name}'s default, as (default, ours)"
+
+
+ALLOYING = "data/ad_astra/recipe/alloying/steel_ingot_from_alloying_iron_ingot_and_barrier.json"
+DESH_PLATE = "data/ad_astra/recipe/compressing/desh_plate_from_compressing_desh_ingots.json"
+
+
+def test_etrium_recipes_keep_ad_astras_own_fields():
+    """tier6.js takes the Etrium ingot's fields from "the jar's only alloying recipe" (ALLOYING), and the plate's fields and
+    numbers from the desh plate ("cookingtime 100, energy 20, count 1", DESH_PLATE). Pin both claims against the jar, so a
+    renamed field in a new Ad Astra version fails here before a boot does. The ingot's own numbers are spec §6 D6.9's."""
+    ingot, plate = CUSTOM["confluence:tier6/etrium_ingot"], CUSTOM["confluence:tier6/etrium_plate"]
+    with zipfile.ZipFile(adastra_jar()) as jar:
+        steel = jar_json(jar, ALLOYING, "tier6.js cites a recipe the jar no longer has")
+        desh = jar_json(jar, DESH_PLATE, "tier6.js cites a recipe the jar no longer has")
+        alloying = [n for n in jar.namelist() if n.startswith("data/") and "/recipe/" in n and n.endswith(".json")
+                    and json.loads(jar.read(n)).get("type") == ingot["type"]]
+    assert alloying == [ALLOYING], f"tier6.js calls {ALLOYING} the jar's only alloying recipe; the jar has {alloying}"
+    assert set(ingot) == set(steel), (sorted(ingot), sorted(steel))
+    assert set(plate) == set(desh), (sorted(plate), sorted(desh))
+    numbers = lambda body: (body["cookingtime"], body["energy"], body["result"]["count"])
+    assert numbers(plate) == numbers(desh), (numbers(plate), numbers(desh))
