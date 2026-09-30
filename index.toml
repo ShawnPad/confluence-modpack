@@ -186,7 +186,7 @@ hash = "067d44714d44518e84b729bba5eb98c8107dbea2564d69c4c7d8ac51319439af"
 
 [[files]]
 file = "kubejs/server_scripts/dump.js"
-hash = "0e103807454e6a8b63ccfdefc583beffe7720fd741d9bc89c0cba069fb0ee321"
+hash = "17858d7c7694e6edd6180977ad80eeb7bbad9b33c392a70603054c705822479a"
 
 [[files]]
 file = "kubejs/server_scripts/events.js"
@@ -198,7 +198,7 @@ hash = "513125401cee98784accfb0f317786d06cc67c3c46c093dc24b1715413c1781e"
 
 [[files]]
 file = "kubejs/server_scripts/lib/ids.js"
-hash = "a85aa981a824bacbdf27fcc07e1a2269ea85e0d5652227296099ec8ed602a12b"
+hash = "4ffdfdbe40bfc7ad6cd216d54064347664475ebd4816d78cfc090b41cca1787b"
 
 [[files]]
 file = "kubejs/server_scripts/lib/loot.js"
