@@ -69,6 +69,10 @@ file = "config/ftbquests/quests/reward_tables/uncommon_bag.snbt"
 hash = "86339e09c0a2bea970b03ac6c09f780b20fc915c4061313bd940c2cee0ee43b1"
 
 [[files]]
+file = "config/tombstone-common.toml"
+hash = "6c6fa3e6a55c28b0ce426b6691d882fbf9f6c4788eb9e0a0f8d10cb160389e20"
+
+[[files]]
 file = "config/twilightforest-common.toml"
 hash = "c28d10a5b8d9952b250dbd4d10a7ba708f26d2229b51fea2705d7d77b880f908"
 
@@ -118,7 +122,7 @@ hash = "c0a70a74875312dde0795174253991461df1f14c761e63135a1e3331028a5c89"
 
 [[files]]
 file = "kubejs/client_scripts/tooltips.js"
-hash = "918183357ec86103fcf8074a00191974a73f7b9b8cf65a9867b19d5f216e3738"
+hash = "e0c20b0c81115c5e0fed727ac9a6298f4aae14e3efee2d9c214a72788e16d3b1"
 
 [[files]]
 file = "kubejs/data/allthemodium/neoforge/biome_modifier/allthemodium/allthemodium.json"
@@ -198,7 +202,7 @@ hash = "faf61916cd8117e807b0c8601eb2b38f1226a673da4fbbc5ee1894164ea07379"
 
 [[files]]
 file = "kubejs/server_scripts/events.js"
-hash = "baac082a4898a30551dfb61f04336149f48e3fe80fd24a096e4e6439f3339f68"
+hash = "c895c7f976b9622960fc3fadad7b90024d34a35d35484f7e4864cfdffbffdfd1"
 
 [[files]]
 file = "kubejs/server_scripts/lib/gates.js"
@@ -211,6 +215,10 @@ hash = "fba640600e23401663a7214c2463da2a7cfa868ca5a45b05c3d86f61374fb44e"
 [[files]]
 file = "kubejs/server_scripts/lib/loot.js"
 hash = "62f43223a93e6e05d48bbdc2781244f1904066d280157617be310b48b3af2b4b"
+
+[[files]]
+file = "kubejs/server_scripts/lib/other_gate.js"
+hash = "c9b7075cb9a9b765ea2ce52c556f809195bf0167d748b7dbd8175fd69117fa3c"
 
 [[files]]
 file = "kubejs/server_scripts/loot.js"
