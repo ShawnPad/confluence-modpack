@@ -43,6 +43,16 @@ gates:
   - confluence:tier3/chemical_crystallizer
   - confluence:tier3/chemical_dissolution_chamber
   - confluence:tier3/chemical_washer
+  # v0.3 key, Supreme frame, alloys (spec §4.1, §5 T5.2 M5.1 X5.1 X5.2)
+  - confluence:tier5/other_key
+  - confluence:tier5/unobtainium_allthemodium_alloy_ingot
+  - confluence:tier5/vibranium_allthemodium_alloy_ingot
+  # datapack recipe (IF dissolution): kubejs/data/confluence/recipe/tier5/unobtainium_vibranium_alloy_ingot.json
+  - confluence:tier5/unobtainium_vibranium_alloy_ingot
+  # in-place datapack override: the id is in the dump with or without our file, and even if our file fails to parse (the dump
+  # runs before any codec). The inputs are checked by tools/tests/test_if_dissolution_data.py, by a boot with no "Parsing error
+  # loading recipe" line in logs/latest.log, and by the PLAYTEST tier-5 recipe probe (spec §12 item 4)
+  - industrialforegoing:dissolution_chamber/supreme_machine_frame
 removed:
   # v0.1 tiers 0–2
   - minecraft:flint_and_steel
@@ -91,3 +101,5 @@ removed:
   - mekanism:chemical_crystallizer
   - mekanism:chemical_dissolution_chamber
   - mekanism:chemical_washer
+  # v0.3 key, Supreme frame, alloys: nothing removed. No loaded recipe makes the key or an alloy ingot except the 9-from-1
+  # block recipes, which stay; the Supreme frame is overridden in place at IF's own id.

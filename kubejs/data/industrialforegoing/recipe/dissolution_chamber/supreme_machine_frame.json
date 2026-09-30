@@ -1,0 +1,44 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:item_exists",
+      "item": "industrialforegoing:machine_frame_supreme"
+    }
+  ],
+  "type": "industrialforegoing:dissolution_chamber",
+  "input": [
+    {
+      "tag": "c:plastics"
+    },
+    {
+      "tag": "industrialforegoing:machine_frame/advanced"
+    },
+    {
+      "tag": "c:plastics"
+    },
+    {
+      "tag": "c:ingots/unobtainium"
+    },
+    {
+      "tag": "c:ingots/unobtainium"
+    },
+    {
+      "item": "powah:crystal_nitro"
+    },
+    {
+      "item": "mekanism:ultimate_control_circuit"
+    },
+    {
+      "item": "allthemodium:unobtainium_allthemodium_alloy_ingot"
+    }
+  ],
+  "inputFluid": {
+    "amount": 135,
+    "fluid": "industrialforegoing:ether_gas"
+  },
+  "output": {
+    "count": 1,
+    "id": "industrialforegoing:machine_frame_supreme"
+  },
+  "processingTime": 300
+}
