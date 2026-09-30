@@ -148,23 +148,27 @@ def calls(recorded, kind):
 
 
 def test_space_shaped_rows(recorded):
+    """The five machines' shaped rows (SHAPED), and one maker per machine: no other shaped or shapeless call has its output,
+    and no custom recipe makes one (json.result, json.output, or an element of json.results)."""
     shaped = calls(recorded, "shaped")
+    grid_makers = shaped + calls(recorded, "shapeless")
     by_id = {c["id"]: c for c in shaped}
     for rid, (output, pattern, keys) in SHAPED.items():
         assert rid in by_id, rid
         c = by_id[rid]
         assert (c["output"], c["pattern"], c["keys"]) == (output, pattern, keys), rid
-        # One maker per machine: a second shaped call with this output would load a second recipe for it.
-        assert [s["id"] for s in shaped if s["output"] == output] == [rid], output
-    # Nor may a custom recipe make one. tier6.js's custom recipes name their product in json.result.id; json.output.id is
-    # checked too, and a bare-string result or output counts as the id.
+        # One maker per machine: a second shaped or shapeless call with this output would load a second recipe for it.
+        assert [s["id"] for s in grid_makers if s["output"] == output] == [rid], output
+    # Nor may a custom recipe make one. tier6.js's custom recipes name their product in json.result.id; json.output and each
+    # element of json.results are checked too, and a bare-string result or output counts as the id.
     machines = {output for output, _, _ in SHAPED.values()}
 
-    def product(j):
-        made = j.get("result", j.get("output"))
-        return made.get("id") if isinstance(made, dict) else made
+    def products(j):
+        made = [j.get("result"), j.get("output")] + list(j.get("results") or [])
+        return {m.get("id") if isinstance(m, dict) else m for m in made if m is not None}
 
-    assert [(c["id"], product(c["json"])) for c in calls(recorded, "custom") if product(c["json"]) in machines] == []
+    assert [(c["id"], sorted(products(c["json"]) & machines)) for c in calls(recorded, "custom")
+            if products(c["json"]) & machines] == []
 
 
 def test_space_removals_are_the_five_defaults_only(recorded):

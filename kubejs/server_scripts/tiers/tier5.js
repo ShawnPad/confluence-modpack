@@ -98,11 +98,15 @@ ServerEvents.recipes(event => {
   })
 })
 
-// ---- AE2, tier 5 (v0.3 Task 7; spec §5 S5.1–S5.3, D107, D117). Shapes: OSR2 1.7.1 crafting.js as quoted in
-// research/phase7-ae2-ids.md §3; AE2 defaults: appliedenergistics2-19.2.17.jar!data/ae2/recipe/network/** (AE2 §1.2).
+// ---- AE2: S5.1 inscriber and charger, S5.2 ME Controller, S5.3 ME Drive, buses and ME Terminal; D107, D117 (plan Task 7)
+// Shapes: OSR2 1.7.1 crafting.js as quoted in AE2 §3; AE2 defaults: appliedenergistics2-19.2.17.jar!data/ae2/recipe/network/**
+// (AE2 §1.2). OSR2 names minecraft:copper_ingot, twilightforest:knightmetal_ingot and industrialforegoing:machine_frame_supreme;
+// the pack uses their tags through IDS (c:ingots/copper, c:ingots/knightmetal, industrialforegoing:machine_frame/supreme), each
+// with one member (AE2 §5; copper: neoforge-21.1.250-universal.jar, one entry in the boot's tags.json).
 // Every default is removed BY ID (IDS.ae2.recipes). A scan of every jar's data/*/recipe/** and the boot dump found exactly one
-// recipe outputting each of these seven items, and the id is what tools/gates.yaml asserts; the buses and the terminal are
-// cable parts, which the dump prints as 'PartItem[...]', not as item ids (AE2 §4.5).
+// recipe outputting each of these seven items, and the id is what tools/gates.yaml asserts. The buses and the terminal are
+// cable parts, which the dump prints as 'PartItem[...]', not as item ids (AE2 §4.5). Whether an {output:} filter reaches AE2
+// part items is [UNVERIFIED] (AE2 §4.5), so every removal is by id, as the IDS.ae2 note in lib/ids.js says.
 ServerEvents.recipes(event => {
   // S5.1 Inscriber (OSR2 crafting.js lines 4130–4145): AE2's default aba / c a / aba has iron ×5, piston ×2 and copper ×1.
   // OSR2 turns the four corner irons into HDPE sheets and the middle-right iron into a second copper, and puts the Supreme
@@ -112,8 +116,11 @@ ServerEvents.recipes(event => {
     { A: IDS.mek.hdpeSheet, B: IDS.vanilla.piston, C: IDS.vanilla.copperIngotTag, D: IDS.ifg.supremeFrameTag })
 
   // S5.1 Charger (OSR2 lines 3141–3154): knightmetal ×5 where the default has iron. OSR2's Ender IO copper alloy is not in the
-  // pack, so the default's copper ×2 stays. The two empty cells are the default's own: vanilla's ShapedRecipePattern codec
-  // (which kubejs:shaped uses) takes rows of equal width with spaces, as it does for AE2's own 'a  ' row.
+  // pack, so the default's copper ×2 stays. The two empty cells are the default's own. kubejs:shaped decodes through vanilla's
+  // ShapedRecipePattern.MAP_CODEC (ShapedKubeJSRecipe$SerializerKJS, kubejs-neoforge-2101.7.2-build.377.jar), which takes rows
+  // of equal width with spaces, as it does for AE2's own 'a  ' row. Its unpack calls shrink, which trims only blank edge rows
+  // and columns (net.minecraft.world.item.crafting.ShapedRecipePattern, server-1.21.1-20240808.144430-srg.jar); this grid has
+  // none.
   gate.remove(event, { id: IDS.ae2.recipes.charger })
   gate.shaped(event, 'confluence:tier5/charger', IDS.ae2.charger, ['ABA', 'A  ', 'ABA'],
     { A: IDS.twilight.knightmetal, B: IDS.vanilla.copperIngotTag })

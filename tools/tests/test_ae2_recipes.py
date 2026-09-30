@@ -3,17 +3,31 @@ S6.1–S6.2 (§6), decisions D107 and D117.
 
 node loads lib/ids.js, lib/gates.js, tiers/tier5.js and tiers/tier6.js into ONE vm context, as KubeJS 2101 gives every server
 script one shared scope, runs each ServerEvents.recipes handler against an event that records what it adds and removes, and
-prints the record as JSON. The tests compare each AE2 recipe with the spec's shape and literal ids. This catches, before any
-boot, a wrong or missing IDS key: KubeJS's kubejs:key_pattern_cleanup post-processor drops a key whose ingredient is null or
-empty and turns its cells into spaces (kubejs-neoforge-2101.7.2-build.377.jar, KeyPatternCleanupPostProcessor.process), so such
-a slip can load as a cheaper recipe instead of an error.
+prints the record as JSON. The tests compare each AE2 recipe with the spec's shape and literal ids before any boot, because a
+wrong key value does not always fail the boot. What each kind of slip does (javap -p -c on kubejs-neoforge-2101.7.2-build.377.jar;
+hasNoItems on NeoForge's patched Ingredient in neoforge-21.1.250-server.jar):
+  - null, or an ingredient KubeJS counts as empty: silent. kubejs:shaped's schema (data/minecraft/kubejs/recipe_schema/
+    shaped.json) runs the kubejs:key_pattern_cleanup post-processor, whose default component is IngredientComponent.INGREDIENT.
+    KeyPatternCleanupPostProcessor.process drops each key whose value is null or component.isEmpty, and turns that symbol's
+    cells into spaces, so the recipe loads cheaper, with no error.
+  - a tag that is unbound or empty: silent too. IngredientComponent.isEmpty is Ingredient.isEmpty() || hasNoItems(), and
+    hasNoItems is true when the only stack is the "Empty Tag: …" barrier that Ingredient$TagValue.getItems gives for an empty
+    tag. tools/check_tags.py, run after the boot, fails on it; the six tags here all come from lib/ids.js and bind one item each.
+  - '', '-', 'air', 'minecraft:air' (IngredientWrapper.parseString), a blank string or any string starting with '-'
+    (IngredientWrapper.read): Ingredient.EMPTY, silent. The literal comparison below catches these, and an undefined IDS key,
+    which the harness records as '<undefined>'.
+  - an unknown item id: not silent. IngredientWrapper.read resolves a plain id with ItemWrapper.findItem, which returns
+    DataResult.error("Item with ID … does not exist!"); IngredientWrapper.wrap (the type wrapper BuiltinKubeJSPlugin registers
+    for Ingredient) throws it as KubeRuntimeException "Failed to read ingredient from …"; RecipeTypeFunction.call catches it
+    and logs it with ConsoleJS.SERVER.error, a KubeJS ERROR line that fails tools/server_boot.sh.
 
 node runs V8, not the pack's Rhino, so this test pins the recipes the handlers record, not that the files load in KubeJS;
 tools/tests/test_rhino_hazards.py lints the known Rhino trap. The load proof is tools/server_boot.sh (its KubeJS ERROR check and
 its check for "Parsing error loading recipe" in logs/latest.log) and the boot's "with 0 failed recipes" line. node must be on
-PATH: the `recorded` fixture asserts it, so this test runs rather than skips. The last test reads AE2's ten defaults (DEFAULTS)
-from appliedenergistics2-19.2.17.jar in .run/server/mods; it skips only when that folder does not exist, and fails on any other
-AE2 jar or on a default that moved or changed.
+PATH: the `recorded` fixture asserts it, so this test runs rather than skips. The last two tests read AE2's ten defaults
+(DEFAULTS) and the five defaults this task keeps (KEPT) from appliedenergistics2-19.2.17.jar in .run/server/mods; they skip only
+when that folder does not exist, and fail on any other AE2 jar or on a default that moved or changed. tools/gates.yaml asserts
+the same ids at boot: the ten under `removed:`, the five kept ones under `gates:`.
 """
 import json
 import os
@@ -68,7 +82,10 @@ const event = new Proxy({}, { get: (t, k) => {
 } })
 // One handler's error (another task's block using an API this stub lacks) must not hide the others' records.
 handlers.forEach((h, i) => { try { h(event) } catch (e) { out.errors.push('handler ' + i + ': ' + e) } })
-process.stdout.write(JSON.stringify(out, (k, v) => (v === undefined ? '<undefined>' : v)))
+// JSON.stringify writes a RegExp as {}. Write it as {"RegExp": "/…/"} instead, so a regex filter stays visible and never
+// passes for a plain string id. instanceof RegExp is false across vm realms, so test the internal class instead.
+const isRegExp = v => Object.prototype.toString.call(v) === '[object RegExp]'
+process.stdout.write(JSON.stringify(out, (k, v) => (v === undefined ? '<undefined>' : isRegExp(v) ? { RegExp: String(v) } : v)))
 """
 
 # Literal ids, each re-read from a jar in .run/server/mods or from the boot's tags.json when this test was written:
@@ -109,16 +126,10 @@ EXPECTED = {
          "O": "#c:ingots/ostrum"}),
 }
 
-# AE2's defaults, each the only recipe for its item except the provider (appliedenergistics2-19.2.17.jar!data/ae2/recipe/...).
-REMOVED_BY_ID = [
-    "ae2:network/blocks/inscribers", "ae2:network/blocks/crystal_processing_charger", "ae2:network/blocks/controller",
-    "ae2:network/blocks/storage_drive", "ae2:network/parts/import_bus", "ae2:network/parts/export_bus",
-    "ae2:network/parts/terminals", "ae2:network/wireless_part", "ae2:network/crafting/cpu_crafting_unit",
-    "ae2:network/blocks/pattern_providers_interface",
-]
-# The same ten, as AE2_JAR!data/ae2/recipe/<path>.json held them when this test was written (AE2 §1.2; the tier5.js and
-# tier6.js comments describe them): default id -> (the confluence: recipe that replaces it, type, pattern, key with tags
-# written '#tag', result (id, count)). The shapeless terminal has no pattern; its key is the ingredient list, in the jar's order.
+# AE2's ten defaults this task removes by id, each the only recipe for its item except the provider, as
+# AE2_JAR!data/ae2/recipe/<path>.json held them when this test was written (AE2 §1.2; the tier5.js and tier6.js comments
+# describe them): default id -> (the confluence: recipe that replaces it, type, pattern, key with tags written '#tag', result
+# (id, count)). The shapeless terminal has no pattern; its key is the ingredient list, in the jar's order.
 DEFAULTS = {
     "ae2:network/blocks/inscribers": ("confluence:tier5/inscriber", "minecraft:crafting_shaped", ["aba", "c a", "aba"],
         {"a": IRON, "b": "minecraft:piston", "c": COPPER}, ("ae2:inscriber", 1)),
@@ -143,12 +154,24 @@ DEFAULTS = {
         ["aba", "c d", "aba"], {"a": IRON, "b": "minecraft:crafting_table", "c": "ae2:annihilation_core",
                                 "d": "ae2:formation_core"}, ("ae2:pattern_provider", 1)),
 }
+REMOVED_BY_ID = list(DEFAULTS)
 # Defaults this task must leave alone: the provider's part <-> block conversions (AE2 §4.5) and the D117 defaults.
 KEPT = [
     "ae2:network/blocks/pattern_providers_interface_alt", "ae2:network/blocks/pattern_providers_interface_part",
     "ae2:network/crafting/molecular_assembler", "ae2:network/parts/terminals_pattern_encoding",
     "ae2:network/parts/terminals_crafting",
 ]
+# The two conversions, verbatim from AE2_JAR (AE2 §1.2). _part is the only recipe that makes the cable pattern provider, and it
+# consumes a provider block; _alt turns that part back into the block. So _alt returns a block that already paid ostrum
+# (confluence:tier6/pattern_provider) and is not a bypass, as long as both bodies stay what they are here.
+CONVERSIONS = {
+    "ae2:network/blocks/pattern_providers_interface_part": {
+        "type": "minecraft:crafting_shapeless", "category": "misc", "ingredients": [{"item": "ae2:pattern_provider"}],
+        "result": {"count": 1, "id": "ae2:cable_pattern_provider"}},
+    "ae2:network/blocks/pattern_providers_interface_alt": {
+        "type": "minecraft:crafting_shapeless", "category": "misc", "ingredients": [{"item": "ae2:cable_pattern_provider"}],
+        "result": {"count": 1, "id": "ae2:pattern_provider"}},
+}
 
 
 @pytest.fixture(scope="module")
@@ -175,8 +198,22 @@ def assert_vanilla_shape(pattern, keys):
     assert all(isinstance(v, str) and v and v != "<undefined>" for v in keys.values()), keys
 
 
+def products(r):
+    """The item ids a recorded recipe makes. A shaped or shapeless call: its output, a stack {id, count} or an id string. A
+    custom recipe: json.result and json.output (each an id string or a stack; a stack written {"item": …} counts too), and
+    each element of a json.results array."""
+    if r["kind"] in ("shaped", "shapeless"):
+        made = [r["output"]]
+    else:
+        j = r["json"]
+        made = [j.get("result"), j.get("output")] + list(j.get("results") or [])
+    return [m.get("id", m.get("item")) if isinstance(m, dict) else m for m in made if m is not None]
+
+
 @pytest.mark.parametrize("rid", sorted(EXPECTED))
 def test_ae2_recipe_matches_spec(recorded, rid):
+    """The spec's shape and ids, and one maker: no other shaped, shapeless or custom recipe in these scripts makes the item
+    (each default's removal leaves this one as the only recipe, except the provider's _alt conversion, KEPT)."""
     hits = [r for r in recorded["recipes"] if r.get("id") == rid]
     assert len(hits) == 1, f"{rid}: {len(hits)} recipes recorded; script errors: {recorded['errors']}"
     r = hits[0]
@@ -185,15 +222,24 @@ def test_ae2_recipe_matches_spec(recorded, rid):
     output, pattern, keys = EXPECTED[rid]
     # gate.shaped passes Item.of(output); the harness records that stack as {id, count}.
     assert (r["output"], r["pattern"], r["keys"]) == ({"id": output, "count": 1}, pattern, keys)
+    makers = [x.get("id") for x in recorded["recipes"] if output in products(x)]
+    assert makers == [rid], f"{output} is made by {makers}"
 
 
 def test_ae2_defaults_removed_by_id_only(recorded):
-    filters = [f for f in recorded["removed"] if isinstance(f, dict)]
-    # A regex id (bypass.js uses one) reaches here as {} after JSON.stringify, so keep only string ids.
-    removed_ids = {f["id"] for f in filters if isinstance(f.get("id"), str)}
-    assert sorted(set(REMOVED_BY_ID) - removed_ids) == []
-    assert sorted(removed_ids & set(KEPT)) == []
-    assert [f for f in filters if str(f.get("output", "")).startswith("ae2:")] == []
+    """Two filter shapes only, as test_tier6_space_recipes.py allows: {id: <a string>} and {output: <a string outside ae2:>}
+    (Task 6's Ad Astra machines). Anything else fails: a filter by mod, type or input, a regex id (the harness writes it as
+    {"RegExp": …}), a bare string, an ae2: output or tag, or a combined filter. The ae2: ids removed are exactly the ten
+    defaults, so no KEPT default and no other AE2 recipe goes."""
+    def by_id(f):
+        return isinstance(f, dict) and set(f) == {"id"} and isinstance(f["id"], str)
+
+    def by_other_output(f):
+        return isinstance(f, dict) and set(f) == {"output"} and isinstance(f["output"], str) and "ae2:" not in f["output"]
+
+    odd = [f for f in recorded["removed"] if not by_id(f) and not by_other_output(f)]
+    assert odd == [], odd
+    assert sorted(f["id"] for f in recorded["removed"] if by_id(f) and f["id"].startswith("ae2:")) == sorted(REMOVED_BY_ID)
 
 
 def ingredient(v):
@@ -209,7 +255,8 @@ def ae2_jar():
         pytest.skip(f"{MODS} does not exist (no server has been booted from this clone)")
     # 'appliedenergistics2-*.jar' needs the hyphen right after the mod id, so an add-on jar with a longer name does not match.
     found = sorted(MODS.glob("appliedenergistics2-*.jar"))
-    assert found == [AE2_JAR], f"DEFAULTS were read from {AE2_JAR.name}; {MODS} holds {[p.name for p in found]}"
+    assert found == [AE2_JAR], (
+        f"DEFAULTS, KEPT and CONVERSIONS were read from {AE2_JAR.name}; {MODS} holds {[p.name for p in found]}")
     return AE2_JAR
 
 
@@ -225,7 +272,6 @@ def test_ae2_default_matches_the_jar(rid):
     """Each default this task removes by id is still at that id in AE2_JAR, and still the recipe DEFAULTS (and the tier5.js /
     tier6.js comments) describe, making the item its confluence: replacement makes. A moved id would leave the default
     loaded beside ours; a changed default would make the comments' "the default's ... stays" untrue."""
-    assert list(DEFAULTS) == REMOVED_BY_ID
     ours, want = DEFAULTS[rid][0], DEFAULTS[rid][1:]
     assert want[3][0] == EXPECTED[ours][0], (rid, want[3], ours, EXPECTED[ours][0])
     ns, path = rid.split(":")
@@ -237,3 +283,15 @@ def test_ae2_default_matches_the_jar(rid):
         got = (d["type"], d["pattern"], {k: ingredient(v) for k, v in d["key"].items()},
                (d["result"]["id"], d["result"]["count"]))
     assert got == want, f"{rid}: {AE2_JAR.name} holds {got}"
+
+
+@pytest.mark.parametrize("rid", KEPT)
+def test_ae2_kept_default_is_in_the_jar(rid):
+    """Each default this task leaves loaded is still at its id in AE2_JAR, so tools/gates.yaml's `gates:` row for it keeps
+    meaning "AE2's own recipe still loads". The two provider conversions must also keep their bodies (CONVERSIONS): if _part
+    stopped consuming a provider block, _alt would turn into a way round the ostrum in confluence:tier6/pattern_provider."""
+    ns, path = rid.split(":")
+    with zipfile.ZipFile(ae2_jar()) as jar:
+        d = jar_json(jar, f"data/{ns}/recipe/{path}.json", f"{rid}, which this task keeps loaded, is gone or renamed")
+    if rid in CONVERSIONS:
+        assert d == CONVERSIONS[rid], f"{rid}: {AE2_JAR.name} holds {d}"
