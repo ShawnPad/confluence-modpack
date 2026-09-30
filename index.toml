@@ -245,6 +245,10 @@ file = "kubejs/server_scripts/tiers/tier5.js"
 hash = "5186574a130b1a4badbb17eeaebe4f68a5aa169791e6d25dee3812f36de00ac0"
 
 [[files]]
+file = "kubejs/server_scripts/tiers/tier6.js"
+hash = "eb7fb8e290850c88f49bc0417089b900f1f72b6002e726b3e5a90ae1eea4c661"
+
+[[files]]
 file = "kubejs/server_scripts/worldgen.js"
 hash = "51c94b2e32db3f5dd0fef9367168c3da94e782a320547d72b9370f67ed89704b"
 
