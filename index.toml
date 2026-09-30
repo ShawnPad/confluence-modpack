@@ -190,7 +190,7 @@ hash = "2b925da45ae9ccc37f6f5ae1fd1f62fb64d9155a6df14a5d44e9d3ab6538cf9d"
 
 [[files]]
 file = "kubejs/server_scripts/bypass.js"
-hash = "c89dcbc71d979d87836d92bc404a9021ea6c2d475255b89ab1a0de228459409a"
+hash = "aa0fe0abe1e63548b3fb691059e82813879968dbb2feb8b7cdb058e83e822b14"
 
 [[files]]
 file = "kubejs/server_scripts/dump.js"
@@ -198,7 +198,7 @@ hash = "faf61916cd8117e807b0c8601eb2b38f1226a673da4fbbc5ee1894164ea07379"
 
 [[files]]
 file = "kubejs/server_scripts/events.js"
-hash = "12f479b3171fe2da925b770d07d4a9850f3500b1c3d16a40589e9b5be8987ebd"
+hash = "baac082a4898a30551dfb61f04336149f48e3fe80fd24a096e4e6439f3339f68"
 
 [[files]]
 file = "kubejs/server_scripts/lib/gates.js"
@@ -206,7 +206,7 @@ hash = "513125401cee98784accfb0f317786d06cc67c3c46c093dc24b1715413c1781e"
 
 [[files]]
 file = "kubejs/server_scripts/lib/ids.js"
-hash = "4ffdfdbe40bfc7ad6cd216d54064347664475ebd4816d78cfc090b41cca1787b"
+hash = "fba640600e23401663a7214c2463da2a7cfa868ca5a45b05c3d86f61374fb44e"
 
 [[files]]
 file = "kubejs/server_scripts/lib/loot.js"
