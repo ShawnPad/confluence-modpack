@@ -234,7 +234,7 @@ hash = "0bce97fcea6e10522098d2ba81252b465204b1064228418060aa6fa7424d61e3"
 
 [[files]]
 file = "kubejs/server_scripts/worldgen.js"
-hash = "d300cbb3e6621136424b87a8cb926d04a6e52bced8ac44da5295ab488c914983"
+hash = "9c1d649e19d6c6240f08290ec39af79d3d3c8ee4b22a053f8d673cd5c8870c33"
 
 [[files]]
 file = "kubejs/startup_scripts/items.js"
