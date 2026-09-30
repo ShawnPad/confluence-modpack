@@ -149,6 +149,10 @@ file = "kubejs/data/ars_nouveau/tags/entity_type/drygmy_blacklist.json"
 hash = "14da5ae2aba2d4269bde8d061906ef37b6a46fa8e5c49bf5e1a810d5068a9b7b"
 
 [[files]]
+file = "kubejs/data/confluence/recipe/tier5/unobtainium_vibranium_alloy_ingot.json"
+hash = "1c4eba70aec503eccb261a218ddead0d51c042aabbeb04b3575f3fac6a2f1277"
+
+[[files]]
 file = "kubejs/data/confluence/tags/item/ars_essences.json"
 hash = "278d63f098f69191a9248bcdc7d9b846f5f537aa696a5e087d3b963e714a70de"
 
@@ -163,6 +167,10 @@ hash = "7d069f3f92624335065af12b8afcf90521158cb6a9c7baa231cc3c347cdb11eb"
 [[files]]
 file = "kubejs/data/industrialforegoing/recipe/dissolution_chamber/simple_machine_frame.json"
 hash = "ed71d60e38f9e98d5ff3a71df2c9a8ff93b544c0d1e231068f728fd753f4d952"
+
+[[files]]
+file = "kubejs/data/industrialforegoing/recipe/dissolution_chamber/supreme_machine_frame.json"
+hash = "f0b5d7030d3eaf30d0bb4723d386e37f149824e176f977e5fa1a751d34a779a7"
 
 [[files]]
 file = "kubejs/data/industrialforegoing/recipe/machine_frame_pity.json"
@@ -234,7 +242,7 @@ hash = "0bce97fcea6e10522098d2ba81252b465204b1064228418060aa6fa7424d61e3"
 
 [[files]]
 file = "kubejs/server_scripts/tiers/tier5.js"
-hash = "3d43e6d446a157da6061d72403ac74ea6008af12f99d53940998196462c6f5ce"
+hash = "0e0ce28c70ba5ecc38a8a0360c1e9c89bf092b45c1bc432b3bd33bdd5cd74095"
 
 [[files]]
 file = "kubejs/server_scripts/worldgen.js"
