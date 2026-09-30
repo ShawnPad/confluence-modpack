@@ -246,7 +246,7 @@ hash = "5186574a130b1a4badbb17eeaebe4f68a5aa169791e6d25dee3812f36de00ac0"
 
 [[files]]
 file = "kubejs/server_scripts/tiers/tier6.js"
-hash = "eb7fb8e290850c88f49bc0417089b900f1f72b6002e726b3e5a90ae1eea4c661"
+hash = "99fd4361331727668a935ba6aa2b693936ee1a4b14543b25a94c79ad2c964df6"
 
 [[files]]
 file = "kubejs/server_scripts/worldgen.js"
