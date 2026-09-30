@@ -202,7 +202,7 @@ hash = "faf61916cd8117e807b0c8601eb2b38f1226a673da4fbbc5ee1894164ea07379"
 
 [[files]]
 file = "kubejs/server_scripts/events.js"
-hash = "c895c7f976b9622960fc3fadad7b90024d34a35d35484f7e4864cfdffbffdfd1"
+hash = "45676c93b4b49c656fe91edbd8d63f8320151893b7438438ff346db796523aa1"
 
 [[files]]
 file = "kubejs/server_scripts/lib/gates.js"
