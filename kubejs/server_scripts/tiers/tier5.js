@@ -97,3 +97,56 @@ ServerEvents.recipes(event => {
     result: { count: 1, id: IDS.allthemodium.vibAtmAlloy },
   })
 })
+
+// ---- AE2, tier 5 (v0.3 Task 7; spec §5 S5.1–S5.3, D107, D117). Shapes: OSR2 1.7.1 crafting.js as quoted in
+// research/phase7-ae2-ids.md §3; AE2 defaults: appliedenergistics2-19.2.17.jar!data/ae2/recipe/network/** (AE2 §1.2).
+// Every default is removed BY ID (IDS.ae2.recipes). A scan of every jar's data/*/recipe/** and the boot dump found exactly one
+// recipe outputting each of these seven items, and the id is what tools/gates.yaml asserts; the buses and the terminal are
+// cable parts, which the dump prints as 'PartItem[...]', not as item ids (AE2 §4.5).
+ServerEvents.recipes(event => {
+  // S5.1 Inscriber (OSR2 crafting.js lines 4130–4145): AE2's default aba / c a / aba has iron ×5, piston ×2 and copper ×1.
+  // OSR2 turns the four corner irons into HDPE sheets and the middle-right iron into a second copper, and puts the Supreme
+  // frame in the default's empty centre (D107); the two pistons stay. HDPE is named by item: no tag holds it (AE2 §5).
+  gate.remove(event, { id: IDS.ae2.recipes.inscriber })
+  gate.shaped(event, 'confluence:tier5/inscriber', IDS.ae2.inscriber, ['ABA', 'CDC', 'ABA'],
+    { A: IDS.mek.hdpeSheet, B: IDS.vanilla.piston, C: IDS.vanilla.copperIngotTag, D: IDS.ifg.supremeFrameTag })
+
+  // S5.1 Charger (OSR2 lines 3141–3154): knightmetal ×5 where the default has iron. OSR2's Ender IO copper alloy is not in the
+  // pack, so the default's copper ×2 stays. The two empty cells are the default's own: vanilla's ShapedRecipePattern codec
+  // (which kubejs:shaped uses) takes rows of equal width with spaces, as it does for AE2's own 'a  ' row.
+  gate.remove(event, { id: IDS.ae2.recipes.charger })
+  gate.shaped(event, 'confluence:tier5/charger', IDS.ae2.charger, ['ABA', 'A  ', 'ABA'],
+    { A: IDS.twilight.knightmetal, B: IDS.vanilla.copperIngotTag })
+
+  // S5.2 ME Controller (OSR2 lines 4147–4164): one forgotten ingot (B occurs once), the Supreme frame in the centre, Tom's
+  // inventory connector bottom centre. A scale gate, not an entry gate: networks of up to 8 channels run without it (D117, AE2 §4.4).
+  gate.remove(event, { id: IDS.ae2.recipes.controller })
+  gate.shaped(event, 'confluence:tier5/controller', IDS.ae2.controller, ['ABA', 'CDC', 'EFE'],
+    { A: IDS.ae2.fluixCrystal, B: IDS.undergarden.forgottenIngot, C: IDS.ae2.engineeringProcessor, D: IDS.ifg.supremeFrameTag,
+      E: IDS.ae2.skyStoneBlock, F: IDS.toms.inventoryConnector })
+
+  // S5.3 ME Drive (OSR2 lines 3242–3257): the QIO drive array fills the default's empty centre (D107). OSR2's aluminium is not in
+  // the pack, so the default's iron ×4 stays.
+  gate.remove(event, { id: IDS.ae2.recipes.drive })
+  gate.shaped(event, 'confluence:tier5/drive', IDS.ae2.drive, ['ABA', 'CDC', 'ABA'],
+    { A: IDS.vanilla.ironIngotTag, B: IDS.ae2.engineeringProcessor, C: IDS.ae2.fluixGlassCable, D: IDS.mek.qioDriveArray })
+
+  // S5.3 Import / export bus (OSR2 lines 3208–3240): the QIO importer / exporter over the annihilation / formation core, a piston
+  // between two metals. OSR2's zinc is not in the pack, so the default's iron ×2 stays.
+  gate.remove(event, { id: IDS.ae2.recipes.importBus })
+  gate.shaped(event, 'confluence:tier5/import_bus', IDS.ae2.importBus, [' A ', ' B ', 'CDC'],
+    { A: IDS.mek.qioImporter, B: IDS.ae2.annihilationCore, C: IDS.vanilla.ironIngotTag, D: IDS.vanilla.piston })
+  gate.remove(event, { id: IDS.ae2.recipes.exportBus })
+  gate.shaped(event, 'confluence:tier5/export_bus', IDS.ae2.exportBus, [' A ', ' B ', 'CDC'],
+    { A: IDS.mek.qioExporter, B: IDS.ae2.formationCore, C: IDS.vanilla.ironIngotTag, D: IDS.vanilla.piston })
+
+  // S5.3 ME Terminal (OSR2 lines 4166–4183): AE2's shapeless default (formation core, any #ae2:illuminated_panel, logic processor,
+  // annihilation core) becomes OSR2's shaped recipe: the Illuminated Panel item ae2:semi_dark_monitor, the Supreme frame, a second
+  // logic processor and the QIO dashboard, which already contains Tom's crafting terminal (tier3.js). The crafting terminal, the
+  // wireless terminal and the ME chest consume the terminal; the pattern encoding terminal and the wireless crafting terminal
+  // consume the crafting terminal (AE2 §4.1). So all of them wait for it.
+  gate.remove(event, { id: IDS.ae2.recipes.terminal })
+  gate.shaped(event, 'confluence:tier5/terminal', IDS.ae2.terminal, [' A ', 'BCD', 'EFE'],
+    { A: IDS.ae2.illuminatedPanel, B: IDS.ae2.formationCore, C: IDS.ifg.supremeFrameTag, D: IDS.ae2.annihilationCore,
+      E: IDS.ae2.logicProcessor, F: IDS.mek.qioDashboard })
+})

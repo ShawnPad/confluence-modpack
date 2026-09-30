@@ -4,8 +4,8 @@
 // '// ----' heading: Space (plan Task 6) first, then AE2 S6.1–S6.2 (Task 7). KubeJS runs every handler registered for the
 // event, in script load order (EventHandlerContainer.add/handle, as dump.js cites); the two handlers touch disjoint ids, so
 // neither depends on order. No top-level const or function in this file: all server scripts share one scope (HANDOFF §6).
-// Later tasks count the handlers with grep -c '^ServerEvents\.recipes(', so each handler begins its line with that call and no
-// other line may.
+// Keep each handler's call at column 0 and no other line may begin with it, so an anchored grep -c '^ServerEvents\.recipes('
+// counts the handlers (the tier5.js convention).
 
 // ---- Space: D6.1, D6.3, T6.1, T6.2, D6.9, M6.1 (plan Task 6)
 ServerEvents.recipes(event => {
@@ -84,4 +84,34 @@ ServerEvents.recipes(event => {
     pedestalItems: [{ item: IDS.irons.divineSoulshard }, { item: IDS.pack.mercuryShard }, { item: IDS.pack.glacioShard }],
     result: { count: 1, id: IDS.pack.astralFocus },
   })
+})
+
+// ---- AE2, tier 6 (v0.3 Task 7; spec §6 S6.1–S6.2, D107, D117). Shapes: research/phase7-ae2-ids.md §3 (OSR2 1.7.1) and §1.2
+// (appliedenergistics2-19.2.17.jar defaults). Removed BY ID (IDS.ae2.recipes), as in tier5.js.
+ServerEvents.recipes(event => {
+  // S6.1 Wireless Receiver (OSR2 crafting.js lines 5635–5649): desh ×3 where the default has iron. The access point and both
+  // wireless terminals consume the receiver (AE2 §4.1), so they wait for Moon desh.
+  gate.remove(event, { id: IDS.ae2.recipes.wirelessReceiver })
+  gate.shaped(event, 'confluence:tier6/wireless_receiver', IDS.ae2.wirelessReceiver, [' A ', 'BCB', ' B '],
+    { A: IDS.ae2.fluixPearl, B: IDS.adastra.deshIngotTag, C: IDS.ae2.quartzFiber })
+
+  // S6.2 Crafting Unit (OSR2 expert_crafting.js lines 1636–1652) with one ostrum ingot in place of one of its two fluix glass
+  // cables (D117; pack spec §2.7, one gate item per replaced filler). Every crafting CPU consumes a unit (research/
+  // phase7-v0.3-gaps.md §3.2), so ostrum gates network autocrafting. The mirror image also crafts: vanilla ShapedRecipePattern.matches
+  // tries the mirrored grid, then the plain one (server-1.21.1-20240808.144430-srg.jar).
+  gate.remove(event, { id: IDS.ae2.recipes.craftingUnit })
+  gate.shaped(event, 'confluence:tier6/crafting_unit', IDS.ae2.craftingUnit, ['ABA', 'CDF', 'AEA'],
+    { A: IDS.ae2.fluixCrystal, B: IDS.ae2.calculationProcessor, C: IDS.adastra.ostrumIngotTag, D: IDS.ifg.supremeFrameTag,
+      E: IDS.ae2.logicProcessor, F: IDS.ae2.fluixGlassCable })
+
+  // S6.2 Pattern Provider: AE2's default aba / c d / aba with an ostrum ingot in the empty centre (D107). Only
+  // ae2:network/blocks/pattern_providers_interface is removed, so the part <-> block conversions ..._interface_alt and
+  // ..._interface_part survive (AE2 §4.5; removing by output would take _alt with it).
+  gate.remove(event, { id: IDS.ae2.recipes.patternProvider })
+  gate.shaped(event, 'confluence:tier6/pattern_provider', IDS.ae2.patternProvider, ['ABA', 'COD', 'ABA'],
+    { A: IDS.vanilla.ironIngotTag, B: IDS.vanilla.craftingTable, C: IDS.ae2.annihilationCore, D: IDS.ae2.formationCore,
+      O: IDS.adastra.ostrumIngotTag })
+
+  // S6.2 Molecular Assembler and Pattern Encoding Terminal: unchanged (D117; OSR2 leaves both alone, AE2 §3). A lone assembler with
+  // a hand-placed pattern automates one recipe from tier 5 (research/phase7-v0.3-gaps.md §3.1).
 })

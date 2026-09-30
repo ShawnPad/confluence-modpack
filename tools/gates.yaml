@@ -63,6 +63,17 @@ gates:
   - confluence:tier6/etrium_ingot
   - confluence:tier6/etrium_plate
   - confluence:tier6/astral_focus
+  # v0.3 AE2 (spec §5 S5.1–S5.3, §6 S6.1–S6.2; D117)
+  - confluence:tier5/inscriber
+  - confluence:tier5/charger
+  - confluence:tier5/controller
+  - confluence:tier5/drive
+  - confluence:tier5/import_bus
+  - confluence:tier5/export_bus
+  - confluence:tier5/terminal
+  - confluence:tier6/wireless_receiver
+  - confluence:tier6/crafting_unit
+  - confluence:tier6/pattern_provider
 removed:
   # v0.1 tiers 0–2
   - minecraft:flint_and_steel
@@ -120,3 +131,14 @@ removed:
   - ad_astra:oxygen_loader
   - ad_astra:fuel_refinery
   - ad_astra:steel_engine
+  # v0.3 AE2 (spec §5 S5.1–S5.3, §6 S6.1–S6.2; D117): AE2's defaults, removed by id
+  - ae2:network/blocks/inscribers
+  - ae2:network/blocks/crystal_processing_charger
+  - ae2:network/blocks/controller
+  - ae2:network/blocks/storage_drive
+  - ae2:network/parts/import_bus
+  - ae2:network/parts/export_bus
+  - ae2:network/parts/terminals
+  - ae2:network/wireless_part
+  - ae2:network/crafting/cpu_crafting_unit
+  - ae2:network/blocks/pattern_providers_interface

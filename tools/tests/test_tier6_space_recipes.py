@@ -156,6 +156,15 @@ def test_space_shaped_rows(recorded):
         assert (c["output"], c["pattern"], c["keys"]) == (output, pattern, keys), rid
         # One maker per machine: a second shaped call with this output would load a second recipe for it.
         assert [s["id"] for s in shaped if s["output"] == output] == [rid], output
+    # Nor may a custom recipe make one. tier6.js's custom recipes name their product in json.result.id; json.output.id is
+    # checked too, and a bare-string result or output counts as the id.
+    machines = {output for output, _, _ in SHAPED.values()}
+
+    def product(j):
+        made = j.get("result", j.get("output"))
+        return made.get("id") if isinstance(made, dict) else made
+
+    assert [(c["id"], product(c["json"])) for c in calls(recorded, "custom") if product(c["json"]) in machines] == []
 
 
 def test_space_removals_are_the_five_defaults_only(recorded):
