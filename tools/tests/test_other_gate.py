@@ -7,7 +7,7 @@ OTHER_GATE function with stub callbacks, and returns the action plus how often e
 node runs V8, NOT the pack's Rhino (rhino-2101.2.7-build.85.jar under KubeJS 2101.7.2), so these tests pin the decisions,
 not that Rhino accepts the file: the load proof is the boot (tools/server_boot.sh fails on any KubeJS ERROR line), and the
 behaviour proof is the in-game probe (v0.3 plan Task 12, spec §12 probes 2 and 3). node must be on PATH: the `node` fixture
-asserts it, so the 68 node tests run rather than skip.
+asserts it, so the node tests run rather than skip.
 """
 import json
 import re
@@ -136,6 +136,25 @@ def test_pad_other_dimensions_are_untouched(dim, hand):
 
 
 @needs_node
+@pytest.mark.parametrize("dim,hand,team,held,out", [
+    (NETHER, "MAIN_HAND", LOCKED, {"main": AIR, "off": AIR},
+     {"cancel": True, "unlock": False, "shrink": None, "message": MSG_LOCKED, "error": None}),
+    (NETHER, "MAIN_HAND", LOCKED, {"main": KEY, "off": AIR},
+     {"cancel": True, "unlock": True, "shrink": "MAIN_HAND", "message": MSG_UNLOCKED, "error": None}),
+    (NETHER, "OFF_HAND", LOCKED, {"main": AIR, "off": KEY},
+     {"cancel": True, "unlock": False, "shrink": None, "message": None, "error": None}),
+    (END, "MAIN_HAND", UNLOCKED, {"main": AIR, "off": AIR},
+     {"cancel": True, "unlock": False, "shrink": None, "message": MSG_BEYOND, "error": None}),
+])
+def test_pad_has_no_game_mode_exemption(dim, hand, team, held, out):
+    """Spec §4.2: the pad rules hold "in every game mode (no creative exemption at the pad)" (D109). Given an exempt callback
+    that says yes, the pad rule never calls it and still cancels."""
+    r = decide("pad", dim=dim, hand=hand, team=team, held=held, exempt=True)
+    assert r["out"] == out
+    assert r["calls"]["exempt"] == 0
+
+
+@needs_node
 @pytest.mark.parametrize("team,held", [("throw", {"main": KEY, "off": AIR}), (LOCKED, "throw")])
 def test_pad_error_fails_closed_and_keeps_the_key(team, held):
     r = decide("pad", dim=NETHER, hand="MAIN_HAND", team=team, held=held)
@@ -243,15 +262,126 @@ def test_arrival_outer_error_moves_only_from_the_gated_dimensions(dest, send, me
 
 # ---- one shared scope -----------------------------------------------------------------------------------------------
 
-TOP_LEVEL = re.compile(r"^(?:const|let|var|function)\s+([A-Za-z_$][\w$]*)", re.M)
+# A column-0 declaration of one name: const, let, var, class, or a function (async, generator or plain).
+TOP_LEVEL = re.compile(r"^(?:(?:const|let|var|class)\s+|(?:async\s+)?function\s*\*?\s*)([A-Za-z_$][\w$]*)", re.M)
+DESTRUCTURING = re.compile(r"^(?:const|let|var)\s*[\[{]", re.M)
+IDENT = re.compile(r"[A-Za-z_$][\w$]*")
+# After one of these, a '/' starts a regex literal; after anything else (a name, number, ')' or ']') it divides.
+REGEX_AFTER = set("(,=:[!&|?{};+-*%<>~^") | {"return", "typeof", "case", "do", "else", "in", "of", "new", "delete", "void",
+                                            "throw", "instanceof"}
+
+
+def blank(src):
+    """src with every comment, and the inside of every string, template and regex literal, turned into spaces (newlines
+    kept), so what is left is code at its own line and column. A '/*' inside a line comment (a path such as data/*/recipe)
+    therefore opens nothing."""
+    out, i, n, prev = list(src), 0, len(src), None
+
+    def wipe(a, b):
+        for k in range(a, min(b, n)):
+            if out[k] != "\n":
+                out[k] = " "
+
+    while i < n:
+        c = src[i]
+        if src.startswith("//", i):
+            j = src.find("\n", i)
+            j = n if j < 0 else j
+            wipe(i, j)
+            i = j
+        elif src.startswith("/*", i):
+            j = src.find("*/", i + 2)
+            j = n if j < 0 else j + 2
+            wipe(i, j)
+            i = j
+        elif c in "'\"`":
+            j = i + 1
+            while j < n and src[j] != c:
+                j += 2 if src[j] == "\\" else 1
+            wipe(i + 1, j)
+            i, prev = j + 1, "str"
+        elif c == "/" and (prev is None or prev in REGEX_AFTER):
+            j, in_class = i + 1, False
+            while j < n and src[j] != "\n" and (src[j] != "/" or in_class):
+                if src[j] == "\\":
+                    j += 1
+                elif src[j] in "[]":
+                    in_class = src[j] == "["
+                j += 1
+            wipe(i + 1, j)
+            i, prev = j + 1, "regex"
+        elif IDENT.match(src, i):
+            m = IDENT.match(src, i)
+            i, prev = m.end(), m.group()
+        else:
+            i, prev = i + 1, (prev if c.isspace() else c)
+    return "".join(out)
+
+
+def top_level_names(src, where):
+    """(names, problems) for one script: the name each column-0 declaration declares, and every column-0 declaration that
+    this check cannot read as exactly one name (a destructuring pattern, or a second declarator after a top-level comma)."""
+    code = blank(src)
+
+    def line(pos):
+        return code.count("\n", 0, pos) + 1
+
+    problems = [f"{where}:{line(m.start())}: a destructuring declaration at the top level; declare one name per statement"
+                for m in DESTRUCTURING.finditer(code)]
+    names = []
+    for m in TOP_LEVEL.finditer(code):
+        names.append(m.group(1))
+        depth, i = 0, m.end()
+        while i < len(code) and not (depth == 0 and code[i] in ";\n"):
+            depth += (code[i] in "([{") - (code[i] in ")]}")
+            if code[i] == "," and depth == 0:
+                problems.append(f"{where}:{line(m.start())}: '{m.group(1)}' is followed by a second declarator; declare one "
+                                "name per statement")
+                break
+            i += 1
+    return names, problems
 
 
 def test_server_script_top_level_names_are_unique():
     """KubeJS 2101 runs every server script in one scope (HANDOFF §6): a top-level name may be declared only once."""
-    seen = {}
+    seen, problems = {}, []
     for path in sorted(SERVER_SCRIPTS.rglob("*.js")):
-        for name in TOP_LEVEL.findall(path.read_text(encoding="utf-8")):
-            seen.setdefault(name, []).append(str(path.relative_to(SERVER_SCRIPTS)))
+        rel = str(path.relative_to(SERVER_SCRIPTS))
+        names, bad = top_level_names(path.read_text(encoding="utf-8"), rel)
+        problems += bad
+        for name in names:
+            seen.setdefault(name, []).append(rel)
+    assert problems == [], "top-level declarations this check cannot read as one name each:\n" + "\n".join(problems)
     dupes = {name: files for name, files in seen.items() if len(files) > 1}
-    assert dupes == {}
+    assert dupes == {}, f"declared at the top level of more than one server script (one shared scope): {dupes}"
     assert seen["OTHER_GATE"] == ["lib/other_gate.js"]
+    assert seen["OTHER_GATE_MC"] == ["events.js"]
+
+
+def test_top_level_scanner_reads_every_declaration_form():
+    """The red case for the scanner above: each declaration form is read, comments and literals hide nothing and invent
+    nothing, and destructuring or a second declarator is reported with its line."""
+    src = "\n".join([
+        "// a path in a line comment, data/*/recipe/**, opens no block comment",   # 1
+        "const VISIBLE = 1",                                                          # 2
+        "/*",                                                                         # 3
+        "const HIDDEN = 1",                                                           # 4
+        "*/",                                                                         # 5
+        "let s = '/* not a comment', t0 = 0",                                         # 6
+        "class Klass {}",                                                             # 7
+        "async function asyncFn(a, b) { return a, b }",                               # 8
+        "function* gen() {}",                                                         # 9
+        "function *gen2() {}",                                                        # 10
+        "let re = /x\\/*/g, second = 2",                                              # 11
+        "const { picked } = VISIBLE",                                                 # 12
+        "const list = [1, 2], third = 3",                                             # 13
+        "const obj = {",                                                              # 14
+        "  a: 1, b: [2, 3],",                                                         # 15
+        "}",                                                                          # 16
+        "var last = f(1,",                                                            # 17
+        "  2)",                                                                       # 18
+        "",
+    ])
+    names, problems = top_level_names(src, "x.js")
+    assert names == ["VISIBLE", "s", "Klass", "asyncFn", "gen", "gen2", "re", "list", "obj", "last"]
+    assert [p.split(":")[1] for p in problems] == ["12", "6", "11", "13"], problems

@@ -45,6 +45,10 @@ if grep -q -E '^\[.*ERROR' logs/kubejs/startup.log logs/kubejs/server.log 2>/dev
 # A recipe the codec rejects, datapack or script, is dropped with only this vanilla line (RecipeManager.apply): the recipe dump
 # and KubeJS's "failed recipes" count both miss it (tools/tests/test_if_dissolution_data.py docstring).
 if grep -q 'Parsing error loading recipe' logs/latest.log 2>/dev/null; then echo "RECIPE PARSE ERRORS"; grep -A2 'Parsing error loading recipe' logs/latest.log | head -40; exit 1; fi
+# Shipped configs: NeoForge rewrites a config/ file its spec calls incorrect (a renamed key reverts to the mod's default) with
+# only a WARN, and a renamed file is never read. check_configs.py checks each shipped config/**/*.toml was tracked, not
+# corrected or recreated, and installed byte-identical (its header cites the loader jar).
+python3 "$ROOT/tools/check_configs.py" "$RUN" || { echo "CONFIG ERRORS"; exit 1; }
 # Questbook: print the load line and fail on any FTB Quests error (a malformed SNBT id or reward is logged, not thrown).
 grep '\[FTB Quests/\]: Loaded' console.log || echo "WARN: no FTB Quests 'Loaded' line within the grace period"
 if grep -E '/(ERROR|WARN)\] \[FTB Quests/\]' console.log | grep -v -i 'translation'; then echo "FTBQUESTS ERRORS"; exit 1; fi

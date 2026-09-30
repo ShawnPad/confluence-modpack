@@ -6,8 +6,11 @@ chose), event.cancel() called outside the try (the stand-in throws, as KubeJS's 
 leaving a native listener, the arrival move deferred until after the event with a still-there check, and the exact tp
 command. Each case loads the real lib/ids.js, lib/other_gate.js and events.js into one vm context (KubeJS gives all
 server scripts one scope), fires one captured listener, and returns every recorded call in order. The stand-ins model only
-the members the section calls (its header comment cites each one); Rhino itself is exercised by the boot and the Task 12
-probe.
+the members the section calls (its header comment cites each one), and each is as strict as the Java member it stands for:
+getTeamForPlayer takes only the event's player (ftb-teams-neoforge-2101.1.11.jar TeamManager has no other overload), an
+empty Optional's get() throws, getUUID() returns an object and PlayerList.getPlayer takes only that object, and the player
+getPlayer returns is a distinct object with the same UUID (server-1.21.1-20240808.144430-srg.jar PlayerList.respawn builds a
+new ServerPlayer), which alone moves when a tp works. Rhino itself is exercised by the boot and the Task 12 probe.
 
 node runs V8, NOT the pack's Rhino (rhino-2101.2.7-build.85.jar under KubeJS 2101.7.2): a section that runs here can still
 fail in KubeJS (tools/tests/test_rhino_hazards.py lints the one known case, a const directly inside a try). The load proof is
@@ -44,7 +47,6 @@ const rec = s => { log.push(s) }
 const boom = at => { if (c.throwAt === at) throw new Error('boom at ' + at) }
 const EXIT = new Error('EventExit')
 const key = id => ({ location: () => ({ toString: () => id }) })
-let where = c.dest
 const team = {
   getExtraData: () => ({
     getBoolean: k => { rec('getBoolean ' + k); boom('getBoolean'); return c.team.unlocked === true },
@@ -53,34 +55,59 @@ const team = {
   markDirty: () => { rec('markDirty'); boom('markDirty') },
   getShortName: () => 'Team1',
 }
+// getTeamForPlayer(ServerPlayer) is FTB Teams' only overload (the UUID form is getTeamForPlayerID), so anything but the event's
+// player is refused, as Rhino's method lookup would refuse it. An empty java.util.Optional's get() throws.
 const api = {
   isManagerLoaded: () => { rec('isManagerLoaded'); boom('isManagerLoaded'); return c.team.manager !== false },
   getManager: () => ({ getTeamForPlayer: p => {
     rec('getTeamForPlayer')
-    return { isPresent: () => c.team.found === true, get: () => team }
+    if (p !== player) throw new TypeError('getTeamForPlayer(ServerPlayer): not the event player')
+    return { isPresent: () => c.team.found === true,
+      get: () => { if (c.team.found !== true) throw new Error('java.util.NoSuchElementException: No value present'); return team } }
   } }),
 }
 const stack = (hand, id) => ({ getId: () => id, shrink: n => { rec('shrink ' + hand + ' ' + n); boom('shrink') } })
+const UUID = { toString: () => 'uuid-1' }   // a java.util.UUID object, not a string
+// Two player objects with the same UUID and the same starting dimension: `player` is the one the event carries, `online` the
+// one PlayerList.getPlayer(UUID) returns. They are distinct, as after a respawn (PlayerList.respawn builds a new ServerPlayer),
+// so only `online` moves (movedAway, a successful tp) and a read from the event's stale object shows.
+const makePlayer = () => {
+  const self = {
+    at: c.dest,
+    getMainHandItem: () => stack('MAIN_HAND', c.main || 'minecraft:air'),
+    getOffhandItem: () => stack('OFF_HAND', c.off || 'minecraft:air'),
+    isCreative: () => c.mode === 'creative',
+    isSpectator: () => c.mode === 'spectator',
+    displayClientMessage: (text, actionBar) => rec('say ' + text.literal + ' ' + actionBar),
+    getScoreboardName: () => 'Alex',
+    getUUID: () => UUID,
+    getStringUUID: () => 'uuid-1-str',
+    getServer: () => server,
+    level: () => ({ isClientSide: () => c.clientSide === true, dimension: () => key(self.at) }),
+    isServerPlayer: () => c.serverPlayer !== false,
+  }
+  return self
+}
 const scheduled = []
 const server = {
   scheduleInTicks: (n, fn) => { rec('schedule ' + n); boom('schedule'); scheduled.push(fn) },
-  getPlayerList: () => ({ getPlayer: u => { rec('getPlayer ' + u); return c.loggedOut ? null : player } }),
+  // PlayerList.getPlayer(UUID): a string or any other object is refused.
+  getPlayerList: () => ({ getPlayer: u => {
+    rec('getPlayer ' + u)
+    if (u !== UUID) throw new TypeError('getPlayer(UUID): not the UUID object')
+    return c.loggedOut ? null : online
+  } }),
   overworld: () => ({ getSharedSpawnPos: () => ({ getX: () => 10, getY: () => 64, getZ: () => -5 }) }),
-  runCommandSilent: cmd => { rec('command ' + cmd); boom('command') },
+  // A tp that works moves the online player before the call returns; tpFails models one that did nothing (it is silent).
+  runCommandSilent: cmd => {
+    rec('command ' + cmd)
+    boom('command')
+    const m = /^execute in (\S+) run tp (\S+) /.exec(cmd)
+    if (m && m[2] === online.getStringUUID() && !c.tpFails) online.at = m[1]
+  },
 }
-const player = {
-  getMainHandItem: () => stack('MAIN_HAND', c.main || 'minecraft:air'),
-  getOffhandItem: () => stack('OFF_HAND', c.off || 'minecraft:air'),
-  isCreative: () => c.mode === 'creative',
-  isSpectator: () => c.mode === 'spectator',
-  displayClientMessage: (text, actionBar) => rec('say ' + text.literal + ' ' + actionBar),
-  getScoreboardName: () => 'Alex',
-  getUUID: () => 'uuid-1',
-  getStringUUID: () => 'uuid-1-str',
-  getServer: () => server,
-  level: () => ({ isClientSide: () => c.clientSide === true, dimension: () => key(where) }),
-  isServerPlayer: () => c.serverPlayer !== false,
-}
+const player = makePlayer()
+const online = makePlayer()
 const listeners = { pad: null, padId: null, native: {} }
 const ctx = vm.createContext({
   console: { info: m => rec('info ' + m), warn: m => rec('warn ' + m), error: m => rec('error ' + m), log: m => rec('log ' + m) },
@@ -95,10 +122,13 @@ const out = { load: log.splice(0), padId: listeners.padId, native: Object.keys(l
   cancelled: false, uncaught: null }
 try {
   if (c.fn === 'pad') {
+    // Both forms of the hand and dimension reads are modelled, so the task's in-game fallbacks (String(event.getHand())
+    // through Enum.toString(), and event.getBlock().getDimensionKey()) pass or fail these tests the same way.
     listeners.pad({
       getPlayer: () => { boom('getPlayer'); return player },
       getLevel: () => ({ dimension: () => { boom('dimension'); return key(c.dim) } }),
-      getHand: () => ({ name: () => c.hand }),
+      getBlock: () => ({ getDimensionKey: () => { boom('dimension'); return key(c.dim) } }),
+      getHand: () => ({ name: () => c.hand, toString: () => c.hand }),
       cancel: () => { rec('cancel'); throw EXIT },
     })
   } else if (c.fn === 'travel') {
@@ -113,7 +143,7 @@ try {
       getEntity: () => { rec('getEntity'); boom('getEntity'); return player },
     })
     rec('tick end')
-    if (c.movedAway) where = 'minecraft:the_nether'
+    if (c.movedAway) online.at = 'minecraft:the_nether'
     scheduled.forEach(fn => fn({}))
   }
 } catch (e) {
@@ -213,6 +243,11 @@ def test_pad_error_during_the_unlock_takes_no_key_before_the_flag_and_still_canc
     pytest.param(dict(dim=END, hand="MAIN_HAND", team=UNLOCKED, main=KEY), [SAY_BEYOND, "cancel"], True, id="end-main-hand"),
     pytest.param(dict(dim=END, hand="OFF_HAND", team=UNLOCKED), ["cancel"], True, id="end-off-hand"),
     pytest.param(dict(dim=OVERWORLD, hand="MAIN_HAND", team=LOCKED, main=KEY), [], False, id="overworld-untouched"),
+    # Spec §4.2: the pad rules hold "in every game mode (no creative exemption at the pad)" (D109).
+    pytest.param(dict(dim=NETHER, hand="MAIN_HAND", team=LOCKED, main=DIRT, mode="creative"), LOOKUP + [SAY_LOCKED, "cancel"],
+                 True, id="creative-gets-no-pad-exemption"),
+    pytest.param(dict(dim=END, hand="MAIN_HAND", team=UNLOCKED, mode="spectator"), [SAY_BEYOND, "cancel"], True,
+                 id="spectator-gets-no-pad-exemption"),
     pytest.param(dict(dim=NETHER, hand="MAIN_HAND", team=LOCKED, main=KEY, throwAt="isManagerLoaded"),
                  ["isManagerLoaded",
                   "error confluence other-gate: pad check failed, click cancelled: Error: boom at isManagerLoaded", "cancel"],
@@ -269,12 +304,17 @@ def test_travel_listener(case, log):
     pytest.param(dict(dest=BEYOND, team=UNLOCKED), ["getEntity"] + moved(BEYOND, SAY_BEYOND), id="beyond-no-lookup"),
     pytest.param(dict(dest=OTHER, team=UNLOCKED), ["getEntity"] + LOOKUP + ["tick end"], id="other-unlocked-team"),
     pytest.param(dict(dest=BEYOND, mode="creative"), ["getEntity", "tick end"], id="creative-exempt"),
+    pytest.param(dict(dest=OTHER, team=LOCKED, mode="spectator"), ["getEntity", "tick end"], id="spectator-exempt"),
     pytest.param(dict(dest=OTHER, team=LOCKED, clientSide=True), ["getEntity", "tick end"], id="client-side-ignored"),
     pytest.param(dict(dest=NETHER, team=LOCKED), ["tick end"], id="nether-reads-nothing"),
     pytest.param(dict(dest=OTHER, team=LOCKED, movedAway=True),
                  ["getEntity"] + LOOKUP + ["schedule 1", "tick end", "getPlayer uuid-1"], id="already-left-not-moved"),
     pytest.param(dict(dest=BEYOND, loggedOut=True), ["getEntity", "schedule 1", "tick end", "getPlayer uuid-1"],
                  id="logged-out-not-moved"),
+    pytest.param(dict(dest=OTHER, team=LOCKED, tpFails=True),
+                 ["getEntity"] + LOOKUP + ["schedule 1", "tick end", "getPlayer uuid-1", TP,
+                                           "error confluence other-gate: arrival move did not leave allthemodium:the_other for Alex"],
+                 id="tp-did-nothing-logged-no-message"),
     pytest.param(dict(dest=OTHER, throwAt="getTo"),
                  ["error confluence other-gate: arrival check error (destination null, moving: false): Error: boom at getTo",
                   "tick end"], id="destination-read-error-not-moved"),

@@ -95,12 +95,17 @@ ServerEvents.tags('block', event => {
 //     Level.getSharedSpawnPos() -> BlockPos (getX/getY/getZ).
 //   Command (MC): ExecuteCommand literal "in" + dimension, TeleportCommand "tp" targets location; a UUID target is parsed
 //     by EntitySelectorParser.parseNameOrUUID and found across getAllLevels() by EntitySelector.
-// Nothing here logs at load time: tools/tests/run_server_scripts.js (plan Task 8) reads a script run's stdout as JSON. The
-// boot proof is KubeJS's own "Loaded Java class '...'" line for each of the three Java.loadClass calls below.
-// Rhino (RH) throws "redeclaration of var" at runtime for a const declared directly inside a try block; V8, and so the node
-// tests, accept it (v0.3 plan Task 2 Step 4, "Correction (execution, session 13)"; tools/tests/test_rhino_hazards.py; dump.js
-// `let j = null`). That harness found let there works, but tried no other form, so every name a try or catch below assigns
-// is declared with let, set to null, before the try; only the nested arrow functions (own scope) declare their own.
+// Nothing here logs at load time, so a "confluence other-gate" line in kubejs/server.log always means a gate acted: a boot
+// with no player online has none (v0.3 plan Task 9 Step 7 greps for it), and test_other_gate_events.py's
+// test_section_registers_its_listeners_and_logs_nothing_while_loading pins that loading records only the three loadClass
+// calls. (tools/tests/run_server_scripts.js sends script console output to stderr, so its JSON stdout does not need this.)
+// The boot proof is KubeJS's own "Loaded Java class '...'" line for each of the three Java.loadClass calls below.
+// Rhino note. Under Rhino 2101.2.7 a `const` declared directly in a `try` block throws "redeclaration of var" when the block
+// runs (a runtime error: rhino-2101.2.7-build.85.jar Interpreter.doSetConstVar / ScriptableObject.putConstImpl), while V8,
+// and so node, accepts it (v0.3 plan Task 2 Step 4, "Correction (execution, session 13)"; tools/tests/test_rhino_hazards.py
+// lints that case). The standalone Rhino harness in that step showed `let` inside a `try` works but tried no other form, so
+// every name a try, catch or finally body assigns is declared with `let` before the `try`, with its starting value (`null`,
+// or `false` for the pad's `cancel`). Nested functions declare their own names.
 const OTHER_GATE_MC = {
   teamsApi: Java.loadClass('dev.ftb.mods.ftbteams.api.FTBTeamsAPI'),
   travelEvent: Java.loadClass('net.neoforged.neoforge.event.entity.EntityTravelToDimensionEvent'),
@@ -129,12 +134,14 @@ const OTHER_GATE_MC = {
   },
 
   // §4.4: at the next end of a server tick (so after Tombstone's own teleport has returned), if the player is still online
-  // and still in dest, move them to the Overworld world spawn and show the message.
+  // and still in dest, move them to the Overworld world spawn and show the message. If the tp left them in dest, log an
+  // error instead of the message.
   toSpawn: function (player, dest, message) {
     const server = player.getServer()
     const uuid = player.getUUID()
     server.scheduleInTicks(1, scheduled => {
-      let p = null   // declared before the try (Rhino note above)
+      // Declared before the try (Rhino note above).
+      let p = null
       let spawn = null
       try {
         p = server.getPlayerList().getPlayer(uuid)
@@ -142,6 +149,14 @@ const OTHER_GATE_MC = {
         spawn = server.overworld().getSharedSpawnPos()
         server.runCommandSilent('execute in ' + IDS.vanilla.overworld + ' run tp ' + p.getStringUUID() + ' ' +
           (spawn.getX() + 0.5) + ' ' + spawn.getY() + ' ' + (spawn.getZ() + 0.5))
+        // runCommandSilent returns void (KJS MinecraftServerKJS.kjs$runCommandSilent) and a failed tp is silent (MC
+        // Commands.performCommand catches Exception, exception table 37-55 -> 70, and the source's output is suppressed). The
+        // tp runs before the call returns (MC Commands.executeCommandInContext runs the command queue at once when no context
+        // is open, offsets 15-94; ServerPlayer.teleportTo -> changeDimension, offset 67), so where p is now tells.
+        if (OTHER_GATE_MC.dimId(p.level().dimension()) === dest) {
+          console.error('confluence other-gate: arrival move did not leave ' + dest + ' for ' + p.getScoreboardName())
+          return
+        }
         OTHER_GATE_MC.say(p, message)
         console.info('confluence other-gate: arrival check sent ' + p.getScoreboardName() + ' from ' + dest + ' to the Overworld spawn')
       } catch (e) {
@@ -152,9 +167,12 @@ const OTHER_GATE_MC = {
 }
 
 // §4.2 pad. Decide inside the try, cancel outside it: cancel() throws, and a try around it would swallow the cancel.
+// KubeJS never posts this event while the clicking hand's item is on cooldown (KJS KubeJSBlockEventHandler.rightClick offsets
+// 47-71; PAD §1.6): the pad itself may then act, and the travel check below still refuses the trip (PAD §1.5, §4.3).
 BlockEvents.rightClicked(IDS.allthemodium.teleportPad, event => {
+  // Declared before the try (Rhino note above).
   let cancel = false
-  let player = null   // declared before the try (Rhino note above)
+  let player = null
   let found = null
   let act = null
   let stack = null
@@ -194,8 +212,9 @@ BlockEvents.rightClicked(IDS.allthemodium.teleportPad, event => {
 // §4.3 travel check. A NativeEvents listener has no KubeJS guard (an uncaught error reaches changeDimension), so the whole
 // body is in the try; the destination is read first and nothing else runs for any other dimension.
 NativeEvents.onEvent(OTHER_GATE_MC.travelEvent, event => {
+  // Declared before the try (Rhino note above).
   let dest = null
-  let entity = null   // declared before the try (Rhino note above)
+  let entity = null
   let act = null
   try {
     dest = OTHER_GATE_MC.dimId(event.getDimension())
@@ -222,9 +241,10 @@ NativeEvents.onEvent(OTHER_GATE_MC.travelEvent, event => {
 
 // §4.4 arrival check: Tombstone's Helper.teleport skips the travel event but fires this one after the move (PAD §4.3, GAP §5).
 NativeEvents.onEvent(OTHER_GATE_MC.changedEvent, event => {
+  // Declared before the try (Rhino note above).
   let dest = null
   let player = null
-  let act = null   // declared before the try (Rhino note above)
+  let act = null
   let move = null
   try {
     dest = OTHER_GATE_MC.dimId(event.getTo())
