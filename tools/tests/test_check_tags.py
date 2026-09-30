@@ -130,11 +130,15 @@ def test_bare_tag_ids_are_not_references():
     assert tags_from_script(src) == set()
 
 
-def test_empty_twin_in_another_registry_fails():
+def test_empty_twin_in_another_registry_fails(monkeypatch):
     """A block tag missing from NON_ITEM_TAGS is looked up as an item tag. If an item tag of the same id is non-empty
-    it passes by accident, while the block tag the script means is bound with 0 entries: report that 'empty twin'."""
+    it passes by accident, while the block tag the script means is bound with 0 entries: report that 'empty twin'.
+    An explicit NON_ITEM_TAGS entry is the cited way to accept a tag, so a mapped tag is never an empty twin."""
     export = {"minecraft:item": {"mod:stone": 1, "c:ingots/osmium": 3}, "minecraft:block": {"mod:stone": 0, "c:ingots/osmium": 2}}
     res = run_checks({"mod:stone": ["lib/ids.js"], "c:ingots/osmium": ["a.js"]}, export)
     assert res.empty_twin == [("mod:stone", "minecraft:block", ["lib/ids.js"])]
     assert res.checked == {"c:ingots/osmium": 3}
     assert res.failures == [("mod:stone", "minecraft:block", ["lib/ids.js"])]
+    monkeypatch.setitem(NON_ITEM_TAGS, "mod:mapped", "minecraft:block")
+    mapped = run_checks({"mod:mapped": ["lib/ids.js"]}, {"minecraft:item": {"mod:mapped": 0}, "minecraft:block": {"mod:mapped": 2}})
+    assert mapped.empty_twin == [] and mapped.checked == {"mod:mapped": 2}

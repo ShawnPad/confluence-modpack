@@ -12,7 +12,7 @@
 // gson's compact toString(). `json` is '' only when serialize() throws (it throws KubeRuntimeException for a null value it must
 // write) or this script errors; such rows are counted and the log line names the first error. A component that fails to encode
 // is logged at ERROR by KubeJS itself (RecipeComponent.writeToJson -> ConsoleJS.SERVER.error), which fails tools/server_boot.sh,
-// and its key is left out of an otherwise partial `json`.
+// and that key is missing from a new recipe's `json` but may keep its old datapack value in a modified original's.
 // Compare recipe types by the `type` column, not json.type: at 0.2.1, 469 bodies (Mystical Agriculture 387, MA Agradditions 49,
 // Tombstone 29, Explorer's and Nature's Compass 2 each) carry an un-namespaced type such as "crafting_shaped", and bodies may
 // carry neoforge:conditions (2553 at 0.2.1).

@@ -181,9 +181,10 @@ def run_checks(refs: dict, export: dict) -> Result:
             res.empty.append(row)
         else:
             # The empty twin: a block tag missing from NON_ITEM_TAGS passes as a non-empty item tag of the same id, while
-            # the tag the script means is bound with 0 entries in its own registry. Flag any other registry binding the id
-            # with 0 entries; a real item tag that also has an empty twin elsewhere is rare enough to check by hand.
-            twins = sorted(other for other, tags in export.items() if other != registry and tags.get(tag) == 0)
+            # the tag the script means is bound with 0 entries in its own registry. Only a tag whose registry is the
+            # default is checked: an explicit NON_ITEM_TAGS entry is the cited way to accept a tag's registry.
+            twins = [] if tag in NON_ITEM_TAGS else sorted(
+                other for other, tags in export.items() if other != registry and tags.get(tag) == 0)
             if twins:
                 res.empty_twin.append((tag, ", ".join(twins), refs[tag]))
             else:
