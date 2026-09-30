@@ -146,7 +146,7 @@ hash = "2b925da45ae9ccc37f6f5ae1fd1f62fb64d9155a6df14a5d44e9d3ab6538cf9d"
 
 [[files]]
 file = "kubejs/data/ars_nouveau/tags/entity_type/drygmy_blacklist.json"
-hash = "14da5ae2aba2d4269bde8d061906ef37b6a46fa8e5c49bf5e1a810d5068a9b7b"
+hash = "1694a5cf094dab243450acf70f544c2e19af9f3f4b1746279d038643866910ca"
 
 [[files]]
 file = "kubejs/data/confluence/recipe/tier5/unobtainium_vibranium_alloy_ingot.json"
@@ -190,7 +190,7 @@ hash = "2b925da45ae9ccc37f6f5ae1fd1f62fb64d9155a6df14a5d44e9d3ab6538cf9d"
 
 [[files]]
 file = "kubejs/server_scripts/bypass.js"
-hash = "067d44714d44518e84b729bba5eb98c8107dbea2564d69c4c7d8ac51319439af"
+hash = "c89dcbc71d979d87836d92bc404a9021ea6c2d475255b89ab1a0de228459409a"
 
 [[files]]
 file = "kubejs/server_scripts/dump.js"
@@ -198,7 +198,7 @@ hash = "faf61916cd8117e807b0c8601eb2b38f1226a673da4fbbc5ee1894164ea07379"
 
 [[files]]
 file = "kubejs/server_scripts/events.js"
-hash = "18e8f28fd8b30c3c7b9916248cb73c61418a8f25fd134337f6220bad295db19e"
+hash = "12f479b3171fe2da925b770d07d4a9850f3500b1c3d16a40589e9b5be8987ebd"
 
 [[files]]
 file = "kubejs/server_scripts/lib/gates.js"
