@@ -33,6 +33,16 @@ gates:
   - confluence:bypass/vibranium_crystal_from_ore
   - confluence:bypass/vibranium_crystal_from_raw_ore
   - confluence:bypass/vibranium_crystal_from_raw_block
+  # v0.3 Mekanism tier 5: T5.1 ultimate circuit, X5.3 Digital Miner (tiers/tier5.js)
+  - confluence:tier5/ultimate_control_circuit
+  - confluence:tier5/digital_miner
+  # v0.3 tier-3 elite-circuit swaps, D113 (tiers/tier3.js)
+  - confluence:tier3/qio_drive_base
+  - confluence:tier3/qio_redstone_adapter
+  - confluence:tier3/quantum_entangloporter
+  - confluence:tier3/chemical_crystallizer
+  - confluence:tier3/chemical_dissolution_chamber
+  - confluence:tier3/chemical_washer
 removed:
   # v0.1 tiers 0–2
   - minecraft:flint_and_steel
@@ -70,3 +80,14 @@ removed:
   - allthemodium:processing/vibranium/slurry/dirty/from_ore
   - allthemodium:processing/vibranium/slurry/dirty/from_raw_ore
   - allthemodium:processing/vibranium/slurry/dirty/from_raw_block
+  # v0.3 Mekanism tier 5: T5.1 ultimate circuit, X5.3 Digital Miner (tiers/tier5.js)
+  - mekanism:control_circuit/ultimate
+  - mekanism:control_circuit/infused_ultimate
+  - mekanism:digital_miner
+  # v0.3 tier-3 elite-circuit swaps, D113 (tiers/tier3.js)
+  - mekanism:qio_drive_base
+  - mekanism:qio_redstone_adapter
+  - mekanism:quantum_entangloporter
+  - mekanism:chemical_crystallizer
+  - mekanism:chemical_dissolution_chamber
+  - mekanism:chemical_washer
