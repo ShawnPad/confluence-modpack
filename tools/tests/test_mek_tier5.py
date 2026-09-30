@@ -7,7 +7,8 @@ prints the record as JSON. Each record names the file whose handler made it. The
 Digital Miner with Mekanism's own defaults (DEFAULTS, checked against the jar by the last test), T5.1 with the spec, and check
 that tier3.js no longer asks for an ultimate circuit. A missing IDS key shows up before any boot, as '<undefined>' or as a
 tagId error in `errors`. Later tasks append their own handlers to tier5.js; one that throws here (an API this stub lacks) is
-listed in `errors` and does not hide the others' records.
+listed in `errors` and does not hide the others' records. Each record also carries the index of the handler that made it, so
+a test can pin one handler's adds and removes (v0.3 Task 5's block, the last tests below).
 
 The harness runs under node's V8, not the pack's Rhino: it pins the recipes the handlers record, not that the files load in
 KubeJS. tools/server_boot.sh (KubeJS `0 errors`, `0 failed recipes`) is the load proof; tools/tests/test_rhino_hazards.py lints
@@ -18,6 +19,7 @@ import os
 import shutil
 import subprocess
 import zipfile
+from collections import Counter
 from pathlib import Path
 
 import pytest
@@ -33,7 +35,7 @@ HARNESS = r"""
 const fs = require('fs'), path = require('path'), vm = require('vm')
 const out = { recipes: [], removed: [], errors: [] }
 const handlers = []
-let loading = null, current = null
+let loading = null, current = null, currentHandler = null
 const noop = () => {}
 // `any` stands in for every other KubeJS global a script might touch at top level: callable, constructible, and every
 // property is itself.
@@ -56,15 +58,15 @@ for (const f of process.env.FILES.split(',')) {
 }
 // Any call on a recipe returns the recipe, so chains like .id(...) work; .id records the id.
 const handle = entry => { const h = new Proxy({}, { get: (t, k) => (k === 'id' ? i => { entry.id = String(i); return h } : () => h) }); return h }
-const add = e => { e.file = current; out.recipes.push(e); return handle(e) }
+const add = e => { e.file = current; e.handler = currentHandler; out.recipes.push(e); return handle(e) }
 const event = new Proxy({}, { get: (t, k) => {
   if (k === 'shaped') return (output, pattern, keys) => add({ kind: 'shaped', output, pattern, keys })
   if (k === 'shapeless') return (output, inputs) => add({ kind: 'shapeless', output, inputs })
   if (k === 'custom') return json => add({ kind: 'custom', json })
-  if (k === 'remove') return filter => { out.removed.push({ file: current, filter }) }
+  if (k === 'remove') return filter => { out.removed.push({ file: current, handler: currentHandler, filter }) }
   return () => handle({})
 } })
-handlers.forEach(([f, h], i) => { current = f; try { h(event) } catch (e) { out.errors.push(f + ' handler ' + i + ': ' + e) } })
+handlers.forEach(([f, h], i) => { current = f; currentHandler = i; try { h(event) } catch (e) { out.errors.push(f + ' handler ' + i + ': ' + e) } })
 process.stdout.write(JSON.stringify(out, (k, v) => (v === undefined ? '<undefined>' : v)))
 """
 
@@ -212,3 +214,57 @@ def test_defaults_match_the_jar():
             got = (d["type"], d["pattern"], {k: ingredient(v) for k, v in d["key"].items()},
                    (d["result"]["id"], d["result"]["count"]))
             assert got == want, name
+
+
+# v0.3 Task 5: the three script recipes of tier5.js's "Key, Supreme frame, alloys" block (spec §4.1 D5.1, §5 M5.1 and X5.1;
+# D105, D115). Literals are the spec's. The four elemental essences are ars_nouveau-1.21.1-5.13.1.jar's lang
+# item.ars_nouveau.{air,earth,fire,water}_essence. T5.2 and X5.2 are datapack JSON: tools/tests/test_if_dissolution_data.py.
+KEY, UNOB_ATM, VIB_ATM = ("confluence:tier5/other_key", "confluence:tier5/unobtainium_allthemodium_alloy_ingot",
+                          "confluence:tier5/vibranium_allthemodium_alloy_ingot")
+HEART = "allthemodium:piglich_heart"
+
+
+def test_d51_key_to_the_other(recorded):
+    r = one(recorded, KEY)
+    assert r["file"] == TIER5
+    assert view(r) == ("kubejs:shaped", [" E ", "VFB", " D "],
+                       {"E": "kubejs:end_focus", "V": "#c:ingots/vibranium", "F": "#industrialforegoing:machine_frame/advanced",
+                        "B": "the_bumblezone:essence_of_the_bees", "D": "minecraft:dragon_egg"},
+                       ("kubejs:other_key", 1))
+
+
+def test_m51_unobtainium_allthemodium_alloy(recorded):
+    r = one(recorded, UNOB_ATM)
+    assert r["file"] == TIER5
+    j = r["json"]
+    assert set(j) == {"type", "keepNbtOfReagent", "sourceCost", "reagent", "pedestalItems", "result"}, sorted(j)
+    assert j["type"] == "ars_nouveau:enchanting_apparatus"
+    assert ingredient(j["reagent"]) == "#c:ingots/unobtainium"
+    assert Counter(map(ingredient, j["pedestalItems"])) == Counter([
+        "#c:ingots/allthemodium", HEART, "ars_nouveau:air_essence", "ars_nouveau:earth_essence", "ars_nouveau:fire_essence",
+        "ars_nouveau:water_essence"])
+    assert j["sourceCost"] == 10000 and j["keepNbtOfReagent"] is False
+    assert j["result"] == {"count": 1, "id": "allthemodium:unobtainium_allthemodium_alloy_ingot"}
+
+
+def test_x51_vibranium_allthemodium_alloy(recorded):
+    r = one(recorded, VIB_ATM)
+    assert r["file"] == TIER5
+    j = r["json"]
+    assert set(j) == {"type", "energy", "ingredients", "result"}, sorted(j)
+    assert j["type"] == "powah:energizing"
+    assert Counter(map(ingredient, j["ingredients"])) == Counter([
+        "#c:ingots/allthemodium", "#c:ingots/vibranium", HEART, "powah:nitro_crystal_block"])
+    assert j["energy"] == 1000000000
+    assert j["result"] == {"count": 1, "id": "allthemodium:vibranium_allthemodium_alloy_ingot"}
+
+
+def test_task5_block_is_add_only(recorded):
+    """One handler makes all three and removes nothing. No loaded recipe makes the key or an alloy ingot except Allthemodium's
+    9-from-1 block recipes, which stay (research/phase7-tier5-ids.md §4.3); gate.custom given an `output` would remove every
+    recipe of that output, the block recipe included."""
+    handlers = {one(recorded, rid)["handler"] for rid in (KEY, UNOB_ATM, VIB_ATM)}
+    assert len(handlers) == 1, handlers
+    h = handlers.pop()
+    assert sorted(r.get("id") for r in recorded["recipes"] if r["handler"] == h) == sorted([KEY, UNOB_ATM, VIB_ATM])
+    assert [e["filter"] for e in recorded["removed"] if e["handler"] == h] == []

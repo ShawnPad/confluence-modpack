@@ -10,7 +10,7 @@ ServerEvents.recipes(event => {
   // recipes survive (D69 lesson). Powah's default: nether star + 2 redstone blocks + blazing crystal block, 20,000,000 FE, 16 out.
   gate.remove(event, { id: IDS.powah.nitroRecipe })
   gate.custom(event, 'confluence:tier3/crystal_nitro', {
-    type: 'powah:energizing', energy: 20000000,
+    type: IDS.powah.energizingType, energy: 20000000,
     ingredients: [
       { tag: tagId(IDS.vanilla.netherStarTag) }, { tag: tagId(IDS.vanilla.redstoneBlockTag) }, { item: IDS.powah.blazingCrystalBlock },
       { item: IDS.powah.spirited }, { item: IDS.irons.arcaneEssence }, { item: IDS.powah.uraninite },

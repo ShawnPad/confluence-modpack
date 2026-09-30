@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Headless boot of the pack in .run/server. Exit 0 iff the server reached "Done" with no KubeJS errors.
+# Headless boot of the pack in .run/server. Exit 0 iff the server reached "Done" with no KubeJS errors, no recipe parse errors
+# and no FTB Quests errors.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 NEO=21.1.250
@@ -41,6 +42,9 @@ sleep 3
 grep -E 'Done \(|Failed to load datapacks|Failed to start the minecraft server|Missing or unsupported mandatory|Requested by' console.log || true
 if ! grep -q 'Done (' console.log; then echo "BOOT FAILED"; exit 1; fi
 if grep -q -E '^\[.*ERROR' logs/kubejs/startup.log logs/kubejs/server.log 2>/dev/null; then echo "KUBEJS ERRORS"; grep -E 'ERROR' logs/kubejs/*.log | head -40; exit 1; fi
+# A recipe the codec rejects, datapack or script, is dropped with only this vanilla line (RecipeManager.apply): the recipe dump
+# and KubeJS's "failed recipes" count both miss it (tools/tests/test_if_dissolution_data.py docstring).
+if grep -q 'Parsing error loading recipe' logs/latest.log 2>/dev/null; then echo "RECIPE PARSE ERRORS"; grep -A2 'Parsing error loading recipe' logs/latest.log | head -40; exit 1; fi
 # Questbook: print the load line and fail on any FTB Quests error (a malformed SNBT id or reward is logged, not thrown).
 grep '\[FTB Quests/\]: Loaded' console.log || echo "WARN: no FTB Quests 'Loaded' line within the grace period"
 if grep -E '/(ERROR|WARN)\] \[FTB Quests/\]' console.log | grep -v -i 'translation'; then echo "FTBQUESTS ERRORS"; exit 1; fi

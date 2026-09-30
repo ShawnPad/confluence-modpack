@@ -27,7 +27,8 @@ gates:
   - confluence:tier4/ender_eye
   - confluence:tier4/planarium
   - confluence:tier4/end_focus
-  # in-place datapack override: the id is present with or without our file; inputs are checked in PLAYTEST H3
+  # in-place datapack override (D91): the id is present with or without our file; inputs are checked against the jar default
+  # by tools/tests/test_if_dissolution_data.py and in PLAYTEST H3
   - industrialforegoing:dissolution_chamber/advanced_machine_frame
   # v0.2 bypass
   - confluence:bypass/vibranium_crystal_from_ore
@@ -43,15 +44,15 @@ gates:
   - confluence:tier3/chemical_crystallizer
   - confluence:tier3/chemical_dissolution_chamber
   - confluence:tier3/chemical_washer
-  # v0.3 key, Supreme frame, alloys (spec §4.1, §5 T5.2 M5.1 X5.1 X5.2)
+  # v0.3 key, Supreme frame, alloys: D5.1, M5.1, X5.1 (tiers/tier5.js); T5.2, X5.2 (kubejs/data); D105, D114, D115
   - confluence:tier5/other_key
   - confluence:tier5/unobtainium_allthemodium_alloy_ingot
   - confluence:tier5/vibranium_allthemodium_alloy_ingot
-  # datapack recipe (IF dissolution): kubejs/data/confluence/recipe/tier5/unobtainium_vibranium_alloy_ingot.json
+  # X5.2 and T5.2 are IF dissolution datapack files; T5.2 overrides IF's default in place, so its id is present even without
+  # our file. A gate row proves the id is in the dump, not that the file passed IF's codec. For that, see the docstring of
+  # tools/tests/test_if_dissolution_data.py, tools/server_boot.sh (it fails on "Parsing error loading recipe") and the
+  # PLAYTEST tier-5 recipe probe (spec §12 item 4)
   - confluence:tier5/unobtainium_vibranium_alloy_ingot
-  # in-place datapack override: the id is in the dump with or without our file, and even if our file fails to parse (the dump
-  # runs before any codec). The inputs are checked by tools/tests/test_if_dissolution_data.py, by a boot with no "Parsing error
-  # loading recipe" line in logs/latest.log, and by the PLAYTEST tier-5 recipe probe (spec §12 item 4)
   - industrialforegoing:dissolution_chamber/supreme_machine_frame
 removed:
   # v0.1 tiers 0–2

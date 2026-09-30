@@ -31,9 +31,7 @@ ServerEvents.recipes(event => {
   })
 })
 
-// ---- Key, Supreme frame, alloys: the Key to The Other [D5.1], the Supreme Machine Frame [T5.2] and the three
-// Allthemodium alloys [M5.1, X5.1, X5.2]. Spec docs/superpowers/specs/2026-09-25-v0.3-tiers-5-6-design.md §4.1, §5; D105, D114, D115.
-// Report keys as lib/ids.js's v0.3 block: T5 = research/phase7-tier5-ids.md.
+// ---- Key, Supreme frame, alloys: D5.1 key (spec §4.1), T5.2 Supreme Machine Frame, M5.1 X5.1 X5.2 alloys; D105, D114, D115.
 //
 // Two of the five recipes are datapack JSON, not code (IF machine recipes are data, D31; the v0.2 T4.1 pattern):
 //  - T5.2 kubejs/data/industrialforegoing/recipe/dissolution_chamber/supreme_machine_frame.json replaces IF's default at its
@@ -45,20 +43,19 @@ ServerEvents.recipes(event => {
 //  - X5.2 kubejs/data/confluence/recipe/tier5/unobtainium_vibranium_alloy_ingot.json (id confluence:tier5/unobtainium_vibranium_alloy_ingot):
 //    four industrialforegoing:pink_slime items, a Vibranium ingot, an Unobtainium ingot and a Piglich heart in the Dissolution
 //    Chamber with 100 mB of allthemodium:soul_lava, 200 ticks. The chamber's input tank has no fluid validator (T5 §3.2-3.3).
-// tools/tests/test_if_dissolution_data.py checks both files against the codec before any boot. After a boot, a file the codec
-// rejects shows only in logs/latest.log ("Parsing error loading recipe <id>"; net.minecraft.world.item.crafting.RecipeManager.apply):
-// KubeJS's "failed recipes" count covers script recipes only, and the recipe dump is taken before any codec runs.
+// Both files are checked before any boot by tools/tests/test_if_dissolution_data.py; its docstring says what a boot can show.
 //
 // Numbers are D115's design values: ATM10's 1,000,000,000 FE, 10,000 source and 100 mB soul lava (AllTheMods/ATM-10
 // kubejs/server_scripts/modpack/atm_alloys.js at dbfd9a2, quoted in T5 §4.5), with one Piglich heart per ingot where ATM10
 // uses two (D105). allthemodium:piglich_heart drops exactly one per Piglich kill, with no Looting function
 // (allthemodium-3.0.1_mc_1.21.1.jar!data/allthemodium/loot_table/entities/piglich.json, T5 §4.6), and the Piglich is the only
-// source (D102). Hearts on the minimum path to the end of tier 6 (spec §5): Supreme frames for the inscriber, controller,
-// terminal and one crafting unit 4, NASA Workbench 1, fuel refinery 1, four rockets 4 = 10; the v1.0 catalyst adds 3.
+// source (D102). Heart budget: spec §5 with its §14 erratum. The trunk questline takes 10, because quest S5.2 asks for an ME
+// controller (§9.1); the gating minimum is 9, because nothing consumes the controller (D117). The v1.0 catalyst adds 3.
 // Soul lava (fluid allthemodium:soul_lava: allthemodium jar com/thevortex/allthemodium/registry/FluidRegistry ldc "soul_lava",
-// lang fluid.allthemodium.soul_lava; T5 §4.4) exists only in The Other, in the basalt-delta soul deltas and the Piglin
-// Village `prisoners` piece. It does not spread into new sources (FluidSoulLava.canConvertToSource is false); the Productive
-// Bees soul lava bee renews it once a player has one bucket (T5 §4.4).
+// lang fluid.allthemodium.soul_lava; T5 §4.4) is bucketable only from The Other's basalt-delta soul deltas and the Piglin
+// Village `prisoners` piece; the `forge` and `mob_forge` templates hold falling flow, which gives no bucket. It does not
+// spread into new sources (FluidSoulLava.canConvertToSource is false); the Productive Bees soul lava bee renews it once a
+// player has one bucket (T5 §4.4).
 //
 // Nothing is removed. No loaded recipe makes the key or any alloy ingot except Allthemodium's 9-from-1 block recipes
 // (allthemodium:*_alloy_ingot_from_block), which stay; the jar's tconstruct casting recipes drop at load because Tinkers is not
@@ -72,10 +69,11 @@ ServerEvents.recipes(event => {
       B: IDS.bumblezone.essence, D: IDS.vanilla.dragonEgg })
 
   // M5.1 Unobtainium-Allthemodium alloy ingot in the Ars Enchanting Apparatus: reagent an Unobtainium ingot; six pedestals, an
-  // Allthemodium ingot, a Piglich heart and the four elemental essences; 10,000 source. The same five keys as tier4.js's
-  // Planarium, re-read from ars_nouveau-1.21.1-5.13.1.jar!com/hollingsworth/arsnouveau/common/crafting/recipes/
-  // EnchantingApparatusRecipe$Serializer: reagent Ingredient, result ItemStack, pedestalItems Ingredient.listOf() (no cap in the
-  // codec; the Apparatus finds pedestals in a 7x7x7 cube, T5 §5.3), sourceCost Codec.INT, keepNbtOfReagent Codec.BOOL.
+  // Allthemodium ingot, a Piglich heart and the four elemental essences; 10,000 source. The five codec fields plus `type`, as
+  // tier4.js's Planarium, re-read from ars_nouveau-1.21.1-5.13.1.jar!com/hollingsworth/arsnouveau/common/crafting/recipes/
+  // EnchantingApparatusRecipe$Serializer: reagent Ingredient.CODEC, result ItemStack.CODEC, pedestalItems
+  // Ingredient.CODEC.listOf() (no cap in the codec; the Apparatus finds pedestals in a 7x7x7 cube, T5 §5.3), sourceCost
+  // Codec.INT, keepNbtOfReagent Codec.BOOL.
   gate.custom(event, 'confluence:tier5/unobtainium_allthemodium_alloy_ingot', {
     type: IDS.ars.apparatusType, keepNbtOfReagent: false, sourceCost: 10000,
     reagent: { tag: tagId(IDS.allthemodium.unobtainiumIngotTag) },
