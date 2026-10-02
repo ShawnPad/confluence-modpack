@@ -20,6 +20,23 @@ counts, not members, so the check is that arithmetic, and a deny tag or needs ta
 Its result is printed on its own line after the reference lines, and its failures are also added to the first line's bad
 count, so that line reads "0 bad" exactly when the exit status is 0 (later steps read it with `head -1`).
 
+A third check (v0.3 Task 8c) reads members, not counts: tagcheck.js also writes kubejs/exported/tag_members.json, the block ids
+in each D112 tag (the nine deny tags, the four needs tags, wither_immune and the four Cataclysm immune tags; lib/ids.js's
+IDS.tierOres lists). It asserts spec §7 D112 by name, which the counts cannot (a deny tag of 27 may hold the wrong 27):
+  - D112(b): the five tier ores (IDS.tierOres.blocks) are in wither_immune and in each Cataclysm immune tag;
+  - D112(a): no deny tag holds a block outside the union of the four needs tags, and the Vibranium and Unobtainium ores are in
+    every deny tag (IDS.allthemodium.vibraniumOre, otherVibraniumOre and unobtainiumOre: allthemodium-3.0.1_mc_1.21.1.jar!data/
+    c/tags/block/needs_allthemodium_tool.json lists both Vibranium ores and needs_vibranium_tool.json the Unobtainium ore; the
+    two Allthemodium ores are in no needs tag, so no deny tag holds them);
+  - a members file, a registry or a tag missing from it fails.
+Its line follows the deny-tags line, and its failures count in the first line's bad count too.
+
+Both members exports are this boot's (Task 8c round 2, R4): tagcheck.js writes tags.json, tag_members.json and
+item_tag_members.json (the members of every bound minecraft:item tag, which tools/check_recipes.py reads to expand tag products)
+from one registry walk, so every exported tag's member list must be as long as tags.json's count for it (STALE otherwise), and
+the item export must hold every minecraft:item tag tags.json binds (NOT EXPORTED otherwise). A member value that is not a list
+of strings fails (BAD MEMBERS). The item export's line comes last, and its failures count in the first line's bad count too.
+
 Run after tools/server_boot.sh:  python3 tools/check_tags.py
 """
 import json
@@ -30,6 +47,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 EXPORT = ROOT / ".run" / "server" / "kubejs" / "exported" / "tags.json"
+MEMBERS = ROOT / ".run" / "server" / "kubejs" / "exported" / "tag_members.json"
+ITEM_MEMBERS = ROOT / ".run" / "server" / "kubejs" / "exported" / "item_tag_members.json"
 IDS_JS = ROOT / "kubejs" / "server_scripts" / "lib" / "ids.js"
 
 SCRIPT_DIRS = ("kubejs/server_scripts", "kubejs/startup_scripts", "kubejs/client_scripts")
@@ -312,6 +331,102 @@ def check_deny_tags(export: dict, nine: list, needs: list):
     return expected, bad
 
 
+# D112 members (v0.3 Task 8c). The ores every deny tag must hold, by their IDS.allthemodium key (see the module docstring).
+DENY_ORE_REFS = ("IDS.allthemodium.vibraniumOre", "IDS.allthemodium.otherVibraniumOre", "IDS.allthemodium.unobtainiumOre")
+IDS_REF = re.compile(r"IDS\.([A-Za-z_$][\w$]*)\.([A-Za-z_$][\w$]*)")
+
+
+def ids_ref(src: str, ref: str) -> str:
+    """The string literal `ref` (IDS.<group>.<key>) names in comment-stripped lib/ids.js source: either the one assignment
+    `IDS.<group>.<key> = '...'`, or the one `<key>: '...'` inside the one flat `<group>: { ... }` object literal. Raises
+    ValueError otherwise (absent, repeated, or not a literal), so a renamed id fails the check instead of checking nothing."""
+    m = IDS_REF.fullmatch(ref)
+    if not m:
+        raise ValueError(f"{ref!r} is not an IDS.<group>.<key> reference")
+    group, key = m.groups()
+    assigned = re.findall(r"\bIDS\." + re.escape(group) + r"\." + re.escape(key) + r"\s*=\s*('[^']*'|\"[^\"]*\")", src)
+    literal = re.findall(r"(?<![\w$.])" + re.escape(group) + r"\s*:\s*\{([^{}]*)\}", src)
+    in_literal = re.findall(r"(?<![\w$])" + re.escape(key) + r"\s*:\s*('[^']*'|\"[^\"]*\")", literal[0]) if len(literal) == 1 else []
+    found = assigned + in_literal
+    if len(found) != 1:
+        raise ValueError(f"expected one literal value for {ref} in lib/ids.js, found {len(found)}")
+    return found[0][1:-1]
+
+
+def read_tier_ore_members(ids_js_text: str):
+    """(the five immune tags, the five tier ores, the deny ores) from lib/ids.js: IDS.tierOres.immuneTags without '#',
+    IDS.tierOres.blocks resolved through ids_ref, and DENY_ORE_REFS resolved the same way."""
+    src = strip_js_comments(ids_js_text)
+    immune = [t.lstrip("#") for t in ids_value(src, "immuneTags")]
+    blocks = re.findall(r"\bblocks\s*:\s*\[([^\]]*)\]", src)
+    if len(blocks) != 1:
+        raise ValueError(f"expected one `blocks:` array in lib/ids.js, found {len(blocks)}")
+    refs = [r.strip() for r in blocks[0].split(",") if r.strip()]
+    ores = [ids_ref(src, r) for r in refs]
+    deny_ores = [ids_ref(src, r) for r in DENY_ORE_REFS]
+    if not set(deny_ores) <= set(ores):
+        raise ValueError(f"the deny ores {deny_ores} are not all among IDS.tierOres.blocks {ores}")
+    return immune, ores, deny_ores
+
+
+def member_shape(members: dict, registry: str, name: str):
+    """(that registry's {tag: [id, ...]}, []) or (None, [the bad line]) for a members export of another shape."""
+    tags = members.get(registry) if isinstance(members, dict) else None
+    if tags is None:
+        return None, [f"NO SUCH REGISTRY {registry} in {name}"]
+    if not isinstance(tags, dict):
+        return None, [f"BAD MEMBERS {registry} in {name}: not a {{tag: [id, ...]}} map"]
+    bad = [f"BAD MEMBERS #{t} in {name}: not a list of strings" for t, ms in tags.items()
+           if not (isinstance(ms, list) and all(isinstance(m, str) for m in ms))]
+    return (None if bad else tags), bad
+
+
+FRESHNESS_LINES = 10
+
+
+def check_freshness(members: dict, export: dict, registry: str, name: str, complete: bool = False) -> list:
+    """Bad lines unless `name` (a members export) is from the same walk as tags.json (module docstring): well formed, each
+    tag's member count equal to tags.json's, and, when `complete`, every tag tags.json binds in `registry` present. At most
+    FRESHNESS_LINES STALE lines, then one line for the rest."""
+    tags, bad = member_shape(members, registry, name)
+    if tags is None:
+        return bad
+    counts = export.get(registry, {})
+    stale = []
+    for t, ms in tags.items():
+        if t not in counts:
+            stale.append(f"STALE #{t} in {name}: not bound in tags.json")
+        elif len(ms) != counts[t]:
+            stale.append(f"STALE #{t} in {name}: {len(ms)} members, tags.json counts {counts[t]}")
+    if len(stale) > FRESHNESS_LINES:
+        stale = stale[:FRESHNESS_LINES] + [f"STALE ... and {len(stale) - FRESHNESS_LINES} more tags in {name}"]
+    missing = sorted(set(counts) - set(tags)) if complete else []
+    if missing:
+        shown = ", ".join("#" + t for t in missing[:FRESHNESS_LINES]) + (", ..." if len(missing) > FRESHNESS_LINES else "")
+        stale.append(f"NOT EXPORTED {len(missing)} of {len(counts)} {registry} tags bound in tags.json are missing from "
+                     f"{name}: {shown}")
+    return stale
+
+
+def check_members(members: dict, nine: list, needs: list, immune: list, ores: list, deny_ores: list) -> list:
+    """Bad lines for D112 by member (module docstring), from tag_members.json's {registry: {tag: [block id, ...]}}."""
+    block, shape_bad = member_shape(members, DENY_REGISTRY, "tag_members.json")
+    if block is None:
+        return shape_bad
+    bad = [f"NO MEMBERS #{t} in tag_members.json" for t in nine + needs + immune if t not in block]
+    for t in immune:
+        bad += [f"NOT IMMUNE {o} is missing from #{t}" for o in ores if t in block and o not in block[t]]
+    if all(t in block for t in needs):
+        union = set().union(*(block[t] for t in needs))
+        for t in nine:
+            outside = sorted(set(block.get(t, [])) - union)
+            if outside:
+                bad.append(f"DENY TAG #{t} holds blocks outside the {len(needs)} needs tags: {outside}")
+    for t in nine:
+        bad += [f"NOT DENIED {o} is missing from #{t}" for o in deny_ores if t in block and o not in block[t]]
+    return bad
+
+
 def main() -> int:
     if not EXPORT.exists():
         print(f"MISSING EXPORT {EXPORT}")
@@ -325,8 +440,30 @@ def main() -> int:
         expected, deny_bad = check_deny_tags(export, nine, needs)
     except (OSError, ValueError) as e:
         nine, needs, expected, deny_bad = [], [], None, [f"CANNOT READ IDS.tierOres from {IDS_JS.relative_to(ROOT)}: {e}"]
+    try:
+        immune, ores, deny_ores = read_tier_ore_members(IDS_JS.read_text())
+        if not MEMBERS.exists():
+            members_bad = [f"MISSING EXPORT {MEMBERS} (tagcheck.js writes it at ServerEvents.loaded)"]
+        else:
+            block_members = json.loads(MEMBERS.read_text())
+            members_bad = check_members(block_members, nine, needs, immune, ores, deny_ores)
+            if not any(line.startswith(("NO SUCH REGISTRY", "BAD MEMBERS")) for line in members_bad):
+                members_bad += check_freshness(block_members, export, DENY_REGISTRY, MEMBERS.name)
+    except (OSError, ValueError) as e:
+        immune, ores, deny_ores, members_bad = [], [], [], [f"CANNOT CHECK tag members: {e}"]
+    item_tags = 0
+    try:
+        if not ITEM_MEMBERS.exists():
+            item_bad = [f"MISSING EXPORT {ITEM_MEMBERS} (tagcheck.js writes it at ServerEvents.loaded)"]
+        else:
+            item_members = json.loads(ITEM_MEMBERS.read_text())
+            item_bad = check_freshness(item_members, export, ITEM_REGISTRY, ITEM_MEMBERS.name, complete=True)
+            item_tags = len(item_members.get(ITEM_REGISTRY) or {}) if isinstance(item_members, dict) else 0
+    except (OSError, ValueError) as e:
+        item_bad = [f"CANNOT CHECK item tag members: {e}"]
+    bad_total = len(res.failures) + len(deny_bad) + len(members_bad) + len(item_bad)
 
-    print(f"tags: {len(refs)} referenced, {len(res.checked)} verified non-empty, {len(res.failures) + len(deny_bad)} bad")
+    print(f"tags: {len(refs)} referenced, {len(res.checked)} verified non-empty, {bad_total} bad")
     for tag, count in sorted(res.checked.items()):
         print(f"  ok {tag} ({count})")
     for tag, registry, sources in res.no_registry:
@@ -345,7 +482,16 @@ def main() -> int:
           f"{len(deny_bad)} bad")
     for line in deny_bad:
         print(f"  {line}")
-    return 1 if res.failures or deny_bad else 0
+    print(f"tag members (D112): {len(nine) + len(needs) + len(immune)} tags; {len(ores)} tier ores in {len(immune)} immune tags, "
+          f"{len(deny_ores)} ores in {len(nine)} deny tags, {len(nine)} deny tags within the {len(needs)} needs tags; "
+          f"{len(members_bad)} bad")
+    for line in members_bad:
+        print(f"  {line}")
+    print(f"item tag members: {item_tags} tags exported, {len(export.get(ITEM_REGISTRY, {}))} bound in tags.json; "
+          f"{len(item_bad)} bad")
+    for line in item_bad:
+        print(f"  {line}")
+    return 1 if res.failures or deny_bad or members_bad or item_bad else 0
 
 
 if __name__ == "__main__":

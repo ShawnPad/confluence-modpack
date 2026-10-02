@@ -14,8 +14,9 @@ What is here:
   node_fixture                      a module-scoped fixture named `node`: `from kjs import node_fixture` in a test module
       provides it. It asserts node is on PATH and never skips; so does run().
   all_rows, products, one_maker     the recipes a run records, what each makes, and who makes an output.
-  json_item_id                      the item id a string inside custom recipe JSON names, read generously. Not for a
-      script's output string: the runner reads that as KubeJS does and records it as the row's outputStack.
+  json_item_id                      the item id a string inside custom recipe JSON names, read generously
+      (check_recipes.json_item_id). Not for a script's output string: the runner reads that as KubeJS does and records it as
+      the row's outputStack.
   one                               the one recorded recipe with a given id, with nothing chained on it and no extra arguments.
   ingredient, grid, cell_diff, EMPTY  one strict reading of a recipe ingredient and of a shaped grid.
   pinned_jar, jar_json              the jar pins: the jar a test reads is exactly the one mods/<mod>.pw.toml ships.
@@ -30,6 +31,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import warnings
 from pathlib import Path
 
@@ -97,70 +99,86 @@ def all_rows(recorded):
 # The keys of a custom recipe's JSON that name what it makes. `result`, `output` and `results` are the common ones; any other
 # top-level key with "result" or "output" in its name counts too (Mekanism's main_output / secondary_output, IF's
 # outputFluid), so a maker cannot hide behind a mod's own key name.
-PRODUCT_KEY = re.compile(r"result|output", re.I)
+# One producer rule (Task 8c round 2, minor 7): a custom recipe's products are tools/check_recipes.py's, the rule the boot's
+# sole-producer check reads the dump with. json_item_id is its string reader (an optional count, then the first run of
+# resource-location characters): each mod's own codec reads its JSON, and none is modelled, so it only makes sure a maker is
+# not missed. A script's shaped/shapeless output string is NOT read with it: the runner reads that as KubeJS does
+# (ItemWrapper.wrap) and records the result as the row's outputStack, which products() uses.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import check_recipes  # noqa: E402
 
-
-# A string inside custom recipe JSON ({result: '2x ae2:drive'}), read generously: an optional count ('2x ', '2 x ', '2x',
-# '1.5x'), then the first run of resource-location characters. Each mod's own codec reads its JSON, and none is modelled, so
-# this only makes sure a maker is not missed. A script's shaped/shapeless output string is NOT read here: the runner reads it
-# as KubeJS does (ItemWrapper.wrap) and records the result as the row's outputStack, which products() uses.
-JSON_ITEM_STRING = re.compile(r"\s*(?:[+-]?[0-9.]+\s*x\s*)?([a-z0-9_:/.-]*)")
-
-
-def json_item_id(s):
-    """The item id a string inside custom recipe JSON names, read generously (JSON_ITEM_STRING): 'ae2:drive' for
-    '2x ae2:drive' and for 'ae2:drive[minecraft:rarity="epic"]'. It never fails. A string with no id there ('-', '', a
-    stand-in such as '<inert>') is returned unchanged. Not for script outputs (see JSON_ITEM_STRING)."""
-    raw = JSON_ITEM_STRING.match(s).group(1)
-    if not raw or raw.startswith("-"):
-        return s
-    return raw if ":" in raw else "minecraft:" + raw
-
-
-def _product(m):
-    if isinstance(m, dict):
-        if isinstance(m.get("id"), str):
-            return m["id"]
-        if isinstance(m.get("item"), str):
-            return m["item"]
-        return json.dumps(m, sort_keys=True)
-    return json_item_id(m) if isinstance(m, str) else json.dumps(m, sort_keys=True)
+json_item_id = check_recipes.json_item_id
 
 
 # A shaped or shapeless product's id: a resource location (namespace, ':', path), no '#'.
 ITEM_ID = re.compile(r"[a-z0-9_.-]+:[a-z0-9_./-]+")
 
+# A runner stand-in label ('<inert>', '<undefined>', '<function>', '<NaN>', '<recipe>', '<unserialisable: ...>'): a value the
+# runner could not record as KubeJS would serialise it (see run_server_scripts.js, "Every recorded value").
+STAND_IN = re.compile(r"<.*>", re.S)
+
+
+def _stand_ins(v, path):
+    """(path, label) for each stand-in string anywhere inside v."""
+    if isinstance(v, str):
+        if STAND_IN.fullmatch(v):
+            yield path, v
+    elif isinstance(v, dict):
+        for k, x in v.items():
+            yield from _stand_ins(x, f"{path}.{k}")
+    elif isinstance(v, list):
+        for i, x in enumerate(v):
+            yield from _stand_ins(x, f"{path}[{i}]")
+
 
 def products(r):
     """The ids a recorded recipe (or a raw recipe JSON) makes. A shaped or shapeless row: the stack the runner read from a
     string output (`outputStack`, as KubeJS reads it), else the output itself (an Item.of stack {id, count}), and its id
-    must be a resource location: an output that is a stand-in ('<inert>', from an unmodelled global such as Item.getItem or
+    must be a resource location: an output that is a stand-in ('<inert>', from an unmodelled global such as
     Ingredient.of), '<undefined>', a tag or anything else the runner could not read fails here (Task 8b round 4). A custom row
-    (from all_rows, or straight from a run's `customs`) or raw JSON: each value of result, output and results (and any other
-    key PRODUCT_KEY matches), where a list counts element by element. A dict reduces to its `id`, or to `item` if there is no
-    `id`, and otherwise to its JSON; a string inside the JSON to json_item_id(string)."""
+    (from all_rows, or straight from a run's `customs`) or raw JSON: check_recipes.made_by's items, then its chemicals and
+    fluids, then '#<tag>' for each tag product, then the JSON of each product value of a shape it does not read (one producer
+    rule, Task 8c round 2: the product keys and shapes are its module docstring's). A custom product holding a runner
+    stand-in anywhere inside it fails (Task 8c, 8b follow-up F1): event.custom({ result: Ingredient.of(id).first }) is a real
+    maker in game, as KubeJS serialises the object, but would read here as the id '<inert>', which no output matches."""
     if r.get("kind") in ("shaped", "shapeless"):
         out = r["output"]
         stack = r.get("outputStack") if isinstance(out, str) else out
         assert isinstance(stack, dict) and isinstance(stack.get("id"), str) and ITEM_ID.fullmatch(stack["id"]), (
             f"{r.get('file')} recipes handler {r.get('handler')}: event.{r['kind']}'s output {out!r} (read as "
             f"{r.get('outputStack')!r}) is not an item stack with a resource-location id. '<inert>' is a stand-in for an "
-            f"unmodelled global (Item.getItem, Ingredient.of(...).first, ...) and '<undefined>' a missing value; pass an item "
+            f"unmodelled global (Ingredient.of(...).first, Fluid.of(...), ...) and '<undefined>' a missing value; pass an item "
             f"string or Item.of(<item string>[, count]), which the runner reads as KubeJS does")
-        made = [stack]
-    else:
-        # A recorded custom row carries its recipe under `json` (with `kind` from all_rows, or `file` straight from
-        # `customs`); anything else is taken as the recipe JSON itself.
-        j = r["json"] if "json" in r and ("kind" in r or "file" in r) else r
-        made = []
-        for k, v in (j.items() if isinstance(j, dict) else []):
-            if PRODUCT_KEY.search(k) and v is not None:
-                made.extend(v if isinstance(v, list) else [v])
-    return [_product(m) for m in made]
+        return [stack["id"]]
+    # A recorded custom row carries its recipe under `json` (with `kind` from all_rows, or `file` straight from `customs`);
+    # anything else is taken as the recipe JSON itself.
+    j = r["json"] if "json" in r and ("kind" in r or "file" in r) else r
+    if not isinstance(j, dict):
+        return []
+    for k, v in check_recipes.product_values(j):
+        bad = list(_stand_ins(v, k))
+        assert not bad, (
+            f"{r.get('file')} recipes handler {r.get('handler')}: custom recipe {r.get('id')!r} has a runner stand-in "
+            f"in its product, {', '.join(f'{p} = {x!r}' for p, x in bad)}. An unmodelled global (Ingredient.of(...)"
+            f".first, Ingredient.of(...).first.id, ...) makes a real maker in game that no test can read; write the id as a "
+            f"string")
+    made = check_recipes.made_by(j)
+    return (made.items + made.chemicals + ["#" + t for t, _ in made.tags]
+            + [json.dumps(v, sort_keys=True) for _, v in made.unknown])
+
+
+def output_problem(r):
+    """None when products(r) reads r's outputs, else its failure message (an unreadable output: a stand-in, a tag, ...)."""
+    try:
+        products(r)
+    except AssertionError as e:
+        return str(e)
+    return None
 
 
 def one_maker(recorded, output):
-    """The ids (None for an id-less recipe) of every recorded recipe that makes `output`."""
+    """The ids (None for an id-less recipe) of every recorded recipe that makes `output`. Fails on the first recipe whose
+    output products() cannot read."""
     return [r["id"] for r in all_rows(recorded) if output in products(r)]
 
 

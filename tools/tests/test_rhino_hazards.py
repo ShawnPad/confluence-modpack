@@ -41,8 +41,10 @@ before anything else, even inside an object literal or a class body (`{ a: c ? 1
 and a count left over when its bracket closes is dropped, so no `?` can claim a later case's or label's `:` (round 4).
 `?.` is optional chaining and `??` is not a ternary, but `?.5` is `? .5`. Directly inside an object literal or a class body,
 any name (for, while, catch, do included), a string or number key, or `[key]` before `(` is a method name, and a `class`
-there (a key's value) starts a class body. `let` not followed by a name, `[` or `{` is a plain name, not a declaration, and
-`for await (` is a loop head like `for (`. Checked against acorn's parse (node's bundled copy) on tens of thousands of
+there starts a class body only in a value position (after a key's ':', a ternary's '?' or a field's '='; Task 8c: a class
+field named `class` is a name). `let` not followed by a name, `[` or `{` is a plain name, not a declaration; `const` always
+declares (jslex reads a name that starts with a Unicode letter or a \\u escape, Task 8c). `for await (` is a loop head like
+`for (`. Checked against acorn's parse (node's bundled copy) on tens of thousands of
 generated programs (Task 8b rounds 3 and 4).
 Limits, each a self-test case: in `do f(); while (y) { const v = 1 }` the `while` is read as a loop head, so the block after
 it is flagged as a loop body; the bare `do` body is flagged as well, so such a file fails either way. The code inside a
@@ -106,6 +108,14 @@ def _brace_kind(prev, closed, in_object, colon):
     return "block"
 
 
+# In an object or class body, the punctuation a key or member name follows; after any other punctuation a `class` is a value.
+# ')', ']', '++' and '--' are here because no expression goes on from them with `class` (and `++class {}` is no valid
+# target): after them, `class` is a class member named class on the next line, after ASI (`a = f()\n class = 1`).
+_KEY_BEFORE = {"{", ",", ";", "}", "*", ")", "]", "++", "--"}
+# The operator words after which a `class` is a value (`{ a: new class {} }`).
+_VALUE_OPS = {"new", "typeof", "void", "delete", "yield", "await", "instanceof", "in"}
+
+
 def declarations(src, bare=None):
     """(decls, open) for JS source `src`. decls lists every const/let declaration outside a for head as (line, keyword,
     kinds), where kinds are the labels of the enclosing '{' blocks from the innermost out, up to the nearest function body.
@@ -130,9 +140,16 @@ def declarations(src, bare=None):
         in_object = bool(stack) and stack[-1][0] == "{" and stack[-1][1] in ("object", "class")
         after_do_block, do_tail = do_tail, False
         dot = prev is not None and prev.text == "."
-        if t.kind == "ident" and t.text == "class" and not dot and in_object and nxt is not None \
-                and nxt.text not in (":", "(", ",", "}"):
-            class_at = len(stack)         # a class expression as a key's value: `{ k: class { ... } }`
+        if t.kind == "ident" and t.text == "class" and not dot and in_object and prev is not None and (
+                (prev.kind == "punct" and prev.text not in _KEY_BEFORE) or (prev.kind == "ident" and prev.text in _VALUE_OPS)) \
+                and nxt is not None and (nxt.kind == "ident" or nxt.text == "{"):
+            # a class expression in a value position directly in an object or class body: after an operator (a key's ':', a
+            # ternary's '?', a class field's '=', '=>', '...', '||') or an operator word (`new class {}`). After _KEY_BEFORE's
+            # marks, or a modifier (static, get, async), `class` is a key, a method or a field name (`{ class: 1 }`,
+            # `class() {}`, `class C { class = 1; m() {} }`), and no class body follows (Task 8c). And a class expression goes
+            # on with a name, `extends` or its '{', so a `class` followed by '=', ';', '(' or '}' is a member name, whatever
+            # came before it.
+            class_at = len(stack)
         if t.kind == "ident" and not dot and not in_object and not (nxt is not None and nxt.text == ":"):
             if t.text == "do":
                 check_body(k, t.line)
@@ -191,8 +208,9 @@ def declarations(src, bare=None):
             nxt = toks[k + 1] if k + 1 < len(toks) else None
             if (prev is not None and prev.text == ".") or (nxt is not None and nxt.text == ":"):
                 continue         # a property or key named const/let
-            if nxt is None or not (nxt.kind == "ident" or nxt.text in ("[", "{")):
-                continue         # `let` as a plain name (`let = 1`, `f(let)`): a declaration names a binding next
+            if t.text == "let" and (nxt is None or not (nxt.kind == "ident" or nxt.text in ("[", "{"))):
+                continue         # `let` as a plain name (`let = 1`, `f(let)`): a declaration names a binding next.
+                                 # `const` is a reserved word, never a name, so a const is always a declaration.
             if prev is not None and prev.text == "(" and stack and stack[-1][:2] == ("(", "loophead"):
                 continue         # a for head: see the module docstring
             kinds = []
@@ -332,6 +350,40 @@ TRY_CASES = {
     "a function named of": ("try {\n  function of(a) {\n    const b = 1\n  }\n} catch (e) {}\n", []),
     "a getter and a nested object's method": ("try {\n  x = { a: { m() { const b = 1 } }, get v() { const c = 1 } }\n"
                                              "} catch (e) {}\n", []),
+    # Task 8c (8b follow-ups): a const or let whose name starts with a non-ASCII letter or a \\u escape is a declaration (const
+    # is never a plain name; jslex's IDENT reads Unicode letters and \\u escapes)
+    "a const with a non-ASCII name": ("try {\n  const \u00e9 = 1\n  let \u00fc = 2\n} catch (e) {}\n", [2, 3]),
+    "a const named with a \\u escape": ("try {\n  const \\u0061 = 1\n} catch (e) {}\n", [2]),
+    # U+2118 (℘) starts a JS identifier (Other_ID_Start) but is no Python \\w, so jslex reads it as punctuation; the
+    # const is still a declaration, because only `let` can be a plain name (spec-review S1)
+    "a const whose name jslex reads as punctuation": ("try {\n  const \u2118 = 1\n} catch (e) {}\n", [2]),
+    # a class field named `class` is a name, not a class expression: the method after it has a function body
+    "a class field named class": ("try {\n  class C { class = 1; m() {\n    const a = 1\n  } }\n} catch (e) {}\n", []),
+    "a class field named class, no semicolon": ("try {\n  class C { class\n  m() { const a = 1 } }\n} catch (e) {}\n", []),
+    "a class expression as a class field's value": ("try {\n  class C { k = class { m() {\n    const a = 1\n  } } }\n"
+                                                    "} catch (e) {}\n", []),
+    # ... also on the line after a call, an index or a postfix ++ (ASI), and before '=', ';', '(' or a name (spec-review S2;
+    # each checked against acorn)
+    "a class field named class after a call (ASI)": ("try { class C { a = f()\n class = 1\n m() {\n const x = 1 } } }"
+                                                     " catch (e) {}", []),
+    "a class field named class after an index, then a method": ("try { class C { a = b[0]\n class;\n m() {\n"
+                                                               " const x = 1 } } } catch (e) {}", []),
+    "a bare class field named class after a call": ("try { class C { a = f()\n class\n m() {\n const x = 1 } } }"
+                                                    " catch (e) {}", []),
+    "a method named class after a postfix ++": ("try { class C { a = x++\n class() {\n const x = 1 } } } catch (e) {}",
+                                                []),
+    "a class expression after a ternary's ?": ("try { class C { a = c ? class {\n m() {\n const x = 1 } } : 1 } }"
+                                               " catch (e) {}", []),
+    "a const after a class field named class": ("try { class C { a = f()\n class = 1 }\n const y = 2 } catch (e) {}",
+                                                [3]),
+    # `await` is a plain name in a script, so it can end a field's value: only the '=' or '(' after `class` tells
+    "a class field and a method named class after await as a name": (
+        "try { class C { a = await\n class = 1\n b = await\n class() {\n const x = 1 } } } catch (e) {}", []),
+    # the '?' of a misread regex (`if (s) /a?b/` divides, jslex's documented limit) is dropped when its bracket closes, so it
+    # cannot take the later case's or label's ':' (the verifier's demo; acorn flags line 4)
+    "a '?' in a case block does not outlive its bracket": (
+        "try {\n  switch (x) {\n    case 1: { if (s) /a?b/.test(t) }\n    case 2: { lbl: { if (y) { const q = 1 } } }\n  }\n"
+        "} catch (e) {}\n", [4]),
 }
 
 
@@ -391,6 +443,16 @@ LOOP_CASES = {
     # names that are keywords elsewhere (L-c)
     "an object key named do": ("const o = { do: 1, while: 2 }\nwhile (x) { f(o.do) }\n", [], []),
     "methods named like loops in an object": ("o = { do() { const a = 1 }, for(x) { const b = 1 } }\n", [], []),
+    # Task 8c (8b follow-ups): a non-ASCII const name in a loop body, and a class field named `class` before a method
+    "a const with a non-ASCII name in a loop": ("for (;;) {\n  const \u00e9 = 1\n}\n", [2], []),
+    "a class field named class in a loop": ("while (x) {\n  class C { class = 1; m() { const a = 1 } }\n}\n", [], []),
+    "a class field named class, then a loop in the method": (
+        "class C { class; m() {\n  for (;;) {\n    const a = 1\n  }\n} }\n", [3], []),
+    # spec-review S2: the same after ASI following a call or an index
+    "a class field named class after a call, in a loop": (
+        "for (;;) { class C { a = f()\n class = 1\n m() {\n const x = 1 } } }", [], []),
+    "a method named class after an index, in a loop": ("while (x) { class C { a = g[1]\n class() {\n const x = 1 } } }",
+                                                         [], []),
     # the documented limit: a bare do's `while` read as a loop head
     "limit: a block after a bare do's while": ("do f(); while (y)\n{\n  const v = 1\n}\n", [3], [1]),
 }

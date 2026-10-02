@@ -67,8 +67,8 @@ ServerEvents.recipes(event => {
   // v0.3 (D113, v0.3 spec §5 "T5.1 side"): six more tier-3 tree items whose Mekanism default takes ultimate circuits. Each default
   // is removed by id and rewritten here with its own pattern and result; only the circuit key changes, to #c:circuits/elite.
   // Bodies: Mekanism-1.21.1-10.7.19.85.jar!data/mekanism/recipe/<name>.json (T5 §1.5). Each default is its item's only producer
-  // in the 118 jars (v0.3 plan Task 4 Fact 4), and ours is the only one loaded (research/phase7-v0.3-test-log.md §2, Step 7).
-  // The four minecraft:crafting_shaped defaults go through gate.shaped and load as kubejs:shaped (test log §2), a crafting-grid
+  // in the 118 jars (v0.3 plan Task 4 Fact 4), and ours is the only one loaded (research/phase7-v0.3-test-log.md, "Mekanism tier 5", Step 7).
+  // The four minecraft:crafting_shaped defaults go through gate.shaped and load as kubejs:shaped (same section), a crafting-grid
   // shaped recipe all the same (ShapedKubeJSRecipe extends ShapedRecipe, kubejs-neoforge-2101.7.2-build.377.jar); the omitted
   // category decodes to misc, the defaults' value (ShapedKubeJSRecipe$SerializerKJS: orElse(MISC)). Only the serializer id
   // changes. The two mekanism:mek_data defaults stay raw JSON (D87) and keep their type.

@@ -55,6 +55,19 @@ CUSTOM_IDS = [f"confluence:bypass/{m}_crystal_from_{s}" for m in ("allthemodium"
               for s in ("ore", "raw_ore", "raw_block")]
 # The crystal each chain makes: lib/ids.js IDS.allthemodium.crystal, .vibraniumCrystal and .unobtainiumCrystal.
 CRYSTALS = {m: f"allthemodium:{m}_crystal" for m in ("allthemodium", "vibranium", "unobtainium")}
+# X2.2 (D125): the Unobtainium chain's three combining recipes, as bypass.js builds them (spec §7).
+ETRIUM_INGOT = {"count": 1, "item": "ad_astra:etrium_ingot"}
+UNOB_BODIES = {
+    "confluence:bypass/unobtainium_crystal_from_ore": {
+        "type": "mekanism:combining", "main_input": {"count": 1, "tag": "c:ores/unobtainium"},
+        "extra_input": ETRIUM_INGOT, "output": {"count": 5, "id": CRYSTALS["unobtainium"]}},
+    "confluence:bypass/unobtainium_crystal_from_raw_ore": {
+        "type": "mekanism:combining", "main_input": {"count": 3, "tag": "c:raw_materials/unobtainium"},
+        "extra_input": ETRIUM_INGOT, "output": {"count": 10, "id": CRYSTALS["unobtainium"]}},
+    "confluence:bypass/unobtainium_crystal_from_raw_block": {
+        "type": "mekanism:combining", "main_input": {"count": 1, "tag": "c:storage_blocks/raw_unobtainium"},
+        "extra_input": ETRIUM_INGOT, "output": {"count": 30, "id": CRYSTALS["unobtainium"]}},
+}
 # Each crystal -> the only recipe ids that may make it, in any server script (test_recipe_scripts.py). Allthemodium's own
 # crystallizing recipe is datapack JSON, not a script recipe.
 SOLE_MAKERS = {CRYSTALS[m]: [rid for rid in CUSTOM_IDS if rid.startswith(f"confluence:bypass/{m}_")] for m in CRYSTALS}
@@ -118,20 +131,8 @@ def test_bypass_adds_exactly_the_nine_crystal_recipes(bypass):
 
 def test_unobtainium_chain_needs_an_etrium_ingot(bypass):
     assert set(UNOB_CHAIN) <= set(bypass["removed"])
-    etrium = {"count": 1, "item": "ad_astra:etrium_ingot"}
-    crystal = "allthemodium:unobtainium_crystal"
     got = {c["id"]: c["json"] for c in bypass["custom"] if c["id"].startswith("confluence:bypass/unobtainium_")}
-    assert got == {
-        "confluence:bypass/unobtainium_crystal_from_ore": {
-            "type": "mekanism:combining", "main_input": {"count": 1, "tag": "c:ores/unobtainium"},
-            "extra_input": etrium, "output": {"count": 5, "id": crystal}},
-        "confluence:bypass/unobtainium_crystal_from_raw_ore": {
-            "type": "mekanism:combining", "main_input": {"count": 3, "tag": "c:raw_materials/unobtainium"},
-            "extra_input": etrium, "output": {"count": 10, "id": crystal}},
-        "confluence:bypass/unobtainium_crystal_from_raw_block": {
-            "type": "mekanism:combining", "main_input": {"count": 1, "tag": "c:storage_blocks/raw_unobtainium"},
-            "extra_input": etrium, "output": {"count": 30, "id": crystal}},
-    }
+    assert got == UNOB_BODIES
 
 
 def test_ore_and_raw_smelting_removed_blasting_and_dust_kept(bypass):

@@ -365,9 +365,27 @@ IDS.adastra = {
   steelPlateTag: '#ad_astra:steel_plates', steelBlockTag: '#ad_astra:steel_blocks',
   deshIngotTag: '#c:ingots/desh', ostrumIngotTag: '#c:ingots/ostrum', caloriteIngotTag: '#c:ingots/calorite',
   alloyingType: 'ad_astra:alloying', compressingType: 'ad_astra:compressing',
-  recipes: { nasaWorkbench: 'ad_astra:nasa_workbench', spaceSuit: 'ad_astra:space_suit', oxygenLoader: 'ad_astra:oxygen_loader',
-    fuelRefinery: 'ad_astra:fuel_refinery', steelEngine: 'ad_astra:steel_engine' },
 }
+
+// v0.3 Task 8c (D132): three ids allthemodium-3.0.1_mc_1.21.1.jar names in six of its item tags but never registers, each
+// with the tags that name it (data/minecraft/tags/item/enchantable/{bow,crossbow,equippable}.json, data/c/tags/item/tools/
+// {bow,crossbow,shield}.json). com/thevortex/allthemodium/registry/ModRegistry's constant pool (javap -v) holds no bow,
+// crossbow or shield string; the only class in the jar that spells the three names is the datagen ItemModels, and the item
+// classes items/toolitems/tools/{ATMBow,Unobow} and items/toolitems/armor/Vib_Shield are constructed nowhere (no class but
+// their own names ATMBow or Unobow; MixinLocalPlayer only tests instanceof Vib_Shield). events.js removes each pair (see
+// there). The tags keep their leading '#', so tools/check_tags.py requires all six bound and non-empty after a boot. An
+// allthemodium version bump must re-check these ids: if a later jar registers one, its remove strips a real item from
+// these tags without any error.
+IDS.allthemodium.unregistered = { bow: 'allthemodium:allthemodium_bow', crossbow: 'allthemodium:unobtainium_crossbow',
+  shield: 'allthemodium:vibranium_shield' }
+IDS.allthemodium.unregisteredTagEntries = [
+  { tag: '#minecraft:enchantable/bow', id: IDS.allthemodium.unregistered.bow },
+  { tag: '#minecraft:enchantable/crossbow', id: IDS.allthemodium.unregistered.crossbow },
+  { tag: '#minecraft:enchantable/equippable', id: IDS.allthemodium.unregistered.shield },
+  { tag: '#c:tools/bow', id: IDS.allthemodium.unregistered.bow },
+  { tag: '#c:tools/crossbow', id: IDS.allthemodium.unregistered.crossbow },
+  { tag: '#c:tools/shield', id: IDS.allthemodium.unregistered.shield },
+]
 
 // Raw recipe/worldgen JSON wants a tag id without the leading '#'. Fails loudly instead of silently mangling a plain id.
 function tagId(tag) {

@@ -26,7 +26,12 @@ from collections import namedtuple
 
 Token = namedtuple("Token", "kind text line start end")   # kind: 'ident', 'num', 'str', 'regex', 'punct' or 'unterminated'
 
-IDENT = re.compile(r"[A-Za-z_$][\w$]*")
+# A name: it starts with a Unicode letter, '_', '$' or a \u escape (\uXXXX or \u{X...}), and goes on with those, digits and
+# the joiners U+200C/U+200D (Task 8c: `const \u00e9 = 1`, an e-acute written as such or as the escape, is a declaration the
+# Rhino lint must see). Not every Unicode ID_Start is a letter here (Python's \w is close, not equal); the pack's names are
+# ASCII.
+_ESCAPE = r"\\u(?:[0-9A-Fa-f]{4}|\{[0-9A-Fa-f]+\})"
+IDENT = re.compile(r"(?:[^\W\d]|\$|" + _ESCAPE + r")(?:[\w$\u200c\u200d]|" + _ESCAPE + r")*")
 NUMBER = re.compile(r"\d[\w.]*")
 # After one of these, a '/' starts a regex literal; after anything else (a name, number, ')' or ']') it divides.
 REGEX_AFTER = set("(,=:[!&|?{};+-*%<>~^") | {"=>", "return", "typeof", "case", "do", "else", "in", "of", "new", "delete",

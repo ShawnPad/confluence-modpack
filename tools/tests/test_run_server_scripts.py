@@ -13,6 +13,7 @@ The behaviour pinned is the runner header's, each part read from kubejs-neoforge
     recorded call's result is recorded too.
 """
 import json
+import re
 
 import pytest
 
@@ -109,14 +110,32 @@ ITEM_STRINGS = [
     ("'ae2:'", "Error: item string 'ae2:': Item with ID ae2: does not exist!"),
     # round 4 R2: an argument that is neither an item string nor a stack the runner made. KubeJS wraps an ItemLike (an Item,
     # an Ingredient's .first) into a real stack, which is not modelled, so Item.of throws rather than record '<inert>'.
-    ("Item.getItem('ae2:drive'), 1", 'Error: Item.of("<inert>", 1): the argument is not an item string or a stack'),
+    # Item.getItem itself throws since round 2's R5 (only Item.of is modelled), before Item.of sees its result.
+    ("Item.getItem('ae2:drive'), 1", 'Error: Item.getItem: not modelled; the runner models only Item.of'),
     ("Ingredient.of('ae2:controller').first, 1", 'Error: Item.of("<inert>", 1): the argument is not an item string'),
     ("Ingredient.of('allthemodium:unobtainium_crystal').first, 2", 'Error: Item.of("<inert>", 2): the argument is not'),
-    ("Item.getItem('ae2:drive')", 'Error: Item.of("<inert>"): the argument is not an item string or a stack'),
+    ("Item.getItem('ae2:drive')", 'Error: Item.getItem: not modelled; the runner models only Item.of'),
+    ("Fluid.of('minecraft:water')", 'Error: Item.of("<inert>"): the argument is not an item string or a stack'),
     ("undefined, 2", 'Error: Item.of("<undefined>", 2): the argument is not an item string or a stack'),
     ("Item.of('ae2:drive'), 3", {"id": "ae2:drive", "count": 3}),   # a stack the runner made: kjs$withCount
+    # Task 8c (8b follow-up F2): the count is converted as Rhino converts a JS value to a Java int (rhino-2101.2.7-build.85.jar
+    # Context.coerceToNumber -> toInteger, javap -c): toDouble (a string through ScriptRuntime.toNumber), truncated toward
+    # zero; NaN, an infinity or a value outside int range is "Cannot convert ... to int"
+    ("'ae2:drive', '4'", {"id": "ae2:drive", "count": 4}),
+    ("'ae2:drive', 2.7", {"id": "ae2:drive", "count": 2}),
+    ("'ae2:drive', ' 3 '", {"id": "ae2:drive", "count": 3}),
+    ("'ae2:drive', -2.5", AIR),
+    ("'ae2:drive', 0.5", AIR),
+    ("'ae2:drive', 'four'", "Error: Item.of: Cannot convert four to int"),
+    ("'ae2:drive', 1/0", "Error: Item.of: Cannot convert Infinity to int"),
+    ("'ae2:drive', 2147483648", "Error: Item.of: Cannot convert 2147483648 to int"),
+    # Task 8c (8b follow-up, optional): a stack the runner made has ItemStackKJS's withCount(n), not enumerable, so it is not
+    # recorded as a key
+    ("'ae2:drive').withCount(5", {"id": "ae2:drive", "count": 5}),
+    ("'2x ae2:drive').withCount('3'", {"id": "ae2:drive", "count": 3}),
+    ("'ae2:drive').withCount(0", AIR),
 ]
-RAW = [i for i, (args, _) in enumerate(ITEM_STRINGS) if args.endswith("'")]   # the one-argument cases
+RAW = [i for i, (args, _) in enumerate(ITEM_STRINGS) if re.fullmatch(r"'[^']*'", args)]   # the one-argument cases
 
 
 @pytest.fixture(scope="module")
@@ -183,10 +202,37 @@ def test_json_item_id_reads_a_json_string_generously(s, want):
     assert json_item_id(s) == want
 
 
-def test_raw_stand_in_output_fails_in_products(tmp_path, monkeypatch):
-    """Round 4 R2: event.shaped(Item.getItem(id), ...) is recorded as given ('<inert>'), and products() names it."""
+# Task 8c round 2, R5: Item.of is the one Item member the runner models. Any other (Item.exists, Item.getItem, ...) throws into
+# `errors`, at load or in a handler, so a script cannot branch on a stand-in (a stand-in is truthy: `if (Item.exists(id))`
+# would always take its true side here).
+@pytest.mark.parametrize("member, js", [
+    ("exists", "Item.exists('allthemodium:allthemodium_bow')"), ("getItem", "Item.getItem('ae2:drive')"),
+    ("empty", "Item.empty"), ("list", "Item.list.size()"),
+])
+def test_an_item_member_other_than_of_throws_into_errors(tmp_path, monkeypatch, member, js):
+    out = scripts(tmp_path, monkeypatch, {
+        "a.js": "ServerEvents.recipes(event => { if (" + js + ") { event.shaped('ae2:drive', ['A'], { A: 'minecraft:stick' }) } })\n",
+        "b.js": "const B_ITEM = " + js + "\n",
+    })
+    prefix = kjs.SCRIPTS_PREFIX
+    want = f"Item.{member}: not modelled; the runner models only Item.of (run_server_scripts.js header, \"Item.of\")"
+    assert [e.split(": ", 1)[0] for e in out["errors"]] == [prefix + "b.js load", prefix + "a.js recipes handler 0"]
+    assert all(want in e for e in out["errors"]), out["errors"]
+    assert out["recipes"] == []
+
+
+def test_item_of_and_plain_object_members_still_work(tmp_path, monkeypatch):
     out = scripts(tmp_path, monkeypatch, {"a.js": (
-        "ServerEvents.recipes(event => { event.shaped(Item.getItem('ae2:drive'), ['A'], { A: 'minecraft:stick' }).id('t:a') })\n")})
+        "ServerEvents.recipes(event => { event.shaped(Item.of('ae2:drive', 2), ['A'], { A: 'minecraft:stick' }).id('t:a') })\n"
+        "console.log(typeof Item.of, Object.keys(Item), String(Item[Symbol.toPrimitive]))\n")})
+    assert out["errors"] == [] and [r["id"] for r in out["recipes"]] == ["t:a"]
+
+
+def test_raw_stand_in_output_fails_in_products(tmp_path, monkeypatch):
+    """Round 4 R2: event.shaped(Ingredient.of(id).first, ...) is recorded as given ('<inert>'), and products() names it.
+    (Item.getItem(id) was the example until round 2's R5 made it throw.)"""
+    out = scripts(tmp_path, monkeypatch, {"a.js": (
+        "ServerEvents.recipes(event => { event.shaped(Ingredient.of('ae2:drive').first, ['A'], { A: 'minecraft:stick' }).id('t:a') })\n")})
     row = next(r for r in out["recipes"] if r["id"] == "t:a")
     assert (out["errors"], row["output"], row["outputStack"]) == ([], "<inert>", None)
     with pytest.raises(AssertionError, match="is not an item stack with a resource-location id. '<inert>' is a stand-in"):
@@ -206,6 +252,37 @@ def test_products_rejects_an_output_with_no_item_id(output, stack):
         products({"kind": "shaped", "id": "t:c", "output": output, "outputStack": stack, "file": "f.js", "handler": 0})
 
 
+@pytest.mark.parametrize("j", [
+    {"type": "x:y", "result": "<inert>"},
+    {"type": "x:y", "output": {"id": "<inert>", "count": 1}},
+    {"type": "x:y", "results": [{"id": "ae2:drive"}, {"item": "<undefined>"}]},
+    {"type": "x:y", "main_output": {"item": {"id": "<inert>", "count": 1}}},
+    {"type": "x:y", "result": {"count": 1, "id": "ae2:drive", "components": {"a": "<function>"}}},
+])
+def test_products_rejects_a_stand_in_in_a_custom_product(j):
+    """Task 8c (8b follow-up F1): a custom recipe's product built from an unmodelled global (Ingredient.of(id).first,
+    Ingredient.of(id).first.id) is recorded as the runner's stand-in label; KubeJS serialises the real object, so it is a maker in
+    game, and products() must not read it as an id no output matches."""
+    with pytest.raises(AssertionError, match="a runner stand-in"):
+        products({"id": "t:c", "json": j, "file": "f.js", "handler": 0, "chain": []})
+
+
+def test_custom_stand_in_output_fails_in_products(tmp_path, monkeypatch):
+    out = scripts(tmp_path, monkeypatch, {"a.js": (
+        "ServerEvents.recipes(event => {\n"
+        "  event.custom({ type: 'ae2:inscriber', result: Ingredient.of('ae2:drive').first }).id('t:a')\n"
+        "  event.custom({ type: 'ae2:inscriber', output: { id: Ingredient.of('ae2:drive').first.id, count: 1 } }).id('t:b')\n"
+        "  event.custom({ type: 'ae2:inscriber', result: { id: 'ae2:drive', count: 1 } }).id('t:c')\n"
+        "})\n")})
+    rows = {r["id"]: r for r in out["customs"]}
+    assert out["errors"] == []
+    for rid in ("t:a", "t:b"):
+        with pytest.raises(AssertionError, match="a runner stand-in"):
+            products(rows[rid])
+    assert products(rows["t:c"]) == ["ae2:drive"]
+    assert kjs.output_problem(rows["t:a"]) and kjs.output_problem(rows["t:c"]) is None
+
+
 def test_products_reads_every_output_form():
     """A shaped row's string output is read through the runner's outputStack, never the raw string (round 3 V1: '2x 2x
     ae2:drive' is ae2:drive). A custom row taken straight from a run's `customs` (no `kind`) is read through its `json`, not
@@ -220,6 +297,37 @@ def test_products_reads_every_output_form():
     assert products(custom) == ["ae2:drive"]
     assert products({"kind": "custom", **custom}) == ["ae2:drive"]
     assert products(raw) == ["ae2:drive", "ae2:controller", "ae2:charger"]
+
+
+# Task 8c round 2, minor 7: one producer rule. A custom row's products are check_recipes.products' (after the stand-in check),
+# so the tests and the dump checker read the same keys and shapes.
+@pytest.mark.parametrize("j, want", [
+    ({"type": "ae2:storage_cell_disassembly", "cell": "x:y", "cell_disassembly_items": [{"count": 1, "id": "ae2:drive"}]},
+     ["ae2:drive"]),
+    ({"type": "twilightforest:uncrafting", "input": {"item": "x:y"}, "key": {"A": {"item": "ae2:drive"}}, "pattern": ["A"]},
+     ["ae2:drive"]),
+    ({"type": "productivebees:centrifuge", "outputs": [[{"item": {"item": "ae2:drive"}, "chance": 0.4}]]}, ["ae2:drive"]),
+    ({"type": "ars_nouveau:crush", "output": [{"chance": 1.0, "stack": {"count": 2, "id": "ae2:drive"}}]}, ["ae2:drive"]),
+    ({"type": "mekanism:dissolution", "output": {"amount": 1000, "id": "allthemodium:dirty_vibranium"}},
+     ["allthemodium:dirty_vibranium"]),
+    ({"type": "cucumber:shaped_tag", "result": {"tag": "c:ingots/iron", "count": 1}}, ["#c:ingots/iron"]),
+    ({"type": "x:y", "byproduct": "ae2:drive"}, ["ae2:drive"]),
+])
+def test_custom_products_follow_the_check_recipes_rule(j, want):
+    assert products({"id": "t:c", "json": j, "file": "f.js", "handler": 0, "chain": []}) == want
+    import check_recipes   # kjs puts tools/ on sys.path
+    made = check_recipes.made_by(j)
+    assert want == made.items + made.chemicals + ["#" + t for t, _ in made.tags]
+
+
+@pytest.mark.parametrize("j", [
+    {"type": "ae2:crafting_unit_transform", "upgrade_item": "x:y", "upgraded_block": "<inert>"},
+    {"type": "twilightforest:uncrafting", "input": {"item": "x:y"}, "key": {"A": {"item": "<inert>"}}, "pattern": ["A"]},
+    {"type": "x:y", "byproduct": "<undefined>"},
+])
+def test_a_stand_in_under_any_product_key_fails(j):
+    with pytest.raises(AssertionError, match="a runner stand-in"):
+        products({"id": "t:c", "json": j, "file": "f.js", "handler": 0, "chain": []})
 
 
 # ---- callbacks (review minor 3; round 3 N1: calls chained on a call's result)

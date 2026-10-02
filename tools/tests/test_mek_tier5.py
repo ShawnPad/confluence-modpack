@@ -79,12 +79,16 @@ MOVED_TO_TIER5 = [
     "mekanismgenerators:reactor/controller", "mekanismgenerators:reactor/port"] + [
     "mekanism:factory/ultimate/" + k for k in ("combining", "compressing", "crushing", "enriching", "infusing", "injecting",
                                                "purifying", "sawing", "smelting")]
-# A recipe's loaded type, keyed by its jar default's type: gate.shaped loads as kubejs:shaped (research/phase7-v0.3-test-log.md
-# §2); raw-JSON types load as written.
+# A recipe's loaded type, keyed by its jar default's type: gate.shaped loads as kubejs:shaped (research/phase7-v0.3-test-log.md,
+# section "Mekanism tier 5"); raw-JSON types load as written.
 LOADED_AS = {"minecraft:crafting_shaped": "kubejs:shaped"}
 
 
 T51 = "confluence:tier5/ultimate_control_circuit"
+# T5.1 as view() reads it: spec §5 row T5.1 (D104).
+T51_VIEW = ("kubejs:shaped", ["EAE", "UTU", "EAE"],
+            {"E": ELITE, "A": "#mekanism:alloys/atomic", "U": "#c:ingots/unobtainium", "T": "ars_nouveau:wilden_tribute"},
+            (ULTIMATE_ITEM, 4))
 
 
 @pytest.fixture(scope="module")
@@ -94,7 +98,7 @@ def recorded():
 
 def view(r):
     """(loaded_type, pattern, key, (result id, count)) of a recorded gate.shaped or gate.custom recipe. A gate.shaped recipe
-    loads as kubejs:shaped (research/phase7-v0.3-test-log.md §2), a crafting-grid shaped recipe all the same (javap,
+    loads as kubejs:shaped (research/phase7-v0.3-test-log.md, section "Mekanism tier 5"), a crafting-grid shaped recipe all the same (javap,
     kubejs-neoforge-2101.7.2-build.377.jar: ShapedKubeJSRecipe extends net.minecraft.world.item.crafting.ShapedRecipe).
     A gate.custom recipe loads with its JSON's own type, and its key is recipe JSON ({"item"} or {"tag"} objects only)."""
     if r["kind"] == "shaped":
@@ -123,9 +127,7 @@ def test_rewrite_keeps_the_default_except_the_circuit(recorded, rid):
 def test_t51_ultimate_control_circuit(recorded):
     r = one(recorded, T51)
     assert r["file"] == TIER5
-    assert view(r) == ("kubejs:shaped", ["EAE", "UTU", "EAE"],
-                       {"E": ELITE, "A": "#mekanism:alloys/atomic", "U": "#c:ingots/unobtainium", "T": "ars_nouveau:wilden_tribute"},
-                       (ULTIMATE_ITEM, 4))
+    assert view(r) == T51_VIEW
     assert one_maker(recorded, ULTIMATE_ITEM) == [T51], f"{ULTIMATE_ITEM} is made by {one_maker(recorded, ULTIMATE_ITEM)}"
 
 
@@ -195,6 +197,25 @@ KEY, UNOB_ATM, VIB_ATM = ("confluence:tier5/other_key", "confluence:tier5/unobta
 KEY_ITEM, UNOB_ATM_ITEM, VIB_ATM_ITEM = ("kubejs:other_key", "allthemodium:unobtainium_allthemodium_alloy_ingot",
                                          "allthemodium:vibranium_allthemodium_alloy_ingot")
 HEART = "allthemodium:piglich_heart"
+# D5.1 as view() reads it (spec §4.1; D105).
+KEY_VIEW = ("kubejs:shaped", [" E ", "VFB", " D "],
+            {"E": "kubejs:end_focus", "V": "#c:ingots/vibranium", "F": "#industrialforegoing:machine_frame/advanced",
+             "B": "the_bumblezone:essence_of_the_bees", "D": "minecraft:dragon_egg"},
+            (KEY_ITEM, 1))
+# M5.1 and X5.1, the whole custom JSON in the script's order (spec §5 rows M5.1, X5.1; D115). The tests below also check
+# the pieces that matter on their own (pedestal multiset, energy as a long), so a failure names the slip.
+CUSTOM_BODIES = {
+    UNOB_ATM: {"type": "ars_nouveau:enchanting_apparatus", "keepNbtOfReagent": False, "sourceCost": 10000,
+               "reagent": {"tag": "c:ingots/unobtainium"},
+               "pedestalItems": [{"tag": "c:ingots/allthemodium"}, {"item": HEART}, {"item": "ars_nouveau:air_essence"},
+                                 {"item": "ars_nouveau:earth_essence"}, {"item": "ars_nouveau:fire_essence"},
+                                 {"item": "ars_nouveau:water_essence"}],
+               "result": {"count": 1, "id": UNOB_ATM_ITEM}},
+    VIB_ATM: {"type": "powah:energizing", "energy": 1000000000,
+              "ingredients": [{"tag": "c:ingots/allthemodium"}, {"tag": "c:ingots/vibranium"}, {"item": HEART},
+                              {"item": "powah:nitro_crystal_block"}],
+              "result": {"count": 1, "id": VIB_ATM_ITEM}},
+}
 
 # Each output this file pins -> the only recipe ids that may make it, in any server script (test_recipe_scripts.py).
 SOLE_MAKERS = {
@@ -206,10 +227,7 @@ SOLE_MAKERS = {
 def test_d51_key_to_the_other(recorded):
     r = one(recorded, KEY)
     assert r["file"] == TIER5
-    assert view(r) == ("kubejs:shaped", [" E ", "VFB", " D "],
-                       {"E": "kubejs:end_focus", "V": "#c:ingots/vibranium", "F": "#industrialforegoing:machine_frame/advanced",
-                        "B": "the_bumblezone:essence_of_the_bees", "D": "minecraft:dragon_egg"},
-                       (KEY_ITEM, 1))
+    assert view(r) == KEY_VIEW
     assert one_maker(recorded, KEY_ITEM) == [KEY]
 
 
@@ -225,6 +243,7 @@ def test_m51_unobtainium_allthemodium_alloy(recorded):
         "ars_nouveau:water_essence"])
     assert j["sourceCost"] == 10000 and j["keepNbtOfReagent"] is False
     assert j["result"] == {"count": 1, "id": UNOB_ATM_ITEM}
+    assert j == CUSTOM_BODIES[UNOB_ATM]
     assert one_maker(recorded, UNOB_ATM_ITEM) == [UNOB_ATM]
 
 
@@ -238,6 +257,7 @@ def test_x51_vibranium_allthemodium_alloy(recorded):
         "#c:ingots/allthemodium", "#c:ingots/vibranium", HEART, "powah:nitro_crystal_block"])
     assert j["energy"] == 1000000000
     assert j["result"] == {"count": 1, "id": VIB_ATM_ITEM}
+    assert j == CUSTOM_BODIES[VIB_ATM]
     assert one_maker(recorded, VIB_ATM_ITEM) == [VIB_ATM]
 
 

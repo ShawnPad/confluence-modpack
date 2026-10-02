@@ -1,10 +1,32 @@
-// Script gates and tag edits: the v0.1 Twilight activator tag swap, the v0.3 tier-ore block tags (v0.3 spec §7, D112) and,
-// at the end of this file, The Other's pad, travel and arrival checks (v0.3 spec §4.2-4.5).
+// Script gates and tag edits: the v0.1 Twilight activator tag swap, the v0.3 removes of allthemodium's unregistered tag
+// entries (D132), the v0.3 tier-ore block tags (v0.3 spec §7, D112) and, at the end of this file, The Other's pad, travel
+// and arrival checks (v0.3 spec §4.2-4.5).
 ServerEvents.tags('item', event => {
   event.get(IDS.twilight.activatorTag).remove('#c:gems/diamond').add(IDS.pack.twilightKey)
+
+  // v0.3 Task 8c (D132): allthemodium-3.0.1_mc_1.21.1.jar!data/minecraft/tags/item/enchantable/{bow,crossbow,equippable}.json
+  // and data/c/tags/item/tools/{bow,crossbow,shield}.json name allthemodium:allthemodium_bow, unobtainium_crossbow and
+  // vibranium_shield, which com/thevortex/allthemodium/registry/ModRegistry never registers (lib/ids.js has the evidence).
+  // Each is a required entry, so vanilla's TagLoader.build drops all six tags, and with them every tag that requires one
+  // (c:tools, c:enchantables, functionalstorage:armory_cabinet_insertable, twilightforest:lower_on_drying_rack): 20
+  // "Couldn't load tag" ERRORs at boot, the three enchantable tags bound empty, and no bow or crossbow taking power, punch,
+  // flame, infinity, multishot, piercing or quick_charge (supported_items in server-1.21.1-20240808.144430-extra.jar!data/
+  // minecraft/enchantment/*.json). Removing just those entries lets the six tags load with everything else in them.
+  // Why this lands in time (kubejs-neoforge-2101.7.2-build.377.jar, javap): TagLoaderMixin injects at the RETURN of
+  // TagLoader.load, and TagLoaderKJS.kjs$customTags wraps the loaded EntryWithSource lists, posts ServerEvents.tags and puts
+  // them back, so this edit is in the lists before TagLoader.build and KubeJS's own CachedTagLookup build read them. A
+  // removal matches by id only: TagEventFilter$ID.testElementId is ResourceLocation.equals, with no registry lookup (only its
+  // add checks the registry), so it removes an id no registry holds. Not a datapack tag file instead: NeoForge's tag `remove`
+  // list is appended to the same entry list as optional removals, and build still fails on ATM's required entry; and
+  // `replace: true` would also drop every other mod's entries in these tags (5 to 7 other jars write each of the six).
+  // AllTheMods 10 ships the same six removes (AllTheMods/ATM-10, kubejs/server_scripts/Tweaks/tags.js).
+  // An allthemodium version bump must re-check the three ids (lib/ids.js): if a later jar registers one, this silently
+  // strips a real item from these tags. Deliberately unguarded (no Item.exists check, D132): that re-check is the safeguard.
+  // tools/tests/test_item_tags.py pins the six (tag, id) pairs.
+  IDS.allthemodium.unregisteredTagEntries.forEach(e => event.remove(tagId(e.tag), e.id))
 })
 
-// ---- v0.3 tier-ore breakers (spec §7 D112 (a) and (b)). Block-tag edits, so they live here with the other tag edit.
+// ---- v0.3 tier-ore breakers (spec §7 D112 (a) and (b)). Block-tag edits, so they live here with the other tag edits.
 // KubeJS 2101 API (kubejs-neoforge-2101.7.2-build.377.jar, javap): ServerEvents.tags takes a registry target; the string
 // 'block' becomes ResourceKey.createRegistryKey(ResourceLocation.parse('block')) = minecraft:block (EventTargetType
 // .toRegistryKey). TagKubeEvent.add(ResourceLocation, Object...) -> TagWrapper.add(Object...) -> TagEventFilter.unwrap: Rhino

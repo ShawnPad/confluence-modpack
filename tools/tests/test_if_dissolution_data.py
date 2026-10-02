@@ -136,3 +136,77 @@ def test_override_is_the_jar_default_plus_our_swaps(rel):
     have = Counter(map(ingredient, default["input"]))
     assert not lose - have, f"{rel}: {IF_JAR}'s default no longer holds {dict(lose - have)}"
     assert have - lose + add == Counter(map(ingredient, ours["input"])), f"{rel}: not {IF_JAR}'s default with our swaps"
+
+
+# ---- v0.3 Task 8c: the two crafting-grid overrides at IF's own ids (pity frame, Dissolution Chamber block) ----
+# Each is IF's jar default at the same path with only the documented swaps, written as edits to the default so a new IF
+# default fails here instead of being silently replaced by ours. Where the swaps are documented:
+#   T0.4 pity frame: pack spec (docs/superpowers/specs/2026-09-11-pack-build-design.md §3, row T0.4: "IF default +
+#     #c:ingots/osmium x4 + Powah energized steel x4") and the v0.1 plan (docs/superpowers/plans/2026-09-11-v0.1-alpha.md,
+#     Task 10 Step 1: "pattern keeps the redstone block centre, swaps logs for osmium and iron for energized steel"). That
+#     step's file body, which kubejs/data ships verbatim, also leaves out the default's neoforge:conditions (item_exists for
+#     IF's own machine_frame_pity, true whenever IF loads), so the drop is listed as a swap.
+#   T2.2 Dissolution Chamber: pack spec §3 row T2.2 ("IF default + Mekanism basic control circuit") and the v0.1 plan's
+#     Task 11 Step 2 ("T2.2 swaps one gold for a basic circuit"; its file body has the bottom row's second gold ingot as
+#     #c:circuits/basic, key X).
+# Defaults: industrialforegoing-1.21-3.6.39.jar!data/industrialforegoing/recipe/{machine_frame_pity,dissolution_chamber}.json
+# (research/phase6-tier0-2-ids.md §B quotes both).
+PITY = "industrialforegoing/recipe/machine_frame_pity.json"
+CHAMBER = "industrialforegoing/recipe/dissolution_chamber.json"
+GRID_OVERRIDES = {
+    # rename: default key letter -> (our letter, our ingredient), every cell of it; cells: (row, col) -> (letter, ingredient);
+    # drop: top-level keys of the default ours leaves out.
+    PITY: {"rename": {"W": ("O", {"tag": "c:ingots/osmium"}), "I": ("E", {"item": "powah:steel_energized"})},
+           "cells": {}, "drop": ["neoforge:conditions"]},
+    CHAMBER: {"rename": {}, "cells": {(2, 2): ("X", {"tag": "c:circuits/basic"})}, "drop": []},
+}
+
+
+def with_swaps(default, swaps):
+    """The default recipe body with the swaps applied: a key letter renamed (and its ingredient replaced) in every cell, single
+    cells replaced, top-level keys dropped. A key letter no cell uses any more is removed, as a hand-written file would."""
+    body = json.loads(json.dumps(default))
+    pattern = [list(row) for row in body["pattern"]]
+    for old, (new, ing) in swaps["rename"].items():
+        assert any(old in row for row in pattern), f"the default no longer uses key {old!r}"
+        pattern = [[new if ch == old else ch for ch in row] for row in pattern]
+        body["key"].pop(old)
+        body["key"][new] = ing
+    for (r, c), (letter, ing) in swaps["cells"].items():
+        assert pattern[r][c] != " ", f"the default's cell {(r, c)} is empty"
+        pattern[r][c] = letter
+        body["key"][letter] = ing
+    body["pattern"] = ["".join(row) for row in pattern]
+    used = {ch for row in body["pattern"] for ch in row}
+    body["key"] = {k: v for k, v in body["key"].items() if k in used}
+    for k in swaps["drop"]:
+        assert k in body, f"the default no longer has {k!r}"
+        body.pop(k)
+    return body
+
+
+def if_default(rel):
+    with zipfile.ZipFile(pinned_jar("industrialforegoing-", IF_JAR, "industrial-foregoing.pw.toml")) as jar:
+        return jar_json(jar, "data/" + rel, f"kubejs/data/{rel} no longer replaces IF's default")
+
+
+@pytest.mark.parametrize("rel", sorted(GRID_OVERRIDES))
+def test_grid_override_is_the_jar_default_plus_our_swaps(rel):
+    assert json.loads((DATA / rel).read_text()) == with_swaps(if_default(rel), GRID_OVERRIDES[rel]), (
+        f"kubejs/data/{rel} is not {IF_JAR}'s default with the documented swaps (GRID_OVERRIDES)")
+
+
+def test_grid_override_drift_is_caught():
+    """A changed default, an extra swap in ours, or a swap applied to the wrong cell all fail the comparison."""
+    default = {"type": "minecraft:crafting_shaped", "category": "misc", "pattern": ["PCP", "BMB", "GDG"],
+               "key": {k: {"item": "m:" + k.lower()} for k in "PCBMGD"}, "result": {"count": 1, "id": "m:out"}}
+    swaps = {"rename": {}, "cells": {(2, 2): ("X", {"tag": "c:circuits/basic"})}, "drop": []}
+    ours = dict(default, pattern=["PCP", "BMB", "GDX"], key=dict(default["key"], X={"tag": "c:circuits/basic"}))
+    assert with_swaps(default, swaps) == ours
+    assert with_swaps(dict(default, category="building"), swaps) != ours                       # the default changed
+    assert with_swaps(default, swaps) != dict(ours, pattern=["PCP", "BXB", "GDX"])             # ours swaps one more cell
+    assert with_swaps(default, dict(swaps, cells={(2, 0): ("X", {"tag": "c:circuits/basic"})})) != ours   # the wrong cell
+    renamed = with_swaps(default, {"rename": {"G": ("O", {"tag": "c:ingots/osmium"})}, "cells": {}, "drop": []})
+    assert renamed["pattern"] == ["PCP", "BMB", "ODO"] and "G" not in renamed["key"]
+    with pytest.raises(AssertionError):
+        with_swaps(default, {"rename": {"W": ("O", {})}, "cells": {}, "drop": []})            # key gone from the default

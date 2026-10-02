@@ -36,7 +36,7 @@ import test_bypass_v03
 import test_mek_tier5
 import test_tier6_space_recipes
 from jslex import tokens
-from kjs import SCRIPTS_PREFIX, all_rows, one_maker, run, scripts_root
+from kjs import SCRIPTS_ENV, SCRIPTS_PREFIX, all_rows, output_problem, products, run, scripts_root
 
 SOURCES = (test_mek_tier5, test_tier6_space_recipes, test_ae2_recipes, test_bypass_v03)
 SOLE_MAKERS = {}
@@ -99,6 +99,26 @@ DUMP_MEMBERS = {
     "forEachRecipe", "addedRecipes", "forEach", "push",     # the walk (DUMP_CALLS) and the rows array
     "recipes", "write", "log",                             # ServerEvents.recipes, JsonIO.write, console.log
 }
+# Where three of them may stand (Task 8c, 8b follow-up F3): push only on dump.js's own `rows`, forEach only on
+# event.addedRecipes, and write only as JsonIO.write('kubejs/exported/recipes.json', ...). So `r.get('result').push(x)` or
+# `.forEach(...)` on a list a recipe hands out (which would edit it) fails, as does a write anywhere else.
+DUMP_RECEIVERS = {"push": ("rows",), "forEach": ("event", "addedRecipes"), "write": ("JsonIO",)}
+DUMP_PATH = "kubejs/exported/recipes.json"
+# Names that never join DUMP_MEMBERS (Task 8c, 8b follow-up F4): the recipe-editing calls and fields of the 8b round-3 ban
+# list (DUMP_EDIT_CALLS and DUMP_EDIT_FIELDS in that tree, less `json`, which dump.js reads through serializeChanges()), plus
+# id, type, group, set, add and remove. test_dump_never_is_disjoint_from_dump_members holds the line.
+DUMP_NEVER = {
+    # round 3 DUMP_EDIT_CALLS
+    "setValue", "replaceInput", "replaceOutput", "group", "id", "ingredientAction", "merge", "set", "stage",
+    "consumeIngredient", "customIngredientAction", "damageIngredient", "keepIngredient", "modifyResult", "replaceIngredient",
+    "remove", "save", "afterLoaded", "deserialize", "initValues", "serialize", "validate", "kjs$setGroup", "setGroup",
+    "addRecipe", "custom", "shaped", "shapeless", "smelting", "blasting", "smoking", "campfireCooking", "stonecutting",
+    "smithing", "smithingTrim", "vanillaShaped", "vanillaShapeless", "applyChanges", "discoverRecipes", "finishEvent", "post",
+    "postEvent", "takeId", "handleFailedRecipe", "add", "addProperty", "addAll", "clear", "put", "putAll", "putIfAbsent",
+    "removeAll", "removeIf", "retainAll", "replaceAll", "compute", "computeIfAbsent", "computeIfPresent",
+    # round 3 DUMP_EDIT_FIELDS, less json
+    "changed", "creationError", "newRecipe", "removed", "originalJson", "type", "sourceLine",
+}
 ASSIGN_OPS = {"=", "+=", "-=", "*=", "/=", "%=", "**=", "<<=", ">>=", ">>>=", "&=", "|=", "^=", "&&=", "||=", "??="}
 # A '[' right after one of these is a member access (x[k], f()[k], a[0][1]); after anything else it starts an array literal.
 _NOT_A_RECEIVER = {"return", "typeof", "in", "of", "new", "delete", "void", "throw", "instanceof", "yield", "await", "case",
@@ -114,12 +134,33 @@ def _assignment(op):
     return None if a is None or (a == "=" and op[1:2] in ("=", ">")) else a
 
 
+def _at_its_receiver(toks, i):
+    """Whether the member token toks[i] (push, forEach or write, after a '.') stands on its DUMP_RECEIVERS chain, which
+    starts a member chain (no '.' before it), and a write takes the DUMP_PATH literal and then a ','."""
+    chain = DUMP_RECEIVERS[toks[i].text]
+    start = i - 2 * len(chain)
+    if start < 0 or (start > 0 and toks[start - 1].text == "."):
+        return False
+    for n, name in enumerate(chain):
+        if toks[start + 2 * n].kind != "ident" or toks[start + 2 * n].text != name or toks[start + 2 * n + 1].text != ".":
+            return False
+    if toks[i].text == "write":
+        arg = toks[i + 1:i + 4]
+        return (len(arg) == 3 and arg[0].text == "(" and arg[1].kind == "str" and arg[1].text[0] in "'\""
+                and arg[1].text[1:-1] == DUMP_PATH and arg[2].text == ",")
+    return True
+
+
 def dump_lint(src):
     """(line, what) for each thing in src that could edit a recipe: a member not in DUMP_MEMBERS (`.name`, on any receiver,
     called or not, and `['name']`), an assignment, ++ or -- on any member, a computed member called or assigned (`x[k](`,
     `x[k] =`), `delete`, and a template or comment that never closes (jslex: it would hide the rest of the file). Comments
     and strings are skipped (jslex), so only code counts. Not seen: a member reached without '.' or '[' (destructuring
-    `const { result } = r`, Rhino's `with (r)`), and code inside a template's ${...}; dump.js uses neither."""
+    `const { result } = r`, Rhino's `with (r)`), and code inside a template's ${...}; dump.js uses neither.
+    Task 8c (8b follow-ups F3): any computed access whose key is not a quoted string literal naming a DUMP_MEMBERS member
+    (`x[k]`, `x[0]`, x[`get`], `x?.[k]`), read or not, since a key computed at run time can name anything; a '\\' right
+    after '.' (a member written with an escape, `r.\\u0067et`, is matched by no name here); and push, forEach and write
+    away from their DUMP_RECEIVERS (write only with the DUMP_PATH literal as its first argument)."""
     toks = tokens(src)
     at = lambda k: toks[k] if 0 <= k < len(toks) else None   # noqa: E731
     hits = []
@@ -137,11 +178,15 @@ def dump_lint(src):
             hits.append((t.line, "unterminated template or comment"))
         elif t.kind == "ident" and t.text == "delete" and not (prev is not None and prev.text == "."):
             hits.append((t.line, "delete"))
+        elif t.kind == "punct" and t.text.startswith("\\") and prev is not None and prev.text == ".":
+            hits.append((t.line, ".\\"))
         elif t.kind == "ident" and prev is not None and prev.text == ".":
-            if t.text not in DUMP_MEMBERS:
+            if t.text not in DUMP_MEMBERS or "\\" in t.text:
                 hits.append((t.line, f".{t.text}"))
             elif _assignment(op_after(i + 1)):
                 hits.append((t.line, f".{t.text} {_assignment(op_after(i + 1))}"))
+            elif t.text in DUMP_RECEIVERS and not _at_its_receiver(toks, i):
+                hits.append((t.line, f".{t.text}"))
         elif t.kind == "punct" and t.text in ("++", "--"):   # a prefix ++ / -- on a member: ++a.b, --a[k]
             j = i + 1
             if at(j) is not None and at(j).kind == "ident":
@@ -159,22 +204,28 @@ def dump_lint(src):
                 if j > i + 1 and (at(j + 1) is None or at(j + 1).text not in ("(",)):
                     hits.append((at(j).line, f"{t.text}{'.' + at(j).text if at(j).kind == 'ident' else '[...]'}"))
         elif t.kind == "punct" and t.text == "[" and prev is not None and (
-                (prev.kind in ("ident", "str") and prev.text not in _NOT_A_RECEIVER) or prev.text in (")", "]")):
+                (prev.kind in ("ident", "str") and prev.text not in _NOT_A_RECEIVER) or prev.text in (")", "]")
+                or (prev.text == "." and at(i - 2) is not None and at(i - 2).text == "?")):   # x?.[k]
             depth, j = 1, i + 1   # a member access: find its ']'
             while at(j) is not None and depth:
                 depth += {"[": 1, "]": -1}.get(at(j).text, 0)
                 j += 1
-            key = toks[i + 1] if j == i + 3 and toks[i + 1].kind == "str" else None   # x['name']
+            key = toks[i + 1] if j == i + 3 and toks[i + 1].kind == "str" and toks[i + 1].text[0] in "'\"" else None
             nxt, op = at(j), op_after(j)
+            called = nxt is not None and (nxt.text == "(" or (
+                nxt.text == "?" and at(j + 1) is not None and at(j + 1).text == "." and at(j + 2) is not None
+                and at(j + 2).text == "("))
             if key is not None:   # x['name'] is x.name
                 if key.text[1:-1] not in DUMP_MEMBERS:
                     hits.append((t.line, f"[{key.text}]"))
                 elif _assignment(op):
                     hits.append((t.line, f"[{key.text}] {_assignment(op)}"))
-            elif nxt is not None and nxt.text == "(":
+            elif called:
                 hits.append((t.line, "[...]("))
             elif _assignment(op):
                 hits.append((t.line, f"[...] {_assignment(op)}"))
+            else:
+                hits.append((t.line, "[...]"))   # a computed key, read: it can name anything at run time
     return hits
 
 
@@ -220,7 +271,8 @@ def test_dump_source_names_only_allowed_members():
     # dump.js's own reads
     ("r.get('result'); r.serializeChanges().json; String(r.getOrCreateId()); rows.push(x); event.forEachRecipe({}, f)", []),
     ("const s = String(r)\nreturn s.slice(s.lastIndexOf('[') + 1, s.length - 1)\nevent.addedRecipes.forEach(f)", []),
-    ("ServerEvents.recipes(e => {})\nJsonIO.write('a', rows)\nconsole.log('x')\nconst rows = []\nfor (const k of [1, 2]) f(k)", []),
+    ("ServerEvents.recipes(e => {})\nJsonIO.write('kubejs/exported/recipes.json', rows)\nconsole.log('x')\nconst rows = []\n"
+     "for (const k of [1, 2]) f(k)", []),
     # adapted round 3 cases: every member outside the allowlist, called or not
     ("if (String(r.getOrCreateId()).startsWith('ae2:')) r.replaceInput('a', 'b')", [(1, ".startsWith"), (1, ".replaceInput")]),
     ("r.get('result').setCount(64)", [(1, ".setCount")]),
@@ -240,25 +292,71 @@ def test_dump_source_names_only_allowed_members():
     ("if (out === '') { r.noMirror() }\nconst g = r.xp\ng(1)", [(1, ".noMirror"), (2, ".xp")]),
     ("r?.cookingTime?.(5)", [(1, ".cookingTime")]),
     ("const s = `${x}\nr.remove()", [(1, "unterminated template or comment")]),
+    # Task 8c (8b follow-up F3): every computed member access whose key is not a DUMP_MEMBERS string literal, read or not
+    ("const g = r[k]\ng()\nr?.[k]?.()\nr[0]\nr[`get`]('result')\nrows['length']",
+     [(1, "[...]"), (3, "[...]("), (4, "[...]"), (5, "[...](")]),
+    # a '\\' right after '.': a member written with an escape (r.\\u0067et is r.get) is never matched by name
+    ("r.\\u0067et('result')\nr.\\x72()", [(1, ".\\u0067et"), (2, ".\\")]),
+    # push only on dump.js's own `rows`, forEach only on event.addedRecipes; never chained after .get(...)
+    ("rows.push(x)\nevent.addedRecipes.forEach(f)\nr.get('result').forEach(f)\nout.push(x)\na.rows.push(x)\n"
+     "event.forEachRecipe({}, f).forEach(g)\nr.get('x').push(1)\nevent.addedRecipes.push(r)",
+     [(3, ".forEach"), (4, ".push"), (5, ".rows"), (5, ".push"), (6, ".forEach"), (7, ".push"), (8, ".push")]),
+    # JsonIO.write's first argument is the dump path, as a literal
+    ("JsonIO.write('kubejs/exported/recipes.json', rows)\nJsonIO.write(\"kubejs/exported/recipes.json\", rows)\n"
+     "JsonIO.write('kubejs/exported/other.json', rows)\nJsonIO.write(path, rows)\nx.write('kubejs/exported/recipes.json', rows)\n"
+     "JsonIO.write('kubejs/exported/recipes.json' + s, rows)",
+     [(3, ".write"), (4, ".write"), (5, ".write"), (6, ".write")]),
 ])
 def test_dump_lint(src, hits):
     assert dump_lint(src) == hits
 
 
-def removal_key(filt):
-    """(form, value) for one recorded event.remove filter (a `filters` row's raw `filter`): ('id', '<id>'), ('id-regex',
-    '/source/flags'), ('output', '<item>', or its JSON for a stack) or ('filter', <its JSON>) for anything else. Unlike the
-    runner's legacy `removed` string, no form can pass as another: { id: 'output:minecraft:flint_and_steel' } is an id
-    removal, not the output removal its `removed` string reads as (round 4 R4)."""
-    if isinstance(filt, dict) and list(filt) == ["id"]:
+def test_dump_never_is_disjoint_from_dump_members():
+    """Task 8c (8b follow-up F4): the recipe-editing names of the round-3 ban list, plus id, type, group, set, add and remove,
+    can never be allowlisted for dump.js."""
+    assert DUMP_NEVER & DUMP_MEMBERS == set()
+
+
+def test_dump_never_names_each_member_once():
+    """Round 2, minor 13: the set literal repeats no name (a repeat reads as a second, different ban)."""
+    import ast
+    with open(__file__, encoding="utf-8") as f:
+        tree = ast.parse(f.read())
+    literal = next(node.value for node in ast.walk(tree) if isinstance(node, ast.Assign)
+                   and any(isinstance(t, ast.Name) and t.id == "DUMP_NEVER" for t in node.targets))
+    names = [elt.value for elt in literal.elts]
+    assert sorted({n for n in names if names.count(n) > 1}) == []
+    assert {"id", "type", "group", "set", "add", "remove", "replaceInput", "setValue", "addProperty"} <= DUMP_NEVER
+
+
+def test_every_recipe_output_is_readable(everything):
+    """Task 8c (8b follow-up): every recipe the scripts make names its products in a form kjs.products reads, so one bad
+    output fails here once, instead of once per pinned output in test_pinned_output_has_only_its_own_makers (which skips an
+    unreadable row, since this test covers it). A stand-in ('<inert>' from Item.getItem or Ingredient.of(...).first,
+    '<undefined>') in a shaped, shapeless or custom output is a maker no test could see."""
+    bad = [(r.get("file"), r.get("id"), output_problem(r)) for r in all_rows(everything) if output_problem(r)]
+    assert bad == []
+
+
+def removal_key(row):
+    """(form, value) for one recorded event.remove (a `filters` row): ('id', '<id>'), ('id-regex', '/source/flags'),
+    ('output', '<item>', or its JSON for a stack) or ('filter', <its JSON>) for anything else. Unlike the runner's legacy
+    `removed` string, no form can pass as another: { id: 'output:minecraft:flint_and_steel' } is an id removal, not the
+    output removal its `removed` string reads as (round 4 R4). The form comes from the runner's `kind` (Task 8c), not from
+    the recorded JSON, so { id: { RegExp: '/x/' } }, an object literal, is a filter and not a regex. A string id of 3 or more
+    characters that starts with '/' is a regex, as KubeJS reads it (kubejs-neoforge-2101.7.2-build.377.jar, javap -c:
+    RecipeFilter.of passes an `id` value to RegExpKJS.wrap, offsets 402-450, which for a CharSequence calls ofString, and
+    ofString returns null, so an IDFilter, unless length >= 3 and charAt(0) == '/', offsets 0-31)."""
+    filt, kind = row["filter"], row["kind"]
+    if kind == "id-regex":
+        return ("id-regex", filt["id"]["RegExp"])
+    if kind == "id":
         v = filt["id"]
-        if isinstance(v, str):
-            return ("id", v)
-        if isinstance(v, dict) and list(v) == ["RegExp"] and isinstance(v["RegExp"], str):
-            return ("id-regex", v["RegExp"])
-    if isinstance(filt, dict) and list(filt) == ["output"]:
+        return ("id-regex", v) if len(v) >= 3 and v.startswith("/") else ("id", v)
+    if kind == "output":
         v = filt["output"]
         return ("output", v if isinstance(v, str) else json.dumps(v, sort_keys=True))
+    assert kind == "filter", row
     return ("filter", json.dumps(filt, sort_keys=True))
 
 
@@ -268,7 +366,7 @@ def owned_key(removed):
     assert not removed.startswith(("filter:", "output:{", "output:[")), removed
     if removed.startswith("output:"):
         return ("output", removed.removeprefix("output:"))
-    if removed.startswith("/"):
+    if len(removed) >= 3 and removed.startswith("/"):   # RegExpKJS.ofString's test (removal_key)
         return ("id-regex", removed)
     return ("id", removed)
 
@@ -280,10 +378,10 @@ def test_every_removal_is_an_owner_tests_removal(everything):
     second copy of a listed one, or a listed output removal written as an id ({ id: 'output:<item>' }), fails, with the file
     that made it."""
     want = Counter(owned_key(x) for owned in PACK_REMOVALS.values() for x in owned)
-    got = Counter(removal_key(row["filter"]) for row in everything["filters"])
+    got = Counter(removal_key(row) for row in everything["filters"])
     by_file = {}
     for row in everything["filters"]:
-        by_file.setdefault(removal_key(row["filter"]), []).append(row["file"])
+        by_file.setdefault(removal_key(row), []).append(row["file"])
     extra = {f"{k[0]} {k[1]}": by_file[k] for k in sorted(got - want)}
     missing = sorted(f"{k[0]} {k[1]}" for k in want - got)
     assert (extra, missing) == ({}, []), (
@@ -292,17 +390,38 @@ def test_every_removal_is_an_owner_tests_removal(everything):
         "PACK_REMOVALS in tools/tests/test_recipe_scripts.py; EARLY_TIER_REMOVALS covers v0.1-v0.2 only.")
 
 
-@pytest.mark.parametrize("filt,key", [
-    ({"id": "mekanism:digital_miner"}, ("id", "mekanism:digital_miner")),
-    ({"id": "output:minecraft:flint_and_steel"}, ("id", "output:minecraft:flint_and_steel")),
-    ({"output": "minecraft:flint_and_steel"}, ("output", "minecraft:flint_and_steel")),
-    ({"id": {"RegExp": "/^a:.*$/"}}, ("id-regex", "/^a:.*$/")),
-    ({"output": {"id": "ae2:drive", "count": 1}}, ("output", '{"count": 1, "id": "ae2:drive"}')),
-    ({"mod": "ae2"}, ("filter", '{"mod": "ae2"}')),
-    ({"id": "a:b", "output": "c:d"}, ("filter", '{"id": "a:b", "output": "c:d"}')),
+@pytest.mark.parametrize("filt,kind,key", [
+    ({"id": "mekanism:digital_miner"}, "id", ("id", "mekanism:digital_miner")),
+    ({"id": "output:minecraft:flint_and_steel"}, "id", ("id", "output:minecraft:flint_and_steel")),
+    ({"output": "minecraft:flint_and_steel"}, "output", ("output", "minecraft:flint_and_steel")),
+    ({"id": {"RegExp": "/^a:.*$/"}}, "id-regex", ("id-regex", "/^a:.*$/")),
+    ({"output": {"id": "ae2:drive", "count": 1}}, "output", ("output", '{"count": 1, "id": "ae2:drive"}')),
+    ({"mod": "ae2"}, "filter", ("filter", '{"mod": "ae2"}')),
+    ({"id": "a:b", "output": "c:d"}, "filter", ("filter", '{"id": "a:b", "output": "c:d"}')),
+    # Task 8c (8b follow-up): a string id of 3 or more chars that starts with '/' is a regex (RegExpKJS.ofString), and an
+    # object literal shaped like the runner's RegExp record is not one: the runner's `kind` says what the filter was
+    ({"id": "/^a:.*$/"}, "id", ("id-regex", "/^a:.*$/")),
+    ({"id": "//"}, "id", ("id", "//")),
+    ({"id": {"RegExp": "/^a:.*$/"}}, "filter", ("filter", '{"id": {"RegExp": "/^a:.*$/"}}')),
 ])
-def test_removal_key_tells_the_forms_apart(filt, key):
-    assert removal_key(filt) == key
+def test_removal_key_tells_the_forms_apart(filt, kind, key):
+    assert removal_key({"filter": filt, "kind": kind}) == key
+
+
+def test_the_runner_records_each_removals_kind(tmp_path, monkeypatch):
+    """A real RegExp, a string id, an output and an object literal that only looks like the runner's RegExp record."""
+    root = tmp_path / "server_scripts"
+    (root / "lib").mkdir(parents=True)
+    (root / "r.js").write_text("ServerEvents.recipes(event => {\n  event.remove({ id: /^a:.*$/ })\n  event.remove({ id: '/^b:.*$/' })\n"
+                               "  event.remove({ id: { RegExp: '/^c:.*$/' } })\n  event.remove({ output: 'd:e' })\n"
+                               "  event.remove({ mod: 'f' })\n})\n", encoding="utf-8")
+    monkeypatch.setenv(SCRIPTS_ENV, str(root))
+    with pytest.warns(UserWarning):
+        out = run(all_scripts=True)
+    assert [(r["kind"], removal_key(r)) for r in out["filters"]] == [
+        ("id-regex", ("id-regex", "/^a:.*$/")), ("id", ("id-regex", "/^b:.*$/")),
+        ("filter", ("filter", '{"id": {"RegExp": "/^c:.*$/"}}')), ("output", ("output", "d:e")),
+        ("filter", ("filter", '{"mod": "f"}'))]
 
 
 @pytest.mark.parametrize("removed,key", [
@@ -321,8 +440,9 @@ def test_sole_makers_agree_across_files():
 
 @pytest.mark.parametrize("output", sorted(SOLE_MAKERS))
 def test_pinned_output_has_only_its_own_makers(everything, output):
+    """Unreadable rows are left to test_every_recipe_output_is_readable (one failure, not one per output here)."""
     want = next(iter(SOLE_MAKERS[output].values()))
-    got = one_maker(everything, output)
+    got = [r["id"] for r in all_rows(everything) if output_problem(r) is None and output in products(r)]
     assert sorted(got, key=json.dumps) == sorted(want), f"{output} is made by {got}; {sorted(SOLE_MAKERS[output])} pin {want}"
 
 

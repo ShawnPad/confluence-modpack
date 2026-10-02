@@ -37,7 +37,8 @@
 //              recipe, as { member, args } (.damageIngredient, .keepIngredient, ...)
 //   customs    [{ id, json, file, handler, chain }]  one per event.custom(json) call, recorded at call time; `id` stays null
 //              when .id() is never called
-//   filters    [{ filter, file, handler }]  one per event.remove(f), with the raw filter
+//   filters    [{ filter, kind, file, handler }]  one per event.remove(f), with the raw filter; `kind` (Task 8c) is 'id',
+//              'id-regex' (a real RegExp), 'output' or 'filter' (see removalKind)
 //   other      [{ member, args, file, handler }]  one per call of any other recipes-event member (replaceInput,
 //              forEachRecipe, smelting, recipes.<ns>.<type>, ...), recorded and not thrown. A dotted member is a call made
 //              through a property: dump.js's event.addedRecipes.forEach(fn) records member 'addedRecipes.forEach'. Such a
@@ -120,14 +121,16 @@
 //     readDouble refuses, a missing 'x', a count below 1, an invalid resource location, and an id with an empty path, which
 //     ItemWrapper.findItem reports as "Item with ID <id> does not exist!": '#c:ingots/iron' and 'AE2:Drive' read one) throws
 //     here, so it lands in `errors`. The empty stack is { id: 'minecraft:air', count: 0 }. The item registry is not
-//     modelled beyond that: any other well-formed id is accepted. Every other Item member is inert.
+//     modelled beyond that: any other well-formed id is accepted. Every other Item member (Item.exists, Item.getItem, ...)
+//     throws 'Item.<member>: not modelled', into `errors` (Task 8c round 2, R5): a stand-in is truthy, so a script branching
+//     on `if (Item.exists(id))` would always take its true side here.
 //     A components or NBT patch is kept as raw text and not read: one KubeJS rejects (unbalanced brackets, an unknown
 //     component, a malformed value) records a row here all the same. The pack writes none (Task 8b round 4).
-//     Item.of(x) or Item.of(x, n) with an x that is neither a string nor a stack this runner made (Item.getItem(id),
-//     Ingredient.of(id).first, any stand-in, undefined) throws here, into `errors`: KubeJS would wrap an ItemLike into a
+//     Item.of(x) or Item.of(x, n) with an x that is neither a string nor a stack this runner made (Ingredient.of(id).first,
+//     any stand-in, undefined) throws here, into `errors`: KubeJS would wrap an ItemLike into a
 //     real stack (ItemWrapper's wrapTrivial calls getDefaultInstance), so the recipe is real in game, but its output is not
 //     modelled, and a row naming '<inert>' would make a maker no test sees (Task 8b round 4). A shaped or shapeless output
-//     that is not a string or a stack at all (event.shaped(Item.getItem(id), ...)) is recorded as given, and
+//     that is not a string or a stack at all (event.shaped(Ingredient.of(id).first, ...)) is recorded as given, and
 //     tools/tests/kjs.py's products() fails on it.
 //   - A shaped or shapeless recipe's string output goes through the same reading (`outputStack`), so tools/tests/kjs.py's
 //     products() takes a script output's id from the stack, never from the raw string.
@@ -225,8 +228,8 @@ const ServerEvents = new Proxy({
     (handlers.tags[reg] = handlers.tags[reg] || []).push({ fn, file: loading })
   },
 }, { get: (target, key) => (key in target ? target[key] : inert) })
-// Item.of and item strings: see the header ("Item.of"). Any other Item member is inert.
-const EMPTY_STACK = () => ({ id: 'minecraft:air', count: 0 })
+// Item.of and item strings: see the header ("Item.of"). Any other Item member throws (the Item proxy, below).
+const EMPTY_STACK = () => asStack({ id: 'minecraft:air', count: 0 })
 // Character.isWhitespace (brigadier's StringReader.skipWhitespace): \t \n \u000b \f \r \u001c-\u001f, and the Unicode space,
 // line and paragraph separators except the no-break spaces U+00A0, U+2007 and U+202F. Written with \u{...} escapes, so no
 // separator character sits in this file. Compared with Character.isWhitespace over every char (JDK 22, Task 8b round 3).
@@ -292,7 +295,7 @@ const parseItemString = (s, whole) => {   // ItemWrapper.parseString and read; `
   // ItemWrapper.findItem: BuiltInRegistries.ITEM.getHolder(id), else "Item with ID <id> does not exist!". The registry is not
   // modelled, except that no item has an empty path ('#c:ingots/iron', 'AE2:Drive' and 'ae2:' all read one).
   if (m[2] === '') throw fail('Item with ID ' + id + ' does not exist! (an empty path)')
-  const stack = { id, count }
+  const stack = asStack({ id, count })
   if (s[p] === '[' || s[p] === '{') stack.components = s.slice(p)
   return stack
 }
@@ -307,9 +310,26 @@ const notModelled = (x, n) => new Error('Item.of(' + snapJson(x) + (n === undefi
   'not an item string or a stack this runner made; KubeJS would make a real stack of it, which is not modelled (see the ' +
   'header, "Item.of")')
 const snapJson = x => { try { return JSON.stringify(snap(x)) } catch (e) { return String(e) } }
-const withCount = (stack, n) => {   // ItemStack.kjs$withCount / ItemWrapper.of(ItemStack, int)
+// A count passed to an int parameter (ItemWrapper.of(ItemStack, int), ItemStackKJS.kjs$withCount(int)) is converted as Rhino
+// converts a JS value to a Java int (rhino-2101.2.7-build.85.jar, javap -c; Task 8c): Context.getConversionWeight lets a string
+// reach a primitive that is not boolean or char (offsets 110-170), and Context.coerceToNumber calls toInteger(value, int,
+// -2^31, 2^31 - 1), which takes toDouble (a Number's doubleValue, a string through ScriptRuntime.toNumber), rejects NaN and the
+// infinities, floors a value above zero and ceils one below (so truncates toward zero), and rejects a result outside the
+// range; each rejection is reportConversionError, msg.conversion.not.allowed "Cannot convert {0} to {1}", {1} the TypeInfo's
+// class name, 'int'. So '4' is 4, 2.7 is 2, -2.5 is -2, and 'four', 1/0 and 2147483648 throw.
+const javaInt = (n, who) => {
+  const d = Number(n)
+  const t = Math.trunc(d)
+  if (!Number.isFinite(d) || t < -2147483648 || t > 2147483647) throw new Error(who + ': Cannot convert ' + String(n) + ' to int')
+  return t
+}
+// A stack this runner makes carries ItemStackKJS's withCount(n) (kjs$withCount, which ItemStackKJS's @RemapPrefixForJS("kjs$")
+// names withCount in scripts; kubejs-neoforge-2101.7.2-build.377.jar, javap -v), not enumerable, so it is never recorded.
+const asStack = o => Object.defineProperty(o, 'withCount', { value: n => withCount(o, javaInt(n, 'withCount')), enumerable: false })
+const withCount = (stack, n) => {   // ItemStack.kjs$withCount / ItemWrapper.of(ItemStack, int); n is already an int
   if (!isStack(stack)) throw notModelled(stack, n)
-  return stack.id === 'minecraft:air' || n <= 0 ? EMPTY_STACK() : Object.assign({}, stack, { count: n })
+  // kjs$withCount (javap -c): n <= 0 or an empty stack is ItemStack.EMPTY, else a copy with count n
+  return stack.id === 'minecraft:air' || n <= 0 ? EMPTY_STACK() : asStack(Object.assign({}, stack, { count: n }))
 }
 const readItemString = str => {   // ItemWrapper.wrapResult, the CharSequence case
   const whole = String(str)
@@ -327,9 +347,20 @@ const readItemString = str => {   // ItemWrapper.wrapResult, the CharSequence ca
 const itemOf = (x, n) => {
   const stack = typeof x === 'string' ? readItemString(x) : x
   if (!isStack(stack)) throw notModelled(x, n)
-  return n === undefined ? stack : withCount(stack, n)
+  return n === undefined ? stack : withCount(stack, javaInt(n, 'Item.of'))
 }
-const Item = new Proxy({ of: itemOf }, { get: (target, key) => (key in target ? target[key] : inert) })
+// Item.of is the one Item member modelled. Any other (Item.exists, Item.getItem, Item.empty, ...) throws, so the error lands in
+// `errors` (at load, or in the handler that read it) instead of returning a truthy stand-in a script could branch on (Task 8c
+// round 2, R5). A symbol key (Symbol.toPrimitive, util.inspect.custom) reads as undefined, as on a plain object without it.
+const itemMemberNotModelled = key => new Error('Item.' + String(key) + ': not modelled; the runner models only Item.of ' +
+  '(run_server_scripts.js header, "Item.of")')
+const Item = new Proxy({ of: itemOf }, {
+  get: (target, key) => {
+    if (Object.prototype.hasOwnProperty.call(target, key)) return target[key]
+    if (typeof key === 'symbol') return undefined
+    throw itemMemberNotModelled(key)
+  },
+})
 const sandbox = { console: scriptConsole, ServerEvents, Item }
 for (const name of ['StartupEvents', 'ClientEvents', 'BlockEvents', 'ItemEvents', 'EntityEvents', 'PlayerEvents', 'LevelEvents',
   'NetworkEvents', 'NativeEvents', 'LootJS', 'LootEntry', 'Java', 'JsonIO', 'Utils', 'Ingredient', 'Fluid', 'Text', 'Component',
@@ -432,6 +463,17 @@ loading = null
 // ---- the recipes event
 const flat = a => a.reduce((acc, x) => acc.concat(Array.isArray(x) ? flat(x) : [x]), [])
 const filterJson = f => JSON.stringify(f, replacer(true))
+// What a removal filter was (Task 8c, 8b follow-up): 'id' (a one-key { id: <string> }), 'id-regex' ({ id: <a real RegExp> }),
+// 'output' (a one-key { output }) or 'filter' (anything else, an object literal that only looks like a recorded RegExp
+// included). Recorded on each `filters` row, so test_recipe_scripts.removal_key never guesses from the recorded JSON.
+const removalKind = f => {
+  const keys = f !== null && typeof f === 'object' && !isRegExp(f) ? Object.keys(f) : null
+  const only = k => keys !== null && keys.length === 1 && keys[0] === k
+  if (only('id') && typeof f.id === 'string') return 'id'
+  if (only('id') && isRegExp(f.id)) return 'id-regex'
+  if (only('output')) return 'output'
+  return 'filter'
+}
 const recordRemoval = f => {
   const keys = f !== null && typeof f === 'object' && !isRegExp(f) ? Object.keys(f) : null
   const only = k => keys !== null && keys.length === 1 && keys[0] === k
@@ -534,7 +576,7 @@ const recipeEvent = ctx => new Proxy({}, {
       return (...args) => {
         const f = args[0]
         out.removed.push(recordRemoval(f))
-        const row = { filter: snap(f), file: ctx.file, handler: ctx.handler }
+        const row = { filter: snap(f), kind: removalKind(f), file: ctx.file, handler: ctx.handler }
         if (args.length !== 1) row.args = snap(args)
         out.filters.push(row)
       }

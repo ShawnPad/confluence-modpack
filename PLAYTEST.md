@@ -12,7 +12,7 @@ Tiers 0–4 are playable: Overworld → Nether → Twilight Forest → Undergard
 
 Two kinds of probe. **Server** = play normally on the server. **Creative** = make a single-player creative world with cheats on (same instance) and use the commands given; you cannot run those on the server unless you are an op. In JEI, hover an item and press **R** for its recipe, **U** for its uses.
 
-Harmless and known: the log shows a couple of dozen "Couldn't load tag … missing following references" errors at world load. They come from mods referencing items that are not in this pack; no need to report them.
+**Fixed, so report it if you see it:** up to 0.2.1 the log showed about twenty "Couldn't load tag … missing following references" errors at world load. They were not harmless: Allthemodium lists a bow, a crossbow and a shield in item tags but never adds them, so the game dropped those tags, and bows and crossbows could not take their enchantments (Power, Punch, Flame, Infinity, Multishot, Piercing, Quick Charge). The pack now takes those three names out of the tags. If any "Couldn't load tag" line still shows up in `latest.log`, paste it into issue #1.
 
 **Known, not a bug to report:** the pack ships Iris 1.8.14-beta.1 (the only Iris that works with Sodium 0.8). With a shader pack enabled, block entities such as chests can be missing from shadows and FPS may drop in busy areas; that is upstream Iris. Shaders off = unaffected. If the game crashes, attach the newest file from the instance's `.minecraft/crash-reports/` to issue #1.
 

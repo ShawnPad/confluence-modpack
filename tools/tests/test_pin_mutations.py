@@ -263,9 +263,15 @@ CASES = [
          recipes("event.shaped(Item.of(Item.getItem('ae2:drive')), ['A'], { A: 'minecraft:stick' })"
                  ".id('confluence:tier2/hidden_drive')"),
          {f"{PACKWIDE}::test_every_server_script_loads_and_runs"}),
-    Case("8b r4 Item.getItem('ae2:drive') as event.shaped's raw output", T2,
+    # Task 8c: an unreadable output fails test_every_recipe_output_is_readable once; the per-output pin skips such a row
+    # (until 8c round 2 this case's stand-in was Item.getItem('ae2:drive'); R5 made every Item member but Item.of throw)
+    Case("8b r4 Ingredient.of('ae2:drive').first as event.shaped's raw output", T2,
+         recipes("event.shaped(Ingredient.of('ae2:drive').first, ['A'], { A: 'minecraft:stick' })"
+                 ".id('confluence:tier2/hidden_drive')"),
+         {f"{PACKWIDE}::test_every_recipe_output_is_readable"}),
+    Case("8c r2 Item.getItem('ae2:drive') as event.shaped's raw output", T2,
          recipes("event.shaped(Item.getItem('ae2:drive'), ['A'], { A: 'minecraft:stick' }).id('confluence:tier2/hidden_drive')"),
-         {f"{PACKWIDE}::test_pinned_output_has_only_its_own_makers[ae2:drive]"}),
+         {f"{PACKWIDE}::test_every_server_script_loads_and_runs"}),
     Case("8b r4 W2 flint's output removal written as { id: 'output:...' }", T1,
          ("  gate.replaceShaped(event, 'confluence:tier1/flint_and_steel', IDS.vanilla.flintAndSteel,\n",
           "  event.remove({ id: 'output:minecraft:flint_and_steel' })\n"
@@ -275,6 +281,35 @@ CASES = [
          ("  event.forEachRecipe({}, r => rows.push(row(r)))\n",
           "  event.forEachRecipe({}, r => { if (String(r.getOrCreateId()) === 'ae2:network/blocks/controller') "
           "r.result('ae2:drive'); rows.push(row(r)) })\n"),
+         {f"{PACKWIDE}::test_dump_source_names_only_allowed_members"}),
+    # ---- Task 8c (the 8b follow-ups): a stand-in in a custom recipe's output, and a dump.js that reads a member it does not
+    # name or pushes to a list a recipe hands out
+    Case("8c event.custom's result is Ingredient.of(id).first", T2,
+         recipes("event.custom({ type: 'ae2:inscriber', mode: 'press', ingredients: { middle: { item: 'minecraft:stick' } }, "
+                 "result: Ingredient.of('ae2:drive').first }).id('confluence:tier2/hidden_drive')"),
+         {f"{PACKWIDE}::test_every_recipe_output_is_readable"}),
+    Case("8c event.custom's output id is Ingredient.of(id).first.id", T2,
+         recipes("event.custom({ type: 'ae2:inscriber', mode: 'press', ingredients: { middle: { item: 'minecraft:stick' } }, "
+                 "output: { id: Ingredient.of('ae2:drive').first.id, count: 1 } }).id('confluence:tier2/hidden_drive')"),
+         {f"{PACKWIDE}::test_every_recipe_output_is_readable"}),
+    # 8c round 2, R5: an Item.exists guard on the D132 removes. In game Item.exists is false for the three dead ids, so this
+    # removes nothing; under the old runner the guard was a truthy stand-in, every remove was recorded and both item-tag tests
+    # passed. The runner throws for any Item member but Item.of now.
+    Case("8c r2 Item.exists guard around the D132 removes", EVENTS,
+         ("IDS.allthemodium.unregisteredTagEntries.forEach(e => event.remove(tagId(e.tag), e.id))",
+          "IDS.allthemodium.unregisteredTagEntries.forEach(e => { if (Item.exists(e.id)) { event.remove(tagId(e.tag), e.id) } })"),
+         {"test_item_tags.py::test_item_tag_handler_registered_and_runs",
+          "test_item_tags.py::test_item_tag_edits_are_exactly_the_twilight_swap_and_the_six_atm_removes",
+          f"{PACKWIDE}::test_every_server_script_loads_and_runs"}),
+    Case("8c a computed member read in dump.js", DUMP,
+         ("  event.addedRecipes.forEach(r => rows.push(row(r)))\n",
+          "  event.addedRecipes.forEach(r => rows.push(row(r)))\n"
+          "  event.addedRecipes.forEach(r => { const f = r['res' + 'ult']; if (f) { f('ae2:drive') } })\n"),
+         {f"{PACKWIDE}::test_dump_source_names_only_allowed_members"}),
+    Case("8c push on a list a recipe hands out, in dump.js", DUMP,
+         ("  event.addedRecipes.forEach(r => rows.push(row(r)))\n",
+          "  event.addedRecipes.forEach(r => rows.push(row(r)))\n"
+          "  event.addedRecipes.forEach(r => { r.get('ingredients').push('minecraft:dirt') })\n"),
          {f"{PACKWIDE}::test_dump_source_names_only_allowed_members"}),
     # ---- Task 9 (The Other gate wiring, test_other_gate_events.py): the quality review's mutants its fixed tests kill
     Case("t9 h1 creative through the pad (wiring)", EVENTS,
@@ -440,10 +475,15 @@ def skipped_for_jars(paths, cwd=ROOT, **env):
 
 def junit_id(classname, name):
     """'<module>.py::[<Class>::]<test>[<id>]' from a JUnit testcase's classname ('tools.tests.test_x' or
-    'tools.tests.test_x.TestY') and name: the module is the first dotted segment that starts with 'test_', and the segments
-    after it are classes (round 4 R6)."""
+    'tools.tests.test_x.TestY') and name (round 4 R6). The module is the segment just before the first class segment (one
+    that starts with 'Test', pytest's default python_classes), or the last segment when there is no class, and the segments
+    after it are classes. A directory named test_* before it is a directory (Task 8c, 8b follow-up F5). A module not named
+    test_* raises ValueError (it was a bare StopIteration)."""
     parts = classname.split(".")
-    i = next(k for k, part in enumerate(parts) if part.startswith("test_"))
+    i = next((k - 1 for k, part in enumerate(parts) if part.startswith("Test")), len(parts) - 1)
+    if i < 0 or not parts[i].startswith("test_"):
+        raise ValueError(f"JUnit classname {classname!r}: no test_* module (the segment before the first Test* class, or the "
+                         f"last segment)")
     return "::".join([parts[i] + ".py", *parts[i + 1:], name])
 
 
@@ -533,6 +573,23 @@ def test_skipped_for_jars_finds_every_way_to_reach_pinned_jar(tmp_path):
 def test_junit_id(classname, name, want):
     """Round 4 R6: a test inside a class once came out as 'TestJar.py::test_x'."""
     assert junit_id(classname, name) == want
+
+
+@pytest.mark.parametrize("classname,name,want", [
+    ("tools.test_dir.tests.test_mek_tier5", "test_x", "test_mek_tier5.py::test_x"),
+    ("test_a.test_b.TestJar", "test_y", "test_b.py::TestJar::test_y"),
+    ("test_a.test_b", "test_y", "test_b.py::test_y"),
+])
+def test_junit_id_ignores_test_directories(classname, name, want):
+    """Task 8c (8b follow-up F5): a directory named test_* before the module is a directory, not the module."""
+    assert junit_id(classname, name) == want
+
+
+@pytest.mark.parametrize("classname", ["tools.tests.conftest", "tools.tests.helper.TestJar", ""])
+def test_junit_id_fails_clearly_on_a_module_not_named_test(classname):
+    """Task 8c (8b follow-up F5): once a bare StopIteration from next()."""
+    with pytest.raises(ValueError, match="no test_\\* module"):
+        junit_id(classname, "test_x")
 
 
 def test_child_env_passes_the_mods_dir_absolute(monkeypatch):

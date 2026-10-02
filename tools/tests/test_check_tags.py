@@ -9,6 +9,9 @@ from check_tags import (
     IDS_JS,
     NON_ITEM_TAGS,
     check_deny_tags,
+    check_members,
+    ids_ref,
+    read_tier_ore_members,
     collect_references,
     ids_value,
     read_tier_ore_tags,
@@ -300,3 +303,204 @@ def test_ids_value_fails_closed():
     for src in ("b: ['x:y']", "a: ['x:y'], a: ['x:z']", "a: [IDS.x.y, 'x:z']", "a: []", "a: IDS.x.y"):
         with pytest.raises(ValueError):
             ids_value(src, "a")
+
+
+# ---- v0.3 Task 8c: the members of the D112 block tags (kubejs/exported/tag_members.json, written by tagcheck.js) ----
+
+IMMUNE = ["minecraft:wither_immune", "cataclysm:ignis_immune", "cataclysm:maledictus_immune", "cataclysm:scylla_immune",
+          "cataclysm:netherite_monstrosity_immune"]
+TIER_ORES = ["allthemodium:allthemodium_ore", "allthemodium:allthemodium_slate_ore", "allthemodium:vibranium_ore",
+             "allthemodium:other_vibranium_ore", "allthemodium:unobtainium_ore"]
+DENY_ORES = ["allthemodium:vibranium_ore", "allthemodium:other_vibranium_ore", "allthemodium:unobtainium_ore"]
+# allthemodium-3.0.1_mc_1.21.1.jar!data/c/tags/block/needs_*_tool.json, the first two entries of each non-empty one.
+NEEDS_MEMBERS = {
+    "c:needs_allthemodium_tool": ["allthemodium:other_vibranium_ore", "allthemodium:vibranium_ore"],
+    "c:needs_vibranium_tool": ["allthemodium:raw_unobtainium_block", "allthemodium:unobtainium_ore"],
+    "c:needs_unobtainium_tool": ["allthemodium:ancient_smooth_stone"],
+    "c:needs_allthemodiumalloy_tool": [],
+}
+
+
+def members_export(**overrides):
+    """A synthetic tag_members.json: the needs tags above, each deny tag holding their union, each immune tag holding the five
+    ores and one vanilla block. An override (tag with '__' for ':') replaces that tag's members; None drops the tag."""
+    union = sorted({b for ms in NEEDS_MEMBERS.values() for b in ms})
+    block = dict(NEEDS_MEMBERS)
+    block.update({t: list(union) for t in DENY_NINE})
+    block.update({t: sorted(TIER_ORES + ["minecraft:bedrock"]) for t in IMMUNE})
+    for tag, members in overrides.items():
+        tag = tag.replace("__", ":")
+        if members is None:
+            block.pop(tag)
+        else:
+            block[tag] = members
+    return {"minecraft:block": block}
+
+
+def test_members_pass():
+    assert check_members(members_export(), DENY_NINE, ATM_NEEDS, IMMUNE, TIER_ORES, DENY_ORES) == []
+
+
+def test_tier_ore_missing_from_an_immune_tag_fails():
+    no_slate = sorted(o for o in TIER_ORES if o != "allthemodium:allthemodium_slate_ore")
+    bad = check_members(members_export(cataclysm__scylla_immune=no_slate), DENY_NINE, ATM_NEEDS, IMMUNE, TIER_ORES, DENY_ORES)
+    assert bad == ["NOT IMMUNE allthemodium:allthemodium_slate_ore is missing from #cataclysm:scylla_immune"]
+    bad = check_members(members_export(minecraft__wither_immune=["minecraft:bedrock"]), DENY_NINE, ATM_NEEDS, IMMUNE,
+                        TIER_ORES, DENY_ORES)
+    assert bad == [f"NOT IMMUNE {o} is missing from #minecraft:wither_immune" for o in TIER_ORES]
+
+
+def test_deny_tag_holding_a_block_outside_the_needs_tags_fails():
+    union = sorted({b for ms in NEEDS_MEMBERS.values() for b in ms})
+    bad = check_members(members_export(mekanism__incorrect_for_meka_tool=union + ["minecraft:obsidian"]),
+                        DENY_NINE, ATM_NEEDS, IMMUNE, TIER_ORES, DENY_ORES)
+    assert bad == ["DENY TAG #mekanism:incorrect_for_meka_tool holds blocks outside the 4 needs tags: ['minecraft:obsidian']"]
+
+
+def test_deny_ore_missing_from_a_deny_tag_fails():
+    """Vibranium ore and Unobtainium ore must be in every deny tag. A deny tag that lost one fails here even though it holds
+    nothing outside the needs tags."""
+    union = sorted({b for ms in NEEDS_MEMBERS.values() for b in ms} - {"allthemodium:unobtainium_ore"})
+    bad = check_members(members_export(cataclysm__needs_black_steel_tool=union), DENY_NINE, ATM_NEEDS, IMMUNE, TIER_ORES,
+                        DENY_ORES)
+    assert bad == ["NOT DENIED allthemodium:unobtainium_ore is missing from #cataclysm:needs_black_steel_tool"]
+
+
+def test_member_tag_missing_from_the_members_export_fails():
+    bad = check_members(members_export(c__needs_vibranium_tool=None, cataclysm__ignis_immune=None), DENY_NINE, ATM_NEEDS,
+                        IMMUNE, TIER_ORES, DENY_ORES)
+    assert bad == ["NO MEMBERS #c:needs_vibranium_tool in tag_members.json", "NO MEMBERS #cataclysm:ignis_immune in tag_members.json"]
+    assert check_members({}, DENY_NINE, ATM_NEEDS, IMMUNE, TIER_ORES, DENY_ORES) == [
+        "NO SUCH REGISTRY minecraft:block in tag_members.json"]
+
+
+def test_tier_ores_and_immune_tags_are_read_from_ids_js():
+    assert read_tier_ore_members(IDS_JS.read_text()) == (IMMUNE, TIER_ORES, DENY_ORES)
+
+
+def test_ids_ref_fails_closed():
+    src = "IDS = { allthemodium: { ore: 'allthemodium:allthemodium_ore', x: 'a:b' } }\nIDS.allthemodium.vibraniumOre = 'a:v'\n"
+    assert ids_ref(src, "IDS.allthemodium.ore") == "allthemodium:allthemodium_ore"
+    assert ids_ref(src, "IDS.allthemodium.vibraniumOre") == "a:v"
+    for ref in ("IDS.allthemodium.nope", "IDS.other.ore", "allthemodium.ore"):
+        with pytest.raises(ValueError):
+            ids_ref(src, ref)
+    with pytest.raises(ValueError):   # assigned twice
+        ids_ref(src + "IDS.allthemodium.vibraniumOre = 'a:w'\n", "IDS.allthemodium.vibraniumOre")
+
+
+def test_main_fails_without_the_members_file(tmp_path, monkeypatch, capsys):
+    """The counts export alone no longer passes: a boot whose tagcheck.js did not write tag_members.json fails, and the first
+    line's bad count says so."""
+    import check_tags
+    export = tmp_path / "tags.json"
+    # counts equal to the synthetic members' lengths (round 2, R4): each deny tag holds the 5-block union = 2 + 2 + 1 + 0
+    block = {t: len(ms) for t, ms in members_export()["minecraft:block"].items()}
+    export.write_text(json.dumps({"minecraft:item": {"c:drives": 1}, "minecraft:block": block}))
+    (tmp_path / "item_tag_members.json").write_text(json.dumps({"minecraft:item": {"c:drives": ["ae2:drive"]}}))
+    monkeypatch.setattr(check_tags, "EXPORT", export)
+    monkeypatch.setattr(check_tags, "MEMBERS", tmp_path / "tag_members.json")
+    monkeypatch.setattr(check_tags, "ITEM_MEMBERS", tmp_path / "item_tag_members.json")
+    monkeypatch.setattr(check_tags, "collect_references", lambda root: {})
+    assert check_tags.main() == 1
+    out = capsys.readouterr().out.splitlines()
+    assert out[0] == "tags: 0 referenced, 0 verified non-empty, 1 bad"
+    assert out[-3].startswith("tag members (D112): ") and out[-3].endswith("; 1 bad")
+    assert out[-2] == f"  MISSING EXPORT {tmp_path / 'tag_members.json'} (tagcheck.js writes it at ServerEvents.loaded)"
+    assert out[-1] == "item tag members: 1 tags exported, 1 bound in tags.json; 0 bad"
+    (tmp_path / "tag_members.json").write_text(json.dumps(members_export()))
+    assert check_tags.main() == 0
+    out = capsys.readouterr().out.splitlines()
+    assert out[0] == "tags: 0 referenced, 0 verified non-empty, 0 bad"
+    assert out[-2] == ("tag members (D112): 18 tags; 5 tier ores in 5 immune tags, 3 ores in 9 deny tags, 9 deny tags "
+                       "within the 4 needs tags; 0 bad")
+    assert out[-1] == "item tag members: 1 tags exported, 1 bound in tags.json; 0 bad"
+
+
+# ---- v0.3 Task 8c round 2: both members exports are this boot's (R4), well formed (minor 10), and written where they are read ----
+
+import check_tags  # noqa: E402
+import check_recipes  # noqa: E402
+
+
+def test_a_members_count_that_differs_from_tags_json_is_stale():
+    """Each exported tag's member list must be as long as tags.json's count for it: the two files come from one walk, so a
+    difference means a members file left over from another boot."""
+    export = {"minecraft:block": {"a:one": 2, "a:two": 1}}
+    assert check_tags.check_freshness({"minecraft:block": {"a:one": ["x:a", "x:b"], "a:two": ["x:c"]}}, export,
+                                      "minecraft:block", "tag_members.json") == []
+    assert check_tags.check_freshness({"minecraft:block": {"a:one": ["x:a"], "a:gone": []}}, export, "minecraft:block",
+                                      "tag_members.json") == [
+        "STALE #a:one in tag_members.json: 1 members, tags.json counts 2",
+        "STALE #a:gone in tag_members.json: not bound in tags.json"]
+
+
+def test_the_item_export_must_hold_every_bound_item_tag():
+    export = {"minecraft:item": {"a:one": 1, "a:two": 0, "a:three": 4}}
+    bad = check_tags.check_freshness({"minecraft:item": {"a:one": ["x:a"]}}, export, "minecraft:item",
+                                     "item_tag_members.json", complete=True)
+    assert bad == ["NOT EXPORTED 2 of 3 minecraft:item tags bound in tags.json are missing from item_tag_members.json: "
+                   "#a:three, #a:two"]
+
+
+def test_a_stale_export_is_reported_in_at_most_eleven_lines():
+    export = {"minecraft:item": {f"a:t{i:02}": 1 for i in range(30)}}
+    bad = check_tags.check_freshness({"minecraft:item": {f"a:t{i:02}": [] for i in range(30)}}, export, "minecraft:item",
+                                     "item_tag_members.json", complete=True)
+    assert len(bad) == 11 and bad[-1] == "STALE ... and 20 more tags in item_tag_members.json"
+
+
+@pytest.mark.parametrize("members, line", [
+    ({"minecraft:block": {"a:one": "x:a"}}, "BAD MEMBERS #a:one in tag_members.json: not a list of strings"),
+    ({"minecraft:block": {"a:one": ["x:a", 3]}}, "BAD MEMBERS #a:one in tag_members.json: not a list of strings"),
+    ({"minecraft:block": {"a:one": None}}, "BAD MEMBERS #a:one in tag_members.json: not a list of strings"),
+    ({"minecraft:block": ["a:one"]}, "BAD MEMBERS minecraft:block in tag_members.json: not a {tag: [id, ...]} map"),
+    ({}, "NO SUCH REGISTRY minecraft:block in tag_members.json"),
+])
+def test_a_member_value_that_is_not_a_list_of_strings_fails(members, line):
+    assert check_tags.check_freshness(members, {"minecraft:block": {"a:one": 1}}, "minecraft:block", "tag_members.json") == [line]
+    if members.get("minecraft:block") is not None and isinstance(members["minecraft:block"], dict):
+        assert check_members(members, [], [], [], [], []) == [line]
+
+
+def test_main_fails_on_a_stale_or_missing_item_export(tmp_path, monkeypatch, capsys):
+    export = tmp_path / "tags.json"
+    block = {t: len(ms) for t, ms in members_export()["minecraft:block"].items()}
+    export.write_text(json.dumps({"minecraft:item": {"c:drives": 2}, "minecraft:block": block}))
+    (tmp_path / "tag_members.json").write_text(json.dumps(members_export()))
+    monkeypatch.setattr(check_tags, "EXPORT", export)
+    monkeypatch.setattr(check_tags, "MEMBERS", tmp_path / "tag_members.json")
+    monkeypatch.setattr(check_tags, "ITEM_MEMBERS", tmp_path / "item_tag_members.json")
+    monkeypatch.setattr(check_tags, "collect_references", lambda root: {})
+    assert check_tags.main() == 1
+    out = capsys.readouterr().out.splitlines()
+    assert out[0] == "tags: 0 referenced, 0 verified non-empty, 1 bad"
+    assert out[-2:] == ["item tag members: 0 tags exported, 1 bound in tags.json; 1 bad",
+                        f"  MISSING EXPORT {tmp_path / 'item_tag_members.json'} (tagcheck.js writes it at ServerEvents.loaded)"]
+    (tmp_path / "item_tag_members.json").write_text(json.dumps({"minecraft:item": {"c:drives": ["ae2:drive"]}}))
+    assert check_tags.main() == 1
+    out = capsys.readouterr().out.splitlines()
+    assert out[0] == "tags: 0 referenced, 0 verified non-empty, 1 bad"
+    assert out[-1] == "  STALE #c:drives in item_tag_members.json: 1 members, tags.json counts 2"
+    # the block members file is held to the same rule
+    stale = members_export()
+    stale["minecraft:block"]["minecraft:wither_immune"] = stale["minecraft:block"]["minecraft:wither_immune"][1:]
+    (tmp_path / "tag_members.json").write_text(json.dumps(stale))
+    (tmp_path / "item_tag_members.json").write_text(json.dumps({"minecraft:item": {"c:drives": ["ae2:drive", "x:y"]}}))
+    assert check_tags.main() == 1
+    out = capsys.readouterr().out.splitlines()
+    assert "  STALE #minecraft:wither_immune in tag_members.json: 5 members, tags.json counts 6" in out
+
+
+def test_tagcheck_writes_exactly_the_files_the_checkers_read():
+    """The JsonIO.write path literals in tagcheck.js and dump.js (relative to the server directory, .run/server) are the
+    files check_tags.py and check_recipes.py read, and the two checkers read the item export from one place."""
+    import re
+    server = check_tags.ROOT / ".run" / "server"
+    scripts = check_tags.ROOT / "kubejs" / "server_scripts"
+    written = {name: re.findall(r"JsonIO\.write\(\s*'([^']*)'", (scripts / name).read_text()) for name in ("tagcheck.js", "dump.js")}
+    assert sorted(server / p for p in written["tagcheck.js"]) == sorted(
+        [check_tags.EXPORT, check_tags.MEMBERS, check_tags.ITEM_MEMBERS])
+    assert [server / p for p in written["dump.js"]] == [check_recipes.DUMP]
+    assert check_recipes.ITEM_MEMBERS == check_tags.ITEM_MEMBERS
+    assert len(re.findall(r"JsonIO\.write\(", (scripts / "tagcheck.js").read_text())) == 3
