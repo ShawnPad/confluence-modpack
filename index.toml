@@ -61,6 +61,14 @@ file = "config/ftbquests/quests/reward_tables/common_bag.snbt"
 hash = "b6e34fe221dacf1cc5c38711976e7e1a00288a87a55e9cc47e2af5addf59ed0e"
 
 [[files]]
+file = "config/ftbquests/quests/reward_tables/epic_bag.snbt"
+hash = "3e29ab24cd0b2ab9e508b40b15ccb07f0684eea38cf8acb80d84b688a5ac610e"
+
+[[files]]
+file = "config/ftbquests/quests/reward_tables/legendary_bag.snbt"
+hash = "351eb2196ffa7fc3cfbd6ed0d33ca07f96e9bb9ee3d5f5f65ae3cbec7009f778"
+
+[[files]]
 file = "config/ftbquests/quests/reward_tables/rare_bag.snbt"
 hash = "b0e9b674ea2543bf541ad0018016af3fec11d31e8bf134f1af7fc1abf67fa0d2"
 
