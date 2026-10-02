@@ -1,18 +1,23 @@
 #!/usr/bin/env bash
-# Headless boot of the pack in .run/server. An EXIT trap kills what it starts in the background (packwiz serve, then run.sh and
-# its java child), however the script ends before the server is stopped; a server still running 60 s after the stop is killed
-# with SIGKILL and fails the boot (SERVER DID NOT STOP), and the trap is cleared before the checks. Exit 0 iff the server reached "Done" with no KubeJS errors, no recipe parse errors
-# (logs/latest.log must exist), every shipped config/ file loaded unchanged (tools/check_configs.py), no FTB Quests errors and
-# no ERROR or FATAL line in logs/latest.log that tools/boot_allowlist.txt does not explain, no missing-tag WARN at all, and
-# Moonlight's pinned generated-pack set (tools/check_boot_log.py; D134). When a check fails, the boot's logs and recipe dump are
-# copied to .run/failed-boots/<UTC timestamp>/ and the path is printed (or "NOT CREATED (<path>)" when it cannot be made).
-# tools/server_boot.sh --check [RUN_DIR] runs only those post-boot checks, on the logs a boot already left in RUN_DIR (default
-# .run/server), without booting. When the checks pass it only reads the logs; each failing --check is archived too, as a new
-# copy under this pack's .run/failed-boots/ whatever RUN_DIR is (about 11 MB each; its SOURCE file names RUN_DIR).
+# Headless boot of the pack in .run/server. An EXIT trap kills what it starts in the background (packwiz serve, then run.sh
+# and its java child), however the script ends before the server is stopped. A server still running 60 s after the stop is
+# declared hung: the trap is re-armed to SIGKILL java and the dump, the server is thread-dumped (jcmd Thread.print -l,
+# appended to console.log; v0.3 Task 11c), then killed with SIGKILL, and the boot fails (SERVER DID NOT STOP). The trap is
+# cleared before the checks. Exit 0 iff the server reached "Done" with no KubeJS errors, no recipe parse errors
+# (logs/latest.log must exist), every shipped config/ file loaded unchanged (tools/check_configs.py), no FTB Quests errors,
+# no ERROR or FATAL line in logs/latest.log that tools/boot_allowlist.txt does not explain, no missing-tag WARN at all,
+# Moonlight's pinned generated-pack set (tools/check_boot_log.py; D134), and nothing left keeping chunks loaded in the run
+# world (tools/count_forced_chunks.py, read after the stop: `forced chunks: 0 (mod tickets: 0; ...)`; v0.3 Task 11c, D136).
+# When a check fails, the boot's logs and recipe dump are copied to .run/failed-boots/<UTC timestamp>/ and the path is
+# printed (or "NOT CREATED (<path>)" when it cannot be made).
+# tools/server_boot.sh --check [RUN_DIR] runs only those post-boot checks, on the logs a boot already left in RUN_DIR
+# (default .run/server), without booting. When the checks pass it only reads the logs; each failing --check is archived too,
+# as a new copy under this pack's .run/failed-boots/ whatever RUN_DIR is (about 11 MB each; its SOURCE file names RUN_DIR).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 NEO=21.1.250
 RUN="$ROOT/.run/server"
+CHECK_ONLY=""   # only --check sets it: one exported by the caller must not reach a boot's forced-chunk guard (Task 11c round 3)
 
 # The post-boot checks, run in the server directory $1 (absolute); $2 (default 0) is the status so far, 1 when the server did
 # not stop. Every check runs, even after one fails (v0.3 Task 8c round 2): each failure prints its label, and the function ends
@@ -56,6 +61,22 @@ post_boot_checks() {
     3) echo "BAD ALLOWLIST"; status=1 ;;
     *) echo "BOOT LOG ERRORS"; status=1 ;;
   esac
+  # Forced chunks and mod tickets (v0.3 Task 11c, D136). A forceload or a chunk loader left in the world is re-added at every
+  # boot, and a stop that arrives while those chunks load waits for every one (25-199 s with the 5,121 two probes had
+  # leaked, against 1.3-1.4 s without): SERVER DID NOT STOP at random. count_forced_chunks.py reads each data/chunks.dat in
+  # the run world and prints `forced chunks: F (mod tickets: M; ...)`; F + M above 0 fails, so a leak fails every boot
+  # instead of some. After a clean stop the files are this boot's final save; after the SIGKILL (SERVER DID NOT STOP) they
+  # are the last save before it, which is still what the next boot re-adds. Its exit codes (its docstring): 1 something
+  # counted, 2 a usage error, an unreadable file or no world. A boot always has a world; --check passes --allow-no-world,
+  # since its RUN_DIR may be a failed-boot archive (logs only, no server.properties), and the guard then prints `forced
+  # chunks: 0 (no world at ...)` and passes. A RUN_DIR with server.properties and no world fails even then.
+  rc=0
+  python3 "$ROOT/tools/count_forced_chunks.py" ${CHECK_ONLY:+--allow-no-world} "$1" || rc=$?
+  case "$rc" in
+    0) ;;
+    1) echo "FORCED CHUNKS"; status=1 ;;
+    *) echo "FORCED CHUNKS CHECK ERROR"; status=1 ;;
+  esac
   if [ "$status" -ne 0 ]; then
     # Keep the failed boot's evidence (v0.3 Task 10b, D134): the next boot deletes latest.log, console.log and the KubeJS
     # logs, rotates debug.log, and rewrites the recipe dump. Each failure gets its own .run/failed-boots/<UTC timestamp>/
@@ -90,6 +111,7 @@ if [ "${1:-}" = "--check" ]; then
   [ $# -le 2 ] || { echo "usage: $0 [--check [RUN_DIR]]"; exit 2; }
   CHECK_DIR="${2:-$RUN}"
   [ -d "$CHECK_DIR" ] || { echo "no such directory: $CHECK_DIR"; exit 2; }
+  CHECK_ONLY=1
   post_boot_checks "$(cd "$CHECK_DIR" && pwd)"   # it exits with the checks' status
 fi
 [ $# -eq 0 ] || { echo "usage: $0 [--check [RUN_DIR]]"; exit 2; }
@@ -110,7 +132,7 @@ fi
 curl -fsSL -o packwiz-installer-bootstrap.jar https://github.com/packwiz/packwiz-installer-bootstrap/releases/download/v0.0.3/packwiz-installer-bootstrap.jar
 "$JAVA" -jar packwiz-installer-bootstrap.jar -g -s server http://localhost:8087/pack.toml
 kill "$SERVE_PID" || true
-rm -f logs/latest.log logs/kubejs/*.log console.log
+rm -f logs/latest.log logs/kubejs/*.log console.log stop-threads.txt
 export JAVA_HOME="${JAVA_HOME:-$(/usr/libexec/java_home -v 21)}"; export PATH="$JAVA_HOME/bin:$PATH"   # run.sh calls bare `java`
 ./run.sh nogui > console.log 2>&1 &
 SERVER_PID=$!
@@ -130,12 +152,38 @@ fi
 JAVA_PID="$(pgrep -P "$SERVER_PID" || true)"
 kill $JAVA_PID "$SERVER_PID" 2>/dev/null || true
 for i in $(seq 1 60); do [ -n "$JAVA_PID" ] && kill -0 $JAVA_PID 2>/dev/null || break; sleep 1; done
-STOP_STATUS=0
+STOP_STATUS=0 DUMP_PID=""
 if [ -n "$JAVA_PID" ] && kill -0 $JAVA_PID 2>/dev/null; then
-  kill -9 $JAVA_PID 2>/dev/null || true
+  # Declared hung: it outlived SIGTERM, so the trap's SIGTERM would leave it running. From here an interrupt SIGKILLs java
+  # and the dump (Task 11c fix round 2, M1).
+  trap 'kill -9 $JAVA_PID ${DUMP_PID:-} 2>/dev/null || true' EXIT
+  # v0.3 Task 11c: record why it did not stop before killing it. The dump (jcmd, given 30 s) goes to a side file, and is
+  # appended to console.log once java is dead: java writes console.log at its own offset, so it could overwrite an append.
+  "$JAVA_HOME/bin/jcmd" $JAVA_PID Thread.print -l > stop-threads.txt 2>&1 &
+  DUMP_PID=$!
+  for i in $(seq 1 30); do kill -0 $DUMP_PID 2>/dev/null || break; sleep 1; done
+  if kill -0 $DUMP_PID 2>/dev/null; then
+    # SIGKILL and reap it before the note: a jcmd still running writes stop-threads.txt at its own offset, over the note (M2).
+    kill -9 $DUMP_PID 2>/dev/null || true
+    wait $DUMP_PID 2>/dev/null || true
+    echo "(jcmd did not finish within 30 s; killed)" >> stop-threads.txt
+  fi
+  wait $DUMP_PID 2>/dev/null || true
+  if kill -0 $JAVA_PID 2>/dev/null; then
+    kill -9 $JAVA_PID 2>/dev/null || true
+  else
+    # Never signal a PID that has exited (M3). A stop just over 60 s ends while jcmd attaches, and jcmd then fails ("state
+    # is not ready"): say so, or it reads as a hang.
+    echo "(java exited on its own while jcmd ran: the stop took just over the 60 s wait)" >> stop-threads.txt
+  fi
   echo "SERVER DID NOT STOP"; STOP_STATUS=1
 fi
 sleep 3
+if [ -f stop-threads.txt ]; then
+  { echo "==== SERVER DID NOT STOP: jcmd Thread.print -l, taken before the SIGKILL ===="; cat stop-threads.txt; } >> console.log
+  rm -f stop-threads.txt
+  echo "thread dump appended to console.log"
+fi
 # Everything is stopped: clear the trap and the PIDs, so nothing signals a PID the system may since have reused.
 trap - EXIT
 SERVE_PID="" SERVER_PID="" JAVA_PID=""

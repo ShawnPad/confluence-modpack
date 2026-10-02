@@ -12,6 +12,20 @@ directory with stand-in checker scripts; the real boot is the script's own job.
     .run/failed-boots/<UTC timestamp>/ and prints the path, since the next boot deletes or rotates every one of them. When
     that directory cannot be made, it says so ("NOT CREATED") and the boot still ends with BOOT CHECKS FAILED. The archive
     is always under the pack's own .run/, so a SOURCE file in it names the server directory the evidence came from.
+  - a server still running at the end of the 60 s stop wait is thread-dumped before its SIGKILL (v0.3 Task 11c): `jcmd <java
+    pid> Thread.print -l`, given 30 s, goes to stop-threads.txt and is appended to console.log (so the failed-boot archive
+    keeps it) once java is dead; a stale stop-threads.txt is deleted at boot start. When java exits on its own while jcmd
+    runs (a stop just over 60 s; jcmd then fails to attach), the dump says so.
+  - forced chunks fail the boot (v0.3 Task 11c fix, D136): post_boot_checks runs tools/count_forced_chunks.py on the server
+    directory (so a boot runs it after the server has stopped, and --check runs it too). It prints `forced chunks: 0 (mod
+    tickets: 0; ...)` when none are left; otherwise its per-dimension counts and hint, and the label FORCED CHUNKS, and the
+    boot fails and is archived like any other failed check. A chunks.dat it cannot read fails too (FORCED CHUNKS CHECK
+    ERROR), and so does a boot whose run directory has no world; --check on a folder without one (a failed-boot archive)
+    says so (`forced chunks: 0 (no world at ...)`) and passes.
+  - once the server is declared hung (alive at the end of the 60 s wait), the EXIT trap is re-armed to SIGKILL java and the
+    jcmd dump, so an interrupt during the dump leaves neither behind (Task 11c fix round 2, M1); a jcmd still running after
+    its 30 s is SIGKILLed and reaped before its note is appended, so it cannot write over the note (M2); and java is
+    SIGKILLed only while it still runs (M3).
 """
 import os
 import re
@@ -24,8 +38,12 @@ from pathlib import Path
 
 import pytest
 
+from test_count_forced_chunks import chunks_dat  # noqa: E402
+
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "tools" / "server_boot.sh"
+# The real reader, not a stub: an empty world folder holds no forced chunk, so it prints `forced chunks: 0 (...)` and exits 0.
+FORCED_READER = ROOT / "tools" / "count_forced_chunks.py"
 STUB = '''import os, sys
 print("ran {name}", " ".join(sys.argv[1:]))
 sys.exit(int(os.environ.get("{env}", "0")))
@@ -44,6 +62,8 @@ def fake(tmp_path):
     (root / "tools").mkdir(parents=True)
     for name, env in (("check_configs.py", "STUB_CONFIGS"), ("check_boot_log.py", "STUB_BOOT_LOG")):
         (root / "tools" / name).write_text(STUB.format(name=name, env=env))
+    shutil.copy(FORCED_READER, root / "tools")
+    (run / "world").mkdir(parents=True)   # a server that reached Done has always created its world
     (run / "logs" / "kubejs").mkdir(parents=True)
     for log in ("logs/latest.log", "logs/kubejs/startup.log", "logs/kubejs/server.log"):
         (run / log).write_text("[01Oct2026 22:26:26.226] [main/INFO] [x/]: fine\n")
@@ -225,6 +245,8 @@ if os.environ.get("STUB_JAVA_IGNORES_TERM"):
 open(os.path.join(state, "runsh.pid"), "w").write(str(os.getppid()))
 open(os.path.join(state, "java.pid"), "w").write(str(os.getpid()))
 T = "[01Oct2026 23:15:24.886]"
+if not os.environ.get("STUB_NO_WORLD"):
+    os.makedirs("world", exist_ok=True)
 os.makedirs("logs/kubejs", exist_ok=True)
 open("logs/latest.log", "w").write(T + " [main/INFO] [x/]: starting\n")
 for name in ("startup", "server"):
@@ -239,6 +261,27 @@ time.sleep(300)
 """
 RUN_SH = '#!/usr/bin/env sh\njava @user_jvm_args.txt @libraries/net/neoforged/neoforge/21.1.250/unix_args.txt "$@"\n'
 STUB_NAMES = ("packwiz", "runsh", "java")
+# The stub jdk's jcmd (Task 11c): it records its PID and its arguments, and whether the PID it was given still ran when it
+# was called; then it prints a stand-in dump, or with STUB_JCMD_HANGS never returns (exec, so its PID is the sleep's; with
+# STUB_JCMD_HANGS=stubborn it instead catches SIGTERM, writes a late line at its own file offset, and keeps running), or
+# with STUB_JCMD_JAVA_EXITS has java end while it runs (a stop that took just over 60 s) and fails as the real jcmd does then.
+STUB_JCMD = r'''echo $$ > "$BOOT_STUB_STATE/jcmd.pid"
+if kill -0 "$1" 2>/dev/null; then state=alive; else state=gone; fi
+echo "jcmd-stub $* (java $state)" >> "$BOOT_STUB_STATE/events"
+if [ "${STUB_JCMD_HANGS:-}" = stubborn ]; then
+  printf 'partial dump\n'
+  trap 'printf "LATE JCMD OUTPUT OVER THE NOTE\n"' TERM
+  while :; do /bin/sleep 0.05; done
+fi
+[ -n "${STUB_JCMD_HANGS:-}" ] && exec /bin/sleep 300
+if [ -n "${STUB_JCMD_JAVA_EXITS:-}" ]; then
+  kill -9 "$1"; for i in $(seq 1 300); do kill -0 "$1" 2>/dev/null || break; /bin/sleep 0.01; done
+  printf '%s:\ncom.sun.tools.attach.AttachNotSupportedException: pid: %s, %s\n' "$1" "$1" \
+    'state is not ready to participate in attach handshake!'
+  exit 1
+fi
+printf '%s:\nFull thread dump stub (jcmd %s)\n"Server thread" #1 stuck\n' "$1" "$*"
+'''
 
 
 def write_exec(path, text):
@@ -257,6 +300,7 @@ def stub_kit(tmp_path_factory):
     for name in ("packwiz", "java", "curl"):
         write_exec(kit / "canary" / name, "#!/bin/bash\n" + CANARY)
     write_exec(kit / "jdk" / "bin" / "java", f"#!{sys.executable}\n" + STUB_JAVA)
+    write_exec(kit / "jdk" / "bin" / "jcmd", "#!/bin/bash\n" + STUB_JCMD)
     write_exec(kit / "run.sh", RUN_SH)
     return kit
 
@@ -270,6 +314,7 @@ def stub_boot(tmp_path, stub_kit):
     shutil.copy(SCRIPT, root / "tools" / "server_boot.sh")
     for name, env in (("check_configs.py", "STUB_CONFIGS"), ("check_boot_log.py", "STUB_BOOT_LOG")):
         (root / "tools" / name).write_text(STUB.format(name=name, env=env))
+    shutil.copy(FORCED_READER, root / "tools")
     (root / ".run" / "server").mkdir(parents=True)
     (root / ".run" / "server" / "run.sh").symlink_to(stub_kit / "run.sh")
     path = f"{bin_dir}:{canary}:/usr/bin:/bin"
@@ -300,12 +345,12 @@ def stub_boot(tmp_path, stub_kit):
         assert not (state / "canary").exists(), (state / "canary").read_text()
         return p.returncode, out, pids, {n: pid for n, pid in pids.items() if running(pid)}
 
-    boot.root = root
+    boot.root, boot.state = root, state
     yield boot
     for p in started:   # never leave a stub behind, whatever the test did
         if p.poll() is None:
             os.killpg(p.pid, signal.SIGKILL)
-    for n in STUB_NAMES:
+    for n in STUB_NAMES + ("jcmd",):
         f = state / f"{n}.pid"
         if f.exists() and running(int(f.read_text())):
             os.kill(int(f.read_text()), signal.SIGKILL)
@@ -359,6 +404,82 @@ def test_a_server_that_ignores_sigterm_is_killed_and_fails_the_boot(stub_boot):
     assert (code, labels(out)) == (1, ["SERVER DID NOT STOP", "BOOT CHECKS FAILED"]), out
 
 
+# ---- Task 11c: a server that does not stop is thread-dumped before the SIGKILL ----------------------------------------
+
+DUMP_BANNER = "==== SERVER DID NOT STOP: jcmd Thread.print -l, taken before the SIGKILL ===="
+
+
+def jcmd_calls(stub_boot):
+    events = stub_boot.state / "events"
+    return [e for e in events.read_text().splitlines() if e.startswith("jcmd-stub")] if events.exists() else []
+
+
+def test_a_server_that_does_not_stop_is_thread_dumped_before_it_is_killed(stub_boot):
+    """jcmd runs once, on java's PID, while java still runs (so before the SIGKILL); the dump is appended to console.log
+    after the server's own output, and the failed-boot archive keeps that console.log. The labels are unchanged."""
+    code, out, pids, alive = stub_boot({"STUB_JAVA_IGNORES_TERM": "1"})
+    assert (set(pids), alive) == (set(STUB_NAMES), {})
+    assert (code, labels(out)) == (1, ["SERVER DID NOT STOP", "BOOT CHECKS FAILED"]), out
+    assert jcmd_calls(stub_boot) == [f"jcmd-stub {pids['java']} Thread.print -l (java alive)"]
+    run = stub_boot.root / ".run" / "server"
+    console = (run / "console.log").read_text()
+    assert console.index("Done (1.0s)") < console.index(DUMP_BANNER) < console.index(
+        f"Full thread dump stub (jcmd {pids['java']} Thread.print -l)"), console
+    assert "thread dump appended to console.log" in out.splitlines(), out
+    [archive] = archives(stub_boot.root)
+    assert (archive / "console.log").read_text() == console
+    assert not (run / "stop-threads.txt").exists()
+    assert JAVA_EXITED_NOTE not in console, "java was still running after the dump: it was SIGKILLed"
+
+
+JAVA_EXITED_NOTE = "(java exited on its own while jcmd ran: the stop took just over the 60 s wait)"
+
+
+def test_a_server_that_exits_during_its_thread_dump_is_reported_as_such(stub_boot):
+    """Task 11c, boot plain-04: a stop that takes just over 60 s ends while jcmd is still attaching, and jcmd then fails with
+    AttachNotSupportedException ("state is not ready"), which reads like a broken diagnostic. The dump says java exited on its
+    own; the labels and the status are unchanged (the 60 s rule stands)."""
+    code, out, pids, alive = stub_boot({"STUB_JAVA_IGNORES_TERM": "1", "STUB_JCMD_JAVA_EXITS": "1"})
+    assert (set(pids), alive) == (set(STUB_NAMES), {})
+    assert (code, labels(out)) == (1, ["SERVER DID NOT STOP", "BOOT CHECKS FAILED"]), out
+    assert jcmd_calls(stub_boot) == [f"jcmd-stub {pids['java']} Thread.print -l (java alive)"]
+    console = (stub_boot.root / ".run" / "server" / "console.log").read_text()
+    assert console.index(DUMP_BANNER) < console.index("state is not ready") < console.index(JAVA_EXITED_NOTE), console
+
+
+def test_a_server_that_stops_is_not_thread_dumped(stub_boot):
+    code, out, pids, alive = stub_boot()
+    assert (code, labels(out)) == (0, ["BOOT OK"]), out
+    assert jcmd_calls(stub_boot) == []
+    assert DUMP_BANNER not in (stub_boot.root / ".run" / "server" / "console.log").read_text()
+
+
+def test_a_thread_dump_that_hangs_is_abandoned_and_the_server_still_killed(stub_boot):
+    """jcmd gets 30 s (30 one-second sleeps); one that has not returned by then is killed, the dump says so, and java is
+    SIGKILLed as before: nothing is left running."""
+    code, out, pids, alive = stub_boot({"STUB_JAVA_IGNORES_TERM": "1", "STUB_JCMD_HANGS": "1"})
+    assert (set(pids), alive) == (set(STUB_NAMES), {})
+    assert (code, labels(out)) == (1, ["SERVER DID NOT STOP", "BOOT CHECKS FAILED"]), out
+    jcmd_pid = int((stub_boot.state / "jcmd.pid").read_text())
+    deadline = time.time() + 3
+    while running(jcmd_pid) and time.time() < deadline:
+        time.sleep(0.02)
+    assert not running(jcmd_pid), "the hung jcmd was left running"
+    console = (stub_boot.root / ".run" / "server" / "console.log").read_text()
+    assert console.index(DUMP_BANNER) < console.index("(jcmd did not finish within 30 s; killed)"), console
+
+
+def test_a_stale_dump_file_never_reaches_a_later_boot(stub_boot):
+    """A stop-threads.txt left by a boot that died mid-dump is deleted with the other per-boot files, so a later clean boot's
+    console.log never carries it."""
+    run = stub_boot.root / ".run" / "server"
+    (run / "stop-threads.txt").write_text("STALE DUMP\n")
+    code, out, pids, alive = stub_boot()
+    assert (code, labels(out)) == (0, ["BOOT OK"]), out
+    assert "STALE DUMP" not in (run / "console.log").read_text()
+    assert not (run / "stop-threads.txt").exists()
+
+
 def test_a_stub_boot_whose_checks_fail_keeps_its_evidence(stub_boot):
     """Task 10b: the forced boot-log failure leaves .run/failed-boots/<UTC timestamp>/ holding this boot's six files."""
     code, out, pids, alive = stub_boot({"STUB_BOOT_LOG": "1"})
@@ -372,3 +493,155 @@ def test_a_stub_boot_whose_checks_fail_keeps_its_evidence(stub_boot):
     assert "Done (1.0s)" in (archive / "console.log").read_text()
     assert (archive / "SOURCE").read_text() == f"{run}\n"
     assert (archive / "kubejs" / "exported" / "recipes.json").read_text() == '{"stub": %s}\n' % pids["java"]
+
+
+# ---- Task 11c fix (D136): forced chunks fail the boot -------------------------------------------------------------------
+
+def leak(run, n=256, rel="world/dimensions/ad_astra/glacio/data/chunks.dat"):
+    path = run / rel
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(chunks_dat(n))
+    return path
+
+
+def test_a_clean_world_prints_its_zero_forced_chunks(fake):
+    root, run = fake
+    leak(run, 0, "world/data/chunks.dat")
+    code, out = checks(fake)
+    assert (code, out[-1]) == (0, "BOOT OK"), out
+    assert f"forced chunks: 0 (mod tickets: 0; 1 chunks.dat files read in {run.resolve() / 'world'})" in out
+
+
+def test_forced_chunks_fail_the_checks_and_are_archived(fake):
+    root, run = fake
+    full_run(run)
+    leak(run, 256)
+    leak(run, 1, "world/data/chunks.dat")
+    code, out = checks(fake)
+    assert code == 1 and labels("\n".join(out)) == ["FORCED CHUNKS", "BOOT CHECKS FAILED"], out
+    w = run.resolve() / "world"
+    assert f"forced chunks: 257 (mod tickets: 0; 2 chunks.dat files read in {w})" in out
+    assert f"  ad_astra:glacio: 256 forced chunk(s) ({w}/dimensions/ad_astra/glacio/data/chunks.dat)" in out
+    assert any("D136" in line for line in out)
+    [archive] = archives(root)
+    assert f"failed-boot archive: {archive}" in out
+    assert sorted(str(p.relative_to(archive)) for p in archive.rglob("*") if p.is_file()) == sorted(ARCHIVED + ("SOURCE",))
+
+
+def test_a_chunks_file_the_guard_cannot_read_fails_the_checks(fake):
+    root, run = fake
+    leak(run, 0, "world/data/chunks.dat").write_bytes(b"not gzip")
+    code, out = checks(fake)
+    assert code == 1 and labels("\n".join(out)) == ["FORCED CHUNKS CHECK ERROR", "BOOT CHECKS FAILED"], out
+
+
+def test_check_mode_runs_the_forced_chunk_guard(fake, tmp_path):
+    """`server_boot.sh --check RUN_DIR` runs the same guard, on RUN_DIR's world, without booting."""
+    root, run = fake
+    shutil.copy(SCRIPT, root / "tools" / "server_boot.sh")
+    leak(run, 3)
+    res = subprocess.run(["bash", str(root / "tools" / "server_boot.sh"), "--check", str(run)], capture_output=True,
+                         text=True, timeout=60)
+    assert res.returncode == 1 and labels(res.stdout) == ["FORCED CHUNKS", "BOOT CHECKS FAILED"], res.stdout
+    assert any(line.startswith("forced chunks: 3 (mod tickets: 0;") for line in res.stdout.splitlines()), res.stdout
+
+
+def test_a_boot_whose_run_dir_has_no_world_fails_the_guard(fake):
+    """A server that reached Done has always created its world: a boot whose run directory has none was not read at all."""
+    root, run = fake
+    (run / "world").rmdir()
+    code, out = checks(fake)
+    assert code == 1 and labels("\n".join(out)) == ["FORCED CHUNKS CHECK ERROR", "BOOT CHECKS FAILED"], out
+
+
+def test_check_mode_where_a_server_ran_but_the_world_is_gone_fails(fake):
+    """Round 3: --check passes a missing world only where no server ran (no server.properties: a failed-boot archive)."""
+    root, run = fake
+    (run / "world").rmdir()
+    (run / "server.properties").write_text("level-name=world\n")
+    shutil.copy(SCRIPT, root / "tools" / "server_boot.sh")
+    res = subprocess.run(["bash", str(root / "tools" / "server_boot.sh"), "--check", str(run)], capture_output=True,
+                         text=True, timeout=60)
+    assert (res.returncode, labels(res.stdout)) == (1, ["FORCED CHUNKS CHECK ERROR", "BOOT CHECKS FAILED"]), res.stdout
+
+
+def test_a_check_only_exported_by_the_operator_does_not_reach_a_boot(stub_boot):
+    """Round 3: CHECK_ONLY in the caller's environment must not turn a boot's guard into --check's. The stub server makes no
+    world (STUB_NO_WORLD) and writes no server.properties, so only the flag decides: a boot fails on the missing world."""
+    code, out, pids, alive = stub_boot({"CHECK_ONLY": "1", "STUB_NO_WORLD": "1"})
+    assert alive == {}, alive
+    assert (code, labels(out)) == (1, ["FORCED CHUNKS CHECK ERROR", "BOOT CHECKS FAILED"]), out
+
+
+def test_check_mode_on_a_folder_without_a_world_says_so_and_passes(fake):
+    """--check on a failed-boot archive (logs, no world): the guard has nothing to read there, says so, and does not fail
+    the logs' own checks for it."""
+    root, run = fake
+    (run / "world").rmdir()
+    shutil.copy(SCRIPT, root / "tools" / "server_boot.sh")
+    res = subprocess.run(["bash", str(root / "tools" / "server_boot.sh"), "--check", str(run)], capture_output=True,
+                         text=True, timeout=60)
+    assert (res.returncode, labels(res.stdout)) == (0, ["BOOT OK"]), res.stdout
+    assert f"forced chunks: 0 (no world at {run.resolve() / 'world'})" in res.stdout.splitlines()
+
+
+def test_a_stub_boot_with_forced_chunks_fails_after_a_clean_stop(stub_boot):
+    """The whole script: the server stops in time, and the world's forced chunks alone fail the boot."""
+    leak(stub_boot.root / ".run" / "server", 1536, "world/dimensions/undergarden/undergarden/data/chunks.dat")
+    code, out, pids, alive = stub_boot()
+    assert (set(pids), alive) == (set(STUB_NAMES), {})
+    assert (code, labels(out)) == (1, ["FORCED CHUNKS", "BOOT CHECKS FAILED"]), out
+    assert any(line.startswith("forced chunks: 1536 (mod tickets: 0;") for line in out.splitlines()), out
+    assert "SERVER DID NOT STOP" not in out.splitlines()
+    assert len(archives(stub_boot.root)) == 1
+
+
+def test_a_clean_stub_boot_reports_zero_forced_chunks(stub_boot):
+    code, out, pids, alive = stub_boot()
+    assert (code, labels(out)) == (0, ["BOOT OK"]), out
+    world = (stub_boot.root / ".run" / "server" / "world").resolve()
+    assert f"forced chunks: 0 (mod tickets: 0; 0 chunks.dat files read in {world})" in out.splitlines(), out
+
+
+# ---- Task 11c fix round 2: the hung-server path leaves nothing behind (M1, M2, M3) ----------------------------------------
+
+def test_an_interrupt_during_the_thread_dump_leaves_no_java_and_no_jcmd(stub_boot):
+    """M1: java ignores SIGTERM (it is hung) and jcmd hangs; ^C to the process group during the dump window. The trap re-armed
+    when java was declared hung SIGKILLs both."""
+    code, out, pids, alive = stub_boot({"STUB_JAVA_IGNORES_TERM": "1", "STUB_JCMD_HANGS": "1"}, signal_on="jcmd",
+                                       sig=signal.SIGINT)
+    jcmd = int((stub_boot.state / "jcmd.pid").read_text())
+    deadline = time.time() + 3
+    while running(jcmd) and time.time() < deadline:
+        time.sleep(0.02)
+    assert (alive, running(jcmd)) == ({}, False), out
+    assert code == -signal.SIGINT and "BOOT OK" not in out, (code, out)   # ended by the ^C, not by a later check
+
+
+def test_a_jcmd_that_ignores_sigterm_is_sigkilled_before_its_note(stub_boot):
+    """M2: a hung jcmd that catches SIGTERM would keep running (and `wait` on it would hang the boot), and could write at its
+    own offset in stop-threads.txt over the note appended after it. It is SIGKILLed and reaped first; the note is intact."""
+    code, out, pids, alive = stub_boot({"STUB_JAVA_IGNORES_TERM": "1", "STUB_JCMD_HANGS": "stubborn"})
+    assert (set(pids), alive) == (set(STUB_NAMES), {})
+    assert (code, labels(out)) == (1, ["SERVER DID NOT STOP", "BOOT CHECKS FAILED"]), out
+    assert not running(int((stub_boot.state / "jcmd.pid").read_text()))
+    console = (stub_boot.root / ".run" / "server" / "console.log").read_text()
+    assert console.index("partial dump") < console.index("(jcmd did not finish within 30 s; killed)"), console
+    assert "LATE JCMD OUTPUT" not in console
+
+
+def test_a_java_that_exited_on_its_own_is_not_sigkilled(stub_boot):
+    """M3: when java has exited while jcmd ran, its PID is not signalled again (the system may have reused it): no
+    `kill -9 <java pid>` runs, and the dump says java exited on its own."""
+    code, out, pids, alive = stub_boot({"STUB_JAVA_IGNORES_TERM": "1", "STUB_JCMD_JAVA_EXITS": "1"}, trace=True)
+    assert (code, labels(out)) == (1, ["SERVER DID NOT STOP", "BOOT CHECKS FAILED"]), out
+    java = pids["java"]
+    assert not [line for line in out.splitlines() if re.match(rf"^\++ kill -9 {java}\b", line)], out
+    assert JAVA_EXITED_NOTE in (stub_boot.root / ".run" / "server" / "console.log").read_text()
+
+
+def test_a_hung_java_is_still_sigkilled(stub_boot):
+    """M3's other branch: java still running after the dump is SIGKILLed, once."""
+    code, out, pids, alive = stub_boot({"STUB_JAVA_IGNORES_TERM": "1"}, trace=True)
+    assert alive == {} and code == 1, out
+    assert len([line for line in out.splitlines() if re.match(rf"^\++ kill -9 {pids['java']}\b", line)]) == 1, out
