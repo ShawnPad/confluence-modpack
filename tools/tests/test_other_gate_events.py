@@ -24,8 +24,10 @@ from pathlib import Path
 
 import pytest
 
+from kjs import scripts_root
+
 ROOT = Path(__file__).resolve().parents[2]
-SCRIPTS = ROOT / "kubejs" / "server_scripts"
+SCRIPTS = scripts_root()   # pack/kubejs/server_scripts, or $CONFLUENCE_SCRIPTS_ROOT (the mutation corpus, test_pin_mutations.py)
 NODE = shutil.which("node")
 
 

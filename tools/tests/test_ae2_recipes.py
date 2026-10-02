@@ -1,9 +1,9 @@
 """v0.3 Task 7: the AE2 recipes in tiers/tier5.js and tiers/tier6.js match the v0.3 spec's rows S5.1–S5.3 (§5) and
 S6.1–S6.2 (§6), decisions D107 and D117.
 
-node loads lib/ids.js, lib/gates.js, tiers/tier5.js and tiers/tier6.js into ONE vm context, as KubeJS 2101 gives every server
-script one shared scope, runs each ServerEvents.recipes handler against an event that records what it adds and removes, and
-prints the record as JSON. The tests compare each AE2 recipe with the spec's shape and literal ids before any boot, because a
+tools/tests/run_server_scripts.js (the shared runner, through kjs.run) loads lib/*.js, tiers/tier5.js and tiers/tier6.js into
+ONE vm context, as KubeJS 2101 gives every server script one shared scope, runs each ServerEvents.recipes handler against an
+event that records what it adds and removes, and prints the record as JSON. The tests compare each AE2 recipe with the spec's shape and literal ids before any boot, because a
 wrong key value does not always fail the boot. What each kind of slip does (javap -p -c on kubejs-neoforge-2101.7.2-build.377.jar;
 hasNoItems on NeoForge's patched Ingredient in neoforge-21.1.250-server.jar):
   - null, or an ingredient KubeJS counts as empty: silent. kubejs:shaped's schema (data/minecraft/kubejs/recipe_schema/
@@ -24,69 +24,22 @@ hasNoItems on NeoForge's patched Ingredient in neoforge-21.1.250-server.jar):
 node runs V8, not the pack's Rhino, so this test pins the recipes the handlers record, not that the files load in KubeJS;
 tools/tests/test_rhino_hazards.py lints the known Rhino trap. The load proof is tools/server_boot.sh (its KubeJS ERROR check and
 its check for "Parsing error loading recipe" in logs/latest.log) and the boot's "with 0 failed recipes" line. node must be on
-PATH: the `recorded` fixture asserts it, so this test runs rather than skips. The last two tests read AE2's ten defaults
-(DEFAULTS) and the five defaults this task keeps (KEPT) from appliedenergistics2-19.2.17.jar in .run/server/mods; they skip only
-when that folder does not exist, and fail on any other AE2 jar or on a default that moved or changed. tools/gates.yaml asserts
-the same ids at boot: the ten under `removed:`, the five kept ones under `gates:`.
+PATH: kjs.run asserts it, so this test runs rather than skips. The last two tests read AE2's ten defaults (DEFAULTS) and the
+five defaults this task keeps (KEPT) from appliedenergistics2-19.2.17.jar in .run/server/mods (kjs.pinned_jar, which also
+checks mods/ae2.pw.toml); they skip only when that folder does not exist, and fail on any other AE2 jar or on a default that
+moved or changed. tools/gates.yaml asserts the same ids at boot: the ten under `removed:`, the five kept ones under `gates:`.
+SOLE_MAKERS (each pinned output -> the one recipe id that may make it) is imported by test_recipe_scripts.py, which checks it
+over every server script.
 """
-import json
-import os
-import shutil
-import subprocess
 import zipfile
-from pathlib import Path
 
 import pytest
 
-ROOT = Path(__file__).resolve().parents[2]
-SCRIPTS = [
-    "kubejs/server_scripts/lib/ids.js",
-    "kubejs/server_scripts/lib/gates.js",
-    "kubejs/server_scripts/tiers/tier5.js",
-    "kubejs/server_scripts/tiers/tier6.js",
-]
-MODS = ROOT / ".run" / "server" / "mods"
-AE2_JAR = MODS / "appliedenergistics2-19.2.17.jar"
+from kjs import ingredient, jar_json, one, one_maker, pinned_jar, run
 
-HARNESS = r"""
-const fs = require('fs'), path = require('path'), vm = require('vm')
-const out = { recipes: [], removed: [], errors: [] }
-const handlers = []
-const noop = () => {}
-// `any` stands in for every other KubeJS global a tier file might touch at top level (Java.loadClass, JsonIO, ...):
-// callable, constructible, and every property is itself.
-const any = new Proxy(function () {}, { get: (t, k) => (k === Symbol.toPrimitive ? () => '' : any), apply: () => any, construct: () => any })
-const sandbox = {
-  console: { log: noop, info: noop, warn: noop, error: noop },
-  ServerEvents: new Proxy({}, { get: (t, k) => (k === 'recipes' ? fn => { handlers.push(fn) } : any) }),
-  // Item.of(id), Item.of(id, n), Item.of(stack): kubejs-neoforge-2101.7.2-build.377.jar ItemWrapper.of(ItemStack) returns its
-  // argument and ItemWrapper.of(ItemStack, int) a copy with count n. A stack is {id, count} here, as in test_mek_tier5.py.
-  Item: { of: (x, n) => (typeof x === 'string' ? { id: x, count: n === undefined ? 1 : n } : (n === undefined ? x : { id: x && x.id, count: n })) },
-}
-for (const g of ['Java', 'JsonIO', 'Utils', 'Ingredient', 'Fluid', 'Text', 'Platform', 'NativeEvents', 'BlockEvents',
-                 'PlayerEvents', 'EntityEvents', 'LootJS']) sandbox[g] = any
-vm.createContext(sandbox)
-for (const f of process.env.FILES.split(',')) {
-  const p = path.join(process.env.PACK_ROOT, f)
-  if (!fs.existsSync(p)) { out.errors.push(f + ': missing'); continue }
-  try { vm.runInContext(fs.readFileSync(p, 'utf8'), sandbox, { filename: f }) } catch (e) { out.errors.push(f + ': ' + e) }
-}
-// Any call on a recipe returns the recipe, so chains like .id(...) work; .id records the id.
-const handle = entry => { const h = new Proxy({}, { get: (t, k) => (k === 'id' ? i => { entry.id = String(i); return h } : () => h) }); return h }
-const event = new Proxy({}, { get: (t, k) => {
-  if (k === 'shaped') return (output, pattern, keys) => { const e = { kind: 'shaped', output, pattern, keys }; out.recipes.push(e); return handle(e) }
-  if (k === 'shapeless') return (output, inputs) => { const e = { kind: 'shapeless', output, inputs }; out.recipes.push(e); return handle(e) }
-  if (k === 'custom') return json => { const e = { kind: 'custom', json }; out.recipes.push(e); return handle(e) }
-  if (k === 'remove') return filter => { out.removed.push(filter) }
-  return () => handle({})
-} })
-// One handler's error (another task's block using an API this stub lacks) must not hide the others' records.
-handlers.forEach((h, i) => { try { h(event) } catch (e) { out.errors.push('handler ' + i + ': ' + e) } })
-// JSON.stringify writes a RegExp as {}. Write it as {"RegExp": "/…/"} instead, so a regex filter stays visible and never
-// passes for a plain string id. instanceof RegExp is false across vm realms, so test the internal class instead.
-const isRegExp = v => Object.prototype.toString.call(v) === '[object RegExp]'
-process.stdout.write(JSON.stringify(out, (k, v) => (v === undefined ? '<undefined>' : isRegExp(v) ? { RegExp: String(v) } : v)))
-"""
+TIER5 = "kubejs/server_scripts/tiers/tier5.js"
+TIER6 = "kubejs/server_scripts/tiers/tier6.js"
+AE2_JAR = "appliedenergistics2-19.2.17.jar"
 
 # Literal ids, each re-read from a jar in .run/server/mods or from the boot's tags.json when this test was written:
 # ae2:* -- appliedenergistics2-19.2.17.jar lang block.ae2.* / item.ae2.* (semi_dark_monitor = "Illuminated Panel");
@@ -174,14 +127,13 @@ CONVERSIONS = {
 }
 
 
+# Each output this file pins -> the only recipe ids that may make it, in any server script (test_recipe_scripts.py).
+SOLE_MAKERS = {output: [rid] for rid, (output, _, _) in EXPECTED.items()}
+
+
 @pytest.fixture(scope="module")
 def recorded():
-    node = shutil.which("node")
-    assert node, "node is not on PATH; `node --version` must print a version (v22.3.0 was used when this test was written)"
-    env = {**os.environ, "PACK_ROOT": str(ROOT), "FILES": ",".join(SCRIPTS)}
-    proc = subprocess.run([node, "-e", HARNESS], env=env, capture_output=True, text=True, timeout=60)
-    assert proc.returncode == 0, proc.stderr
-    return json.loads(proc.stdout)
+    return run(TIER5, TIER6)
 
 
 def assert_vanilla_shape(pattern, keys):
@@ -196,33 +148,24 @@ def assert_vanilla_shape(pattern, keys):
     assert " " not in keys
     assert set("".join(pattern)) - {" "} == set(keys)
     assert all(isinstance(v, str) and v and v != "<undefined>" for v in keys.values()), keys
-
-
-def products(r):
-    """The item ids a recorded recipe makes. A shaped or shapeless call: its output, a stack {id, count} or an id string. A
-    custom recipe: json.result and json.output (each an id string or a stack; a stack written {"item": …} counts too), and
-    each element of a json.results array."""
-    if r["kind"] in ("shaped", "shapeless"):
-        made = [r["output"]]
-    else:
-        j = r["json"]
-        made = [j.get("result"), j.get("output")] + list(j.get("results") or [])
-    return [m.get("id", m.get("item")) if isinstance(m, dict) else m for m in made if m is not None]
+    for v in keys.values():
+        ingredient(v)   # '#tag' or an item id: not '<inert>' or any other stand-in
 
 
 @pytest.mark.parametrize("rid", sorted(EXPECTED))
 def test_ae2_recipe_matches_spec(recorded, rid):
-    """The spec's shape and ids, and one maker: no other shaped, shapeless or custom recipe in these scripts makes the item
-    (each default's removal leaves this one as the only recipe, except the provider's _alt conversion, KEPT)."""
-    hits = [r for r in recorded["recipes"] if r.get("id") == rid]
-    assert len(hits) == 1, f"{rid}: {len(hits)} recipes recorded; script errors: {recorded['errors']}"
-    r = hits[0]
+    """The spec's shape and ids, and one maker: no other shaped, shapeless or custom recipe in these scripts makes the item,
+    with or without an id (each default's removal leaves this one as the only recipe, except the provider's _alt conversion,
+    KEPT). kjs.products reads a custom recipe's json.result, json.output, each element of json.results and any other
+    result/output key. Nothing is chained on the recipe."""
+    r = one(recorded, rid)   # exactly one recipe with this id; nothing chained, no extra arguments
     assert r["kind"] == "shaped"
-    assert_vanilla_shape(r["pattern"], r["keys"])
+    assert_vanilla_shape(r["pattern"], r["key"])
     output, pattern, keys = EXPECTED[rid]
-    # gate.shaped passes Item.of(output); the harness records that stack as {id, count}.
-    assert (r["output"], r["pattern"], r["keys"]) == ({"id": output, "count": 1}, pattern, keys)
-    makers = [x.get("id") for x in recorded["recipes"] if output in products(x)]
+    # gate.shaped passes Item.of(output); the runner records that stack as {id, count} (plus `components` for an 'id[...]'
+    # string).
+    assert (r["output"], r["pattern"], r["key"]) == ({"id": output, "count": 1}, pattern, keys)
+    makers = one_maker(recorded, output)
     assert makers == [rid], f"{output} is made by {makers}"
 
 
@@ -230,41 +173,26 @@ def test_ae2_defaults_removed_by_id_only(recorded):
     """Two filter shapes only, as test_tier6_space_recipes.py allows: {id: <a string>} and {output: <a string outside ae2:>}
     (Task 6's Ad Astra machines). Anything else fails: a filter by mod, type or input, a regex id (the harness writes it as
     {"RegExp": …}), a bare string, an ae2: output or tag, or a combined filter. The ae2: ids removed are exactly the ten
-    defaults, so no KEPT default and no other AE2 recipe goes."""
+    defaults, so no KEPT default and no other AE2 recipe goes. Nor may these scripts make any other recipes-event call
+    (replaceInput, replaceOutput and the like), which could change an AE2 recipe without removing it."""
     def by_id(f):
         return isinstance(f, dict) and set(f) == {"id"} and isinstance(f["id"], str)
 
     def by_other_output(f):
         return isinstance(f, dict) and set(f) == {"output"} and isinstance(f["output"], str) and "ae2:" not in f["output"]
 
-    odd = [f for f in recorded["removed"] if not by_id(f) and not by_other_output(f)]
+    filters = [e["filter"] for e in recorded["filters"]]
+    odd = [f for f in filters if not by_id(f) and not by_other_output(f)]
     assert odd == [], odd
-    assert sorted(f["id"] for f in recorded["removed"] if by_id(f) and f["id"].startswith("ae2:")) == sorted(REMOVED_BY_ID)
-
-
-def ingredient(v):
-    """A jar key value or shapeless ingredient ({"item": ...} or {"tag": ...}) as DEFAULTS writes it: an item id or '#tag'."""
-    assert isinstance(v, dict) and set(v) in ({"item"}, {"tag"}), v
-    return "#" + v["tag"] if "tag" in v else v["item"]
+    assert sorted(f["id"] for f in filters if by_id(f) and f["id"].startswith("ae2:")) == sorted(REMOVED_BY_ID)
+    assert recorded["other"] == [], recorded["other"]
 
 
 def ae2_jar():
-    """AE2_JAR, after the checks test_tier6_space_recipes.py's jar tests make: skip only when no server has been booted from
-    this clone, and fail on any other AE2 jar."""
-    if not MODS.is_dir():
-        pytest.skip(f"{MODS} does not exist (no server has been booted from this clone)")
-    # 'appliedenergistics2-*.jar' needs the hyphen right after the mod id, so an add-on jar with a longer name does not match.
-    found = sorted(MODS.glob("appliedenergistics2-*.jar"))
-    assert found == [AE2_JAR], (
-        f"DEFAULTS, KEPT and CONVERSIONS were read from {AE2_JAR.name}; {MODS} holds {[p.name for p in found]}")
-    return AE2_JAR
-
-
-def jar_json(jar, entry, what):
-    try:
-        return json.loads(jar.read(entry))
-    except KeyError:
-        pytest.fail(f"id moved: {AE2_JAR.name} has no {entry}, so {what}")
+    """AE2_JAR, after kjs.pinned_jar's checks: mods/ae2.pw.toml ships it, the test skips only when no server has been booted
+    from this clone, and any other AE2 jar fails ('appliedenergistics2-*.jar' needs the hyphen right after the mod id, so an
+    add-on jar with a longer name does not match). DEFAULTS, KEPT and CONVERSIONS were read from it."""
+    return pinned_jar("appliedenergistics2-", AE2_JAR, "ae2.pw.toml")
 
 
 @pytest.mark.parametrize("rid", REMOVED_BY_ID)
@@ -278,11 +206,12 @@ def test_ae2_default_matches_the_jar(rid):
     with zipfile.ZipFile(ae2_jar()) as jar:
         d = jar_json(jar, f"data/{ns}/recipe/{path}.json", f"removing {rid} by id no longer removes AE2's default")
     if d["type"] == "minecraft:crafting_shapeless":
-        got = (d["type"], None, [ingredient(v) for v in d["ingredients"]], (d["result"]["id"], d["result"]["count"]))
-    else:
-        got = (d["type"], d["pattern"], {k: ingredient(v) for k, v in d["key"].items()},
+        got = (d["type"], None, [ingredient(v, json_only=True) for v in d["ingredients"]],
                (d["result"]["id"], d["result"]["count"]))
-    assert got == want, f"{rid}: {AE2_JAR.name} holds {got}"
+    else:
+        got = (d["type"], d["pattern"], {k: ingredient(v, json_only=True) for k, v in d["key"].items()},
+               (d["result"]["id"], d["result"]["count"]))
+    assert got == want, f"{rid}: {AE2_JAR} holds {got}"
 
 
 @pytest.mark.parametrize("rid", KEPT)
@@ -294,4 +223,4 @@ def test_ae2_kept_default_is_in_the_jar(rid):
     with zipfile.ZipFile(ae2_jar()) as jar:
         d = jar_json(jar, f"data/{ns}/recipe/{path}.json", f"{rid}, which this task keeps loaded, is gone or renamed")
     if rid in CONVERSIONS:
-        assert d == CONVERSIONS[rid], f"{rid}: {AE2_JAR.name} holds {d}"
+        assert d == CONVERSIONS[rid], f"{rid}: {AE2_JAR} holds {d}"

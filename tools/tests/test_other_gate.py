@@ -17,6 +17,8 @@ from pathlib import Path
 
 import pytest
 
+from jslex import blank
+
 ROOT = Path(__file__).resolve().parents[2]
 SERVER_SCRIPTS = ROOT / "kubejs" / "server_scripts"
 LIB = SERVER_SCRIPTS / "lib"
@@ -262,60 +264,12 @@ def test_arrival_outer_error_moves_only_from_the_gated_dimensions(dest, send, me
 
 # ---- one shared scope -----------------------------------------------------------------------------------------------
 
-# A column-0 declaration of one name: const, let, var, class, or a function (async, generator or plain).
-TOP_LEVEL = re.compile(r"^(?:(?:const|let|var|class)\s+|(?:async\s+)?function\s*\*?\s*)([A-Za-z_$][\w$]*)", re.M)
+# A column-0 declaration of one name: const, let, var, class, or a function (async, generator or plain). `function` must be
+# followed by whitespace or a '*', so a column-0 name that merely starts with it (functionsByTier = ...) is not read as one.
+TOP_LEVEL = re.compile(r"^(?:(?:const|let|var|class)\s+|(?:async\s+)?function(?:\s*\*\s*|\s+))([A-Za-z_$][\w$]*)", re.M)
 DESTRUCTURING = re.compile(r"^(?:const|let|var)\s*[\[{]", re.M)
-IDENT = re.compile(r"[A-Za-z_$][\w$]*")
-# After one of these, a '/' starts a regex literal; after anything else (a name, number, ')' or ']') it divides.
-REGEX_AFTER = set("(,=:[!&|?{};+-*%<>~^") | {"return", "typeof", "case", "do", "else", "in", "of", "new", "delete", "void",
-                                            "throw", "instanceof"}
-
-
-def blank(src):
-    """src with every comment, and the inside of every string, template and regex literal, turned into spaces (newlines
-    kept), so what is left is code at its own line and column. A '/*' inside a line comment (a path such as data/*/recipe)
-    therefore opens nothing."""
-    out, i, n, prev = list(src), 0, len(src), None
-
-    def wipe(a, b):
-        for k in range(a, min(b, n)):
-            if out[k] != "\n":
-                out[k] = " "
-
-    while i < n:
-        c = src[i]
-        if src.startswith("//", i):
-            j = src.find("\n", i)
-            j = n if j < 0 else j
-            wipe(i, j)
-            i = j
-        elif src.startswith("/*", i):
-            j = src.find("*/", i + 2)
-            j = n if j < 0 else j + 2
-            wipe(i, j)
-            i = j
-        elif c in "'\"`":
-            j = i + 1
-            while j < n and src[j] != c:
-                j += 2 if src[j] == "\\" else 1
-            wipe(i + 1, j)
-            i, prev = j + 1, "str"
-        elif c == "/" and (prev is None or prev in REGEX_AFTER):
-            j, in_class = i + 1, False
-            while j < n and src[j] != "\n" and (src[j] != "/" or in_class):
-                if src[j] == "\\":
-                    j += 1
-                elif src[j] in "[]":
-                    in_class = src[j] == "["
-                j += 1
-            wipe(i + 1, j)
-            i, prev = j + 1, "regex"
-        elif IDENT.match(src, i):
-            m = IDENT.match(src, i)
-            i, prev = m.end(), m.group()
-        else:
-            i, prev = i + 1, (prev if c.isspace() else c)
-    return "".join(out)
+# blank(): every comment, and the inside of every string, template and regex literal, turned into spaces (newlines kept). It is
+# tools/tests/jslex.py's, shared with test_rhino_hazards.py since Task 8b; a '...' or "..." string stops at its line's end.
 
 
 def top_level_names(src, where):
@@ -385,3 +339,19 @@ def test_top_level_scanner_reads_every_declaration_form():
     names, problems = top_level_names(src, "x.js")
     assert names == ["VISIBLE", "s", "Klass", "asyncFn", "gen", "gen2", "re", "list", "obj", "last"]
     assert [p.split(":")[1] for p in problems] == ["12", "6", "11", "13"], problems
+
+
+def test_top_level_scanner_edge_cases():
+    """Task 9 re-review M6: a column-0 name that starts with `function` is not a declaration, and a quote the scanner opens by
+    mistake (after a regex it read as division, because it follows ')') ends at its line, so the declaration on the next
+    line is still read."""
+    src = "\n".join([
+        "functionsByTier = {}",            # 1: an assignment, not `function sByTier`
+        "function\tspaced() {}",           # 2
+        "if (ok) /'/.test(s)",             # 3: '/' after ')' divides, so the "'" opens a string that never closes
+        "const AFTER = 1",                 # 4
+        "",
+    ])
+    names, problems = top_level_names(src, "x.js")
+    assert names == ["spaced", "AFTER"], names
+    assert problems == []

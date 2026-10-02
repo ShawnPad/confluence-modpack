@@ -101,11 +101,52 @@ class Result:
         return self.absent + self.empty + self.empty_twin + self.no_registry
 
 
+# After one of these, a '/' starts a regex literal; after anything else (a name, number, ')', ']' or a string) it divides.
+# The same rule as tools/tests/jslex.py's tokenizer.
+REGEX_AFTER_CHARS = set("(,=:[!&|?{};+-*%<>~^")
+REGEX_AFTER_WORDS = {"return", "typeof", "case", "do", "else", "in", "of", "new", "delete", "void", "throw", "instanceof",
+                     "yield", "await"}
+
+
+def _regex_may_start(out: list) -> bool:
+    """Whether a '/' may start a regex literal here, judged by the last code character kept so far. The rule is
+    tools/tests/jslex.py's REGEX_AFTER (test_check_tags.py keeps the two in step), including its reading of '++' and '--':
+    JS takes a run of '+' (or '-') two at a time from the left, so an even run ends in '++' (after `i++`, '/' divides)
+    and an odd run in a single '+' (after `a+++`, '/' starts a regex)."""
+    j = len(out) - 1
+    while j >= 0 and out[j].isspace():
+        j -= 1
+    if j >= 0 and out[j] in "+-":
+        k = j
+        while k >= 0 and out[k] == out[j]:
+            k -= 1
+        return (j - k) % 2 == 1
+    if j < 0 or out[j] in REGEX_AFTER_CHARS:
+        return True
+    if out[j].isalnum() or out[j] in "_$":
+        k = j
+        while k >= 0 and (out[k].isalnum() or out[k] in "_$"):
+            k -= 1
+        return "".join(out[k + 1:j + 1]) in REGEX_AFTER_WORDS
+    return False
+
+
 def strip_js_comments(text: str) -> str:
-    """Drop // and /* */ comments, leaving string literals intact.
+    r"""Drop // and /* */ comments, leaving string and regex literals intact (template literals: see the last limit).
 
     Comments are stripped so that a tag named in prose (e.g. ids.js explaining which tag is *wrong*) is not
-    mistaken for a reference. Regex literals are not tracked; no script in the pack uses one.
+    mistaken for a reference. A block comment becomes one space, as JS reads it, so `a+/**/+/x/` keeps its two separate
+    '+' (and the regex after them). Regex literals are copied verbatim, so a regex holding '//', '/*' or a quote (such as
+    /https?:\/\//, /[/*]/ or /'/) neither starts a comment nor opens a string. A '/' starts a regex only where JS allows
+    one (after an operator, an opening bracket, a comma or semicolon, or a keyword such as return); elsewhere it divides.
+    The pack has one regex literal today, bypass.js's /^deeperdarker:.*gloomslate_.*_ore$/, which holds none of the three.
+    Limit (the same as tools/tests/jslex.py's): '}' counts as a place a regex may start (a block's end), so a '/' after an
+    object literal or a function expression, `x = {} / 2` or `function () {} / 2`, is misread as a regex. The pack writes
+    neither; test_check_tags.py pins the limit.
+    Limit (unlike jslex): a template literal is read as a plain quote, from one backtick to the next. So a comment inside a
+    ${ ... } is kept (a tag named in it counts as a reference), and a backtick inside a substitution (a nested template)
+    ends the outer template early. HEAD (61f1a11) read templates the same way; the pack's templates hold neither, and
+    test_check_tags.py pins both.
     """
     out = []
     i, n = 0, len(text)
@@ -134,6 +175,25 @@ def strip_js_comments(text: str) -> str:
         if c == "/" and i + 1 < n and text[i + 1] == "*":
             end = text.find("*/", i + 2)
             i = n if end == -1 else end + 2
+            out.append(" ")
+            continue
+        if c == "/" and _regex_may_start(out):
+            # Copy the regex literal up to its closing '/' (not one escaped or inside a [...] class), or to the line end.
+            j, in_class = i + 1, False
+            while j < n and text[j] != "\n":
+                if text[j] == "\\":
+                    j += 2
+                    continue
+                if text[j] == "[":
+                    in_class = True
+                elif text[j] == "]":
+                    in_class = False
+                elif text[j] == "/" and not in_class:
+                    break
+                j += 1
+            j = min(j + 1, n) if j < n and text[j] == "/" else min(j, n)
+            out.extend(text[i:j])
+            i = j
             continue
         out.append(c)
         i += 1

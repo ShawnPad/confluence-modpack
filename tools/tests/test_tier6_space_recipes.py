@@ -1,60 +1,37 @@
 """Pin the Space recipes in kubejs/server_scripts/tiers/tier6.js (v0.3 spec §6; plan Task 6).
 
-node evaluates lib/ids.js, lib/gates.js and tiers/tier6.js as one script, the way KubeJS 2101 runs server
-scripts (one shared scope). A stub `event` records every gate call. The expected values are the spec §6
-rows, with ids read from the jars when the plan was written (see the comments in tier6.js). This test
-catches an undefined IDS key or a wrong slot before any boot: JSON.stringify drops an undefined object
-value, so the exact comparison fails. It cannot prove the recipes load. node runs V8, not the pack's Rhino,
-so this test pins the recorded recipes, not that tier6.js loads in KubeJS; tools/tests/test_rhino_hazards.py
-lints the one known Rhino trap. tools/server_boot.sh (its KubeJS ERROR check, and its check for "Parsing
-error loading recipe" in logs/latest.log) and the "with 0 failed recipes" summary line prove the recipes
-load; tools/check_recipes.py proves the ids are added and removed. check_recipes alone is not enough:
-dump.js writes recipes.json inside ServerEvents.recipes, before the recipe codecs run, so a recipe that
-later fails to parse is still listed.
+tools/tests/run_server_scripts.js (the shared runner, through kjs.run) loads lib/*.js and tiers/tier6.js into one shared
+scope, the way KubeJS 2101 runs server scripts, and records every recipes-event call. The expected values are the spec §6
+rows, with ids read from the jars when the plan was written (see the comments in tier6.js). This test catches an undefined
+IDS key or a wrong slot before any boot: the runner writes an undefined value as '<undefined>', so the exact comparison
+fails. It cannot prove the recipes load. node runs V8, not the pack's Rhino, so this test pins the recorded recipes, not
+that tier6.js loads in KubeJS; tools/tests/test_rhino_hazards.py lints the known Rhino trap. tools/server_boot.sh (its
+KubeJS ERROR check, and its check for "Parsing error loading recipe" in logs/latest.log) and the "with 0 failed recipes"
+summary line prove the recipes load; tools/check_recipes.py proves the ids are added and removed. check_recipes alone is not
+enough: dump.js writes recipes.json inside ServerEvents.recipes, before the recipe codecs run, so a recipe that later fails
+to parse is still listed.
 (kubejs-neoforge-2101.7.2-build.377.jar: RecipesKubeEvent.post runs postEvent, the handlers, then
 applyChanges; a codec failure reaches RecipeManagerMixin.catchFailingRecipes -> handleFailedRecipe, which
 logs "Error parsing recipe %s" as an ERROR when DevProperties log_erroring_recipes is set, default true, and
 adds one to the failed count that finishEvent prints.)
 The dump check in plan Task 6 Step 6 imports SHAPED and CUSTOM from this module and keeps no copy of its
 own, so a slot fix touches tier6.js, SHAPED and SLOT_CHANGES, and a custom-recipe fix touches tier6.js and
-CUSTOM. The jar tests read adastra-1.21.1-1.16.25-neoforge.jar from .run/server/mods: each machine must be
-that jar's default with exactly its SLOT_CHANGES cells changed, and the Etrium recipes must keep the fields
-of Ad Astra's own alloying and compressing recipes. They skip only when .run/server/mods does not exist,
-and fail on any other Ad Astra jar. node must be on PATH: the `recorded` fixture asserts it (plan Step 2:
-this test must run, not skip).
+CUSTOM. SOLE_MAKERS (each pinned output -> the one recipe id that may make it) is imported by test_recipe_scripts.py, which
+checks it over every server script. The jar tests read adastra-1.21.1-1.16.25-neoforge.jar from .run/server/mods (kjs.pinned_jar,
+which also checks mods/ad-astra.pw.toml): each machine must be that jar's default with exactly its SLOT_CHANGES cells changed,
+and the Etrium recipes must keep the fields of Ad Astra's own alloying and compressing recipes. They skip only when
+.run/server/mods does not exist, and fail on any other Ad Astra jar. node must be on PATH: kjs.run asserts it (plan Step 2:
+this test must run, not skip). A tier6.js handler that throws, or that calls a recipes-event member the runner does not
+model (replaceInput, smelting, ...), fails every test here through the `recorded` fixture, as the Task 6 harness did.
 """
 import json
-import os
-import shutil
-import subprocess
 import zipfile
-from pathlib import Path
 
 import pytest
 
-ROOT = Path(__file__).resolve().parents[2]
+from kjs import EMPTY, all_rows, cell_diff, grid, jar_json, one, one_maker, pinned_jar, run
 
-HARNESS = r"""
-const fs = require('fs'), vm = require('vm'), path = require('path')
-const dir = path.join(process.env.PACK_ROOT, 'kubejs', 'server_scripts')
-const src = ['lib/ids.js', 'lib/gates.js', 'tiers/tier6.js'].map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('\n;\n')
-const handlers = []
-const ctx = { ServerEvents: { recipes: fn => handlers.push(fn) }, Item: { of: x => x }, console: console }
-vm.createContext(ctx)
-vm.runInContext(src, ctx)
-const calls = []
-const event = {
-  shaped: (output, pattern, keys) => ({ id: id => calls.push({ kind: 'shaped', id: id, output: output, pattern: pattern, keys: keys }) }),
-  shapeless: (output, inputs) => ({ id: id => calls.push({ kind: 'shapeless', id: id, output: output, inputs: inputs }) }),
-  remove: filter => calls.push({ kind: 'remove', filter: filter }),
-  custom: json => ({ id: id => calls.push({ kind: 'custom', id: id, json: json }) }),
-}
-handlers.forEach(h => h(event))
-// JSON.stringify writes a RegExp as {}. Write it as {"RegExp": "/…/"} instead, so a regex filter stays visible and never
-// passes for a plain string id. instanceof RegExp is false across vm realms, so test the internal class instead.
-const isRegExp = v => Object.prototype.toString.call(v) === '[object RegExp]'
-process.stdout.write(JSON.stringify(calls, (k, v) => (isRegExp(v) ? { RegExp: String(v) } : v)))
-"""
+TIER6 = "kubejs/server_scripts/tiers/tier6.js"
 
 PLATE = "#ad_astra:steel_plates"
 ULTIMATE = "mekanism:ultimate_control_circuit"
@@ -100,12 +77,10 @@ CUSTOM = {
         "result": {"count": 1, "id": "kubejs:astral_focus"}},
 }
 
-MODS = ROOT / ".run" / "server" / "mods"
-ADASTRA_JAR = MODS / "adastra-1.21.1-1.16.25-neoforge.jar"
-EMPTY = None  # a ' ' cell of a pattern
+ADASTRA_JAR = "adastra-1.21.1-1.16.25-neoforge.jar"
 
 # Spec §6's slot changes to each jar default, and nothing else: recipe id -> {(row, col): (default cell, our cell)}. A cell is
-# '#tag', an item id or EMPTY. The defaults are ADASTRA_JAR!data/ad_astra/recipe/<item>.json (AA §1.1–1.4). The jar is pinned;
+# '#tag', an item id or EMPTY. The defaults are ADASTRA_JAR's data/ad_astra/recipe/<item>.json (AA §1.1–1.4). The jar is pinned;
 # a new Ad Astra version means re-reading the five defaults and this table by hand.
 SLOT_CHANGES = {
     # D6.1: the two iron rods (top corners) and the two redstone torches (middle-row ends) become the four gate items.
@@ -133,42 +108,38 @@ SLOT_CHANGES = {
 }
 
 
+# Each output this file pins -> the only recipe ids that may make it, in any server script (test_recipe_scripts.py).
+SOLE_MAKERS = {**{output: [rid] for rid, (output, _, _) in SHAPED.items()},
+               **{body["result"]["id"]: [rid] for rid, body in CUSTOM.items()}}
+
+
 @pytest.fixture(scope="module")
 def recorded():
-    node = shutil.which("node")
-    assert node, "node is not on PATH; `node --version` must print a version (v22.3.0 was used when this test was written)"
-    env = {**os.environ, "PACK_ROOT": str(ROOT)}
-    out = subprocess.run([node, "-e", HARNESS], env=env, capture_output=True, text=True, timeout=60)
-    assert out.returncode == 0, out.stderr
-    return json.loads(out.stdout)
+    recorded = run(TIER6)
+    # The Task 6 harness stopped at the first error and knew no other event member; keep that strictness.
+    assert recorded["errors"] == [] and recorded["other"] == [], (recorded["errors"], recorded["other"])
+    return recorded
 
 
 def calls(recorded, kind):
-    return [c for c in recorded if c["kind"] == kind]
+    """The recorded rows of one kind: 'shaped', 'shapeless', 'custom' (recipes), or 'remove' (the raw filters)."""
+    if kind == "remove":
+        return [f["filter"] for f in recorded["filters"]]
+    return [r for r in all_rows(recorded) if r["kind"] == kind]
 
 
 def test_space_shaped_rows(recorded):
-    """The five machines' shaped rows (SHAPED), and one maker per machine: no other shaped or shapeless call has its output,
-    and no custom recipe makes one (json.result, json.output, or an element of json.results)."""
-    shaped = calls(recorded, "shaped")
-    grid_makers = shaped + calls(recorded, "shapeless")
-    by_id = {c["id"]: c for c in shaped}
+    """The five machines' shaped rows (SHAPED), and one maker per machine: no other shaped, shapeless or custom recipe makes
+    it (kjs.products: an output stack or id, or a custom recipe's json.result, json.output, an element of json.results, or
+    any other result/output key), whether or not .id() was called on it. Nothing is chained on a machine's recipe."""
     for rid, (output, pattern, keys) in SHAPED.items():
-        assert rid in by_id, rid
-        c = by_id[rid]
-        assert (c["output"], c["pattern"], c["keys"]) == (output, pattern, keys), rid
-        # One maker per machine: a second shaped or shapeless call with this output would load a second recipe for it.
-        assert [s["id"] for s in grid_makers if s["output"] == output] == [rid], output
-    # Nor may a custom recipe make one. tier6.js's custom recipes name their product in json.result.id; json.output and each
-    # element of json.results are checked too, and a bare-string result or output counts as the id.
-    machines = {output for output, _, _ in SHAPED.values()}
-
-    def products(j):
-        made = [j.get("result"), j.get("output")] + list(j.get("results") or [])
-        return {m.get("id") if isinstance(m, dict) else m for m in made if m is not None}
-
-    assert [(c["id"], sorted(products(c["json"]) & machines)) for c in calls(recorded, "custom")
-            if products(c["json"]) & machines] == []
+        c = one(recorded, rid)   # exactly one recipe with this id, of any kind; nothing chained, no extra arguments
+        assert c["kind"] == "shaped", (rid, c["kind"])
+        # gate.shaped passes Item.of(output); the runner records that stack as {id, count} (plus `components` for an
+        # 'id[...]' string), so a count or components change fails here.
+        assert (c["output"], c["pattern"], c["key"]) == ({"id": output, "count": 1}, pattern, keys), rid
+        # One maker per machine: a second recipe with this output would load beside ours.
+        assert one_maker(recorded, output) == [rid], output
 
 
 def test_space_removals_are_the_five_defaults_only(recorded):
@@ -176,11 +147,11 @@ def test_space_removals_are_the_five_defaults_only(recorded):
     AE2 block removes by id). Anything else fails: a filter by type, mod or input, a regex or ad_astra: id, another output,
     or a combined filter. So D6.2 / D118 hold (rockets, the launch pad and the desh, ostrum and calorite engines keep their
     default recipes), and Etrium and the Astral Focus lose nothing (no default exists, AA §2.3)."""
-    filters = [c["filter"] for c in calls(recorded, "remove")]
+    filters = calls(recorded, "remove")
     outputs = {v[0] for v in SHAPED.values()}
 
     def by_machine_output(f):
-        return isinstance(f, dict) and set(f) == {"output"} and f["output"] in outputs
+        return isinstance(f, dict) and set(f) == {"output"} and isinstance(f["output"], str) and f["output"] in outputs
 
     def by_other_id(f):
         return isinstance(f, dict) and set(f) == {"id"} and isinstance(f["id"], str) and not f["id"].startswith("ad_astra:")
@@ -191,45 +162,17 @@ def test_space_removals_are_the_five_defaults_only(recorded):
 
 
 def test_space_custom_json(recorded):
-    custom = {c["id"]: c["json"] for c in calls(recorded, "custom")}
+    """Each CUSTOM body, made by exactly one event.custom call with that id and nothing chained on it."""
     for rid, body in CUSTOM.items():
-        assert custom.get(rid) == body, rid
-
-
-def ingredient(v):
-    """A key value as tier6.js writes it ('#tag' or an item id) or as recipe JSON ({"tag": ...} or {"item": ...})."""
-    if isinstance(v, dict):
-        assert set(v) in ({"item"}, {"tag"}), v
-        return "#" + v["tag"] if "tag" in v else v["item"]
-    return v
-
-
-def grid(pattern, key):
-    """{(row, col): cell} of a 3x3 shaped pattern. Every symbol in the pattern is in the key and every key symbol is used
-    (vanilla rejects an unused one: "Key defines symbols that aren't used in pattern", ShapedRecipePattern.unpack,
-    server-1.21.1-20240808.144430-srg.jar)."""
-    assert len(pattern) == 3 and all(len(row) == 3 for row in pattern), pattern
-    assert set("".join(pattern)) - {" "} == set(key), (pattern, sorted(key))
-    return {(r, c): EMPTY if ch == " " else ingredient(key[ch]) for r, row in enumerate(pattern) for c, ch in enumerate(row)}
+        c = one(recorded, rid)   # exactly one recipe with this id, of any kind; nothing chained
+        assert (c["kind"], c["json"]) == ("custom", body), rid
 
 
 def adastra_jar():
-    """ADASTRA_JAR, after the checks every jar test shares: skip only when no server has been booted from this clone, and
-    fail on any other Ad Astra jar."""
-    if not MODS.is_dir():
-        pytest.skip(f"{MODS} does not exist (no server has been booted from this clone)")
-    # 'adastra-*.jar' needs the hyphen right after the mod id, so an add-on jar with a longer name does not match.
-    found = sorted(MODS.glob("adastra-*.jar"))
-    assert found == [ADASTRA_JAR], (
-        f"the jar tests were written against {ADASTRA_JAR.name}; {MODS} holds {[p.name for p in found]}")
-    return ADASTRA_JAR
-
-
-def jar_json(jar, entry, what):
-    try:
-        return json.loads(jar.read(entry))
-    except KeyError:
-        pytest.fail(f"id moved: {ADASTRA_JAR.name} has no {entry}, so {what}")
+    """ADASTRA_JAR, after kjs.pinned_jar's checks: mods/ad-astra.pw.toml ships it, the test skips only when no server has been
+    booted from this clone, and any other Ad Astra jar fails ('adastra-*.jar' needs the hyphen right after the mod id, so an
+    add-on jar with a longer name does not match)."""
+    return pinned_jar("adastra-", ADASTRA_JAR, "ad-astra.pw.toml")
 
 
 @pytest.mark.parametrize("rid", list(SLOT_CHANGES))
@@ -243,14 +186,16 @@ def test_space_machine_is_the_jar_default_plus_spec_slots(recorded, rid):
     with zipfile.ZipFile(adastra_jar()) as jar:
         default = jar_json(jar, entry, "SLOT_CHANGES no longer describe Ad Astra's default")
     assert default["type"] == "minecraft:crafting_shaped" and default["result"] == {"count": 1, "id": output}, default
-    ours = {c["id"]: c for c in calls(recorded, "shaped")}.get(rid)
-    assert ours is not None and ours["output"] == output, (rid, ours)
-    before, after = grid(default["pattern"], default["key"]), grid(ours["pattern"], ours["keys"])
+    ours = one(recorded, rid)   # exactly one recipe with this id: a dict keyed by id would keep only the last of two
+    assert ours["kind"] == "shaped" and ours["output"] == {"id": output, "count": 1}, (rid, ours)
+    # kjs.grid checks each grid is 3x3 with every symbol keyed and every key used; the jar's cells must be recipe JSON.
+    before = grid(default["pattern"], default["key"], json_only=True)
+    after = grid(ours["pattern"], ours["key"])
     # The recipe loads through vanilla's ShapedRecipePattern.unpack, which shrinks the pattern: it trims empty edge rows and
     # columns (see the tier6.js comment above the five machines). Ours has none, so the grid that loads is this one.
     assert all(any(after[r, c] for c in range(3)) and any(after[c, r] for c in range(3)) for r in range(3)), ours["pattern"]
-    changed = {cell: (before[cell], after[cell]) for cell in before if before[cell] != after[cell]}
-    assert changed == SLOT_CHANGES[rid], f"{rid}: cells that differ from {ADASTRA_JAR.name}'s default, as (default, ours)"
+    changed = cell_diff(before, after)
+    assert changed == SLOT_CHANGES[rid], f"{rid}: cells that differ from {ADASTRA_JAR}'s default, as (default, ours)"
 
 
 ALLOYING = "data/ad_astra/recipe/alloying/steel_ingot_from_alloying_iron_ingot_and_barrier.json"

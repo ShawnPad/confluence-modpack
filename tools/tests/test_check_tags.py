@@ -53,6 +53,89 @@ def test_strip_comments_leaves_a_slash_inside_a_string():
     assert strip_js_comments("const u = 'http://x//y' // gone") == "const u = 'http://x//y' "
 
 
+@pytest.mark.parametrize("src,want", [
+    # a regex holding '//': not a comment
+    (r"const r = /https?:\/\//g // gone", r"const r = /https?:\/\//g "),
+    # a regex holding '/*' in a class: not a block comment, so the next line survives
+    ("const r = /[/*]/ // gone\nconst t = '#c:kept'", "const r = /[/*]/ \nconst t = '#c:kept'"),
+    # a regex holding a quote: not a string, so the comment after it is still a comment
+    ("s.replace(/'/g, '') // '#c:fake'", "s.replace(/'/g, '') "),
+    # bypass.js's regex, as it is written there
+    ("event.remove({ id: /^deeperdarker:.*gloomslate_.*_ore$/ }) // x", "event.remove({ id: /^deeperdarker:.*gloomslate_.*_ore$/ }) "),
+    # after a name, a number or ')' a '/' divides, and a comment after it still goes
+    ("a = b / c // gone", "a = b / c "),
+    ("a = f(x) / 2 /* gone */ + 1", "a = f(x) / 2   + 1"),   # a block comment becomes one space
+    # Task 8b review: after '++' or '--' a '/' divides; after a single '+' or '-' (the end of an odd run) it starts a regex
+    ("y = i++ / 2 // gone", "y = i++ / 2 "),
+    ("y = i-- / 2 /* gone */ + 1", "y = i-- / 2   + 1"),
+    ("y = a+++/x\\//.source // gone", "y = a+++/x\\//.source "),
+    ("y = a + /'/.source // gone", "y = a + /'/.source "),
+    # Task 8b round 3 (J-c): a block comment between two '+' keeps them apart, as in JS, so the '/' after them starts a regex
+    ("y = a+/**/+/'/.source // '#c:fake'", "y = a+ +/'/.source "),
+])
+def test_strip_comments_reads_regex_literals(src, want):
+    assert strip_js_comments(src) == want
+
+
+def test_increment_before_a_slash_hides_no_tag():
+    """Task 8b review: with `i++ /` read as the start of a regex, the regex would run to the '/' inside 'a/b', and the
+    quotes after it would pair up wrongly, so '#c:real' would sit outside any string."""
+    assert tags_from_script("x = i++ / 2 + 'a/b'; t = '#c:real'\n") == {"c:real"}
+    assert tags_from_script("x = i-- / 2 + 'a/b'; t = '#c:real'\n") == {"c:real"}
+
+
+def test_regex_start_rule_matches_jslex():
+    """check_tags.py (tools/, run as a script) and tools/tests/jslex.py (the lints' tokenizer) each hold the rule for where
+    a '/' starts a regex; keep them equal. jslex also has the token '=>', which check_tags sees as its last character '>'.
+    Then, for each '/' jslex reads (as a regex or as division), check_tags' _regex_may_start on the text before it, with
+    comments stripped as strip_js_comments strips them, must decide the same."""
+    import check_tags
+    import jslex
+    assert check_tags.REGEX_AFTER_CHARS | check_tags.REGEX_AFTER_WORDS | {"=>"} == jslex.REGEX_AFTER
+    snippets = ["y = i++ / 2 + 'a/b'", "y = a+++/x/.source", "y = --n / 2", "y = n-- / 2 / 3", "y = a + /x/.source",
+                "y = a - -/x/.source.length", "return /x/", "f(x) / 2", "a = b / c", "x = [/a/, /b/]", "y = typeof /x/",
+                "xs.some(s => /x/.test(s))", "s = 'q' / 2", "o = { k: /x/ }",
+                # round 3 J-c: a block comment between two '+'; J-b: the documented limit both share
+                "y = a+/**/+/x/.source", "y = a+/* c */+b / 2", "x = {} / 2 / 3", "y = function () {} / 2 / 3"]
+    seen = 0
+    for src in snippets:
+        for t in jslex.tokens(src):
+            if t.text.startswith("/") and t.kind in ("regex", "punct"):
+                before = list(check_tags.strip_js_comments(src[:t.start]))
+                assert check_tags._regex_may_start(before) == (t.kind == "regex"), (src, t)
+                seen += 1
+    assert seen == 20   # every snippet's slashes outside strings and comments
+
+
+def test_documented_limit_slash_after_a_brace():
+    """Round 3 J-b (the limit in strip_js_comments' docstring, shared with jslex): a '/' after '}' starts a regex, so after
+    an object literal or a function expression the division is misread, and the comment after it is read as code. The pack
+    writes neither form."""
+    assert tags_from_script("x = {} / 2 // '#c:fake'\n") == {"c:fake"}
+    assert tags_from_script("y = function () {} / 2 // '#c:fake'\n") == {"c:fake"}
+
+
+def test_documented_limit_templates_are_plain_quotes():
+    """Round 4 R11 (the last limit in strip_js_comments' docstring): a comment inside a ${ ... } is kept, so its tag counts;
+    a nested template's backtick ends the outer template early, so a quote after it pairs wrongly. The pack writes neither."""
+    assert tags_from_script("s = `${ x /* '#c:in_comment' */ }`\n") == {"c:in_comment"}
+    # JS: the template ends at the last backtick before //, and the comment goes. Here the backticks pair up wrongly, the
+    # quote in '`' opens a string, and the comment is kept with its tag.
+    assert tags_from_script("s = `a ${ `b` + '`' } c` // '#c:fake'\n") == {"c:fake"}
+
+
+def test_block_comment_between_plus_signs_hides_no_tag():
+    """Round 3 J-c: with the comment dropped outright, `a+/**/+` became `a++` and the regex /'/ after it was read as division,
+    so its quote opened a string and the comment's tag was read as code."""
+    assert tags_from_script("x = a+/**/+/'/.source // '#c:fake'\nt = '#c:real'\n") == {"c:real"}
+
+
+def test_regex_quote_hides_no_tag():
+    """With the regex read as a string opener, the quote in /'/ would run to the next quote and the comment's tag would be
+    read as code."""
+    assert tags_from_script("s.replace(/'/g, '') // '#c:fake'\nconst x = '#c:real'\n") == {"c:real"}
+
+
 def test_json_tag_values_at_any_depth():
     doc = {
         "key": {"A": {"tag": "c:plastics"}},

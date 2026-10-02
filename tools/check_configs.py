@@ -13,9 +13,16 @@ ConfigTracker.loadConfig (loader-4.0.44.jar!net/neoforged/fml/config/ConfigTrack
     recreated with defaults (offsets 127-137).
 A mod that renames its config file leaves the pack's copy unread, just as silently. ConfigTracker logs each file a mod
 registers, at DEBUG, as "Config file {} for {} tracking" (logs/debug.log; log4j2.xml in the same jar rolls it at every
-start and at 200 MB, and a headless boot writes about 2.5 MB, so it holds this boot only).
+start and at 200 MB, and a headless boot writes about 2.5 MB, so it holds this boot only). Tracking is not loading: a
+dedicated server also tracks each mod's CLIENT config (this boot's debug.log lists tombstone-client.toml and
+twilightforest-client.toml as tracked) and never opens it. A file is read only by ConfigTracker.openConfig, which calls
+loadConfig on the resolved path (offsets 63-90) and then logs, at DEBUG, "Loaded TOML config file {}" with that same path
+(ldc #233 at offset 99, the path at 101; javap -c -v of the same class, Task 8b).
 So, after a boot, for every config/**/*.toml the pack ships:
-  - logs/debug.log shows a mod tracking it under that name;
+  - it is not a *-client.toml: a CLIENT config never loads on a dedicated server, so nothing here could prove it read;
+  - logs/debug.log shows a mod tracking it under that name, and a "Loaded TOML config file <path>" line whose path is
+    RUN_DIR/config/<file> (compared after resolving links: a copy loaded from anywhere else, such as a defaultconfigs/
+    override, does not count);
   - logs/latest.log names it in neither WARN message;
   - the server's copy under RUN_DIR/config/ is byte-identical to the pack's.
 The pinned values themselves are checked by tools/tests/test_shipped_configs.py.
@@ -23,6 +30,7 @@ The pinned values themselves are checked by tools/tests/test_shipped_configs.py.
 Usage, from pack/:  python3 tools/check_configs.py [RUN_DIR]   (default .run/server). tools/server_boot.sh runs it after
 every boot. Prints one summary line and exits 0, or prints each problem and exits 1.
 """
+import os
 import re
 import sys
 from pathlib import Path
@@ -31,6 +39,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CORRECTED = re.compile(r"Configuration file (.+?) is not correct\. Correcting")
 RECREATED = re.compile(r"Failed to load config (.+?): .*Attempting to recreate")
 TRACKED = re.compile(r"\]: Config file (.+?) for \S+ tracking$")
+LOADED = re.compile(r"\]: Loaded TOML config file (.+)$")
 
 
 def shipped(root=ROOT):
@@ -47,14 +56,25 @@ def read_lines(log, problems):
 
 
 def check(run, root=ROOT):
-    """Return (the shipped paths, every problem found) for the server install at `run`."""
+    """Return (the shipped paths, every problem found) for the server install at `run`. A missing log is one problem; the
+    per-file checks that read it are then skipped rather than each failing on it."""
     files, problems = shipped(root), []
     lines = read_lines(run / "logs" / "latest.log", problems)
+    have_debug = (run / "logs" / "debug.log").is_file()
     debug = read_lines(run / "logs" / "debug.log", problems)
     tracked = {m.group(1).replace("\\", "/") for m in map(TRACKED.search, debug) if m}
+    loaded = {os.path.realpath(m.group(1)) for m in map(LOADED.search, debug) if m}
     for rel in files:
-        if rel not in tracked:
+        installed = run / "config" / rel
+        if rel.rsplit("/", 1)[-1].endswith("-client.toml"):
+            problems.append(f"config/{rel}: a CLIENT config (*-client.toml); a dedicated server never loads one, so the pack "
+                            "cannot ship it as a server setting (remove it, or change this check on purpose)")
+            continue
+        if have_debug and rel not in tracked:
             problems.append(f"config/{rel}: no mod tracks a config file of that name (debug.log); the pack's copy is unread")
+        if have_debug and os.path.realpath(installed) not in loaded:
+            problems.append(f"config/{rel}: the server never loaded it (debug.log has no 'Loaded TOML config file "
+                            f"{installed}' line); the pack's copy is unread")
         for line in lines:
             m = CORRECTED.search(line)
             # The "not correct" line carries the file's path, the "recreate" line its name under config/.
@@ -64,7 +84,6 @@ def check(run, root=ROOT):
             m = RECREATED.search(line)
             if m and m.group(1).replace("\\", "/") == rel:
                 problems.append(f"config/{rel}: NeoForge could not parse it and recreated it (latest.log: {line.strip()})")
-        installed = run / "config" / rel
         if not installed.is_file():
             problems.append(f"config/{rel}: not installed at {installed}")
         elif installed.read_bytes() != (root / "config" / rel).read_bytes():

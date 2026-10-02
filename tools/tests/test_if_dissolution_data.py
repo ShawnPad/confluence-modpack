@@ -22,14 +22,14 @@ IF's default with it, because both share the id, and leaves the product with no 
 import json
 import zipfile
 from collections import Counter
-from pathlib import Path
 
 import pytest
 
-ROOT = Path(__file__).resolve().parents[2]
+from kjs import ROOT, jar_json, pinned_jar
+from kjs import ingredient as kjs_ingredient
+
 DATA = ROOT / "kubejs" / "data"
-MODS = ROOT / ".run" / "server" / "mods"
-IF_JAR = MODS / "industrialforegoing-1.21-3.6.39.jar"
+IF_JAR = "industrialforegoing-1.21-3.6.39.jar"
 TYPE = "industrialforegoing:dissolution_chamber"
 FRAMES = "industrialforegoing/recipe/dissolution_chamber/"
 SIMPLE, ADVANCED, SUPREME = (FRAMES + n + "_machine_frame.json" for n in ("simple", "advanced", "supreme"))
@@ -62,8 +62,8 @@ def dissolution_files():
 
 
 def ingredient(entry):
-    assert set(entry) in ({"item"}, {"tag"}), entry
-    return entry["item"] if "item" in entry else "#" + entry["tag"]
+    """kjs.ingredient for datapack JSON: exactly {"item": id} or {"tag": id}, never a bare string."""
+    return kjs_ingredient(entry, json_only=True)
 
 
 def test_every_pack_dissolution_recipe_fits_codec_and_pack_conventions():
@@ -124,20 +124,15 @@ def test_unobtainium_vibranium_alloy_is_spec_x52():
 def test_override_is_the_jar_default_plus_our_swaps(rel):
     """Each in-place override is IF's jar default at the same path, with only the OVERRIDES swaps. It fails when IF moves the id
     (ours would then add a second recipe instead of replacing one) or changes the default (ours would silently drop the change)."""
-    if not MODS.is_dir():
-        pytest.skip(f"{MODS} does not exist (no server has been booted from this clone)")
-    # 'industrialforegoing-*.jar' needs the hyphen right after the mod id, so an add-on jar with a longer name does not match.
-    found = sorted(MODS.glob("industrialforegoing-*.jar"))
-    assert found == [IF_JAR], f"OVERRIDES were read from {IF_JAR.name}; {MODS} holds {[p.name for p in found]}"
-    with zipfile.ZipFile(IF_JAR) as jar:
-        try:
-            default = json.loads(jar.read("data/" + rel))
-        except KeyError:
-            pytest.fail(f"id moved: {IF_JAR.name} has no data/{rel}, so kubejs/data/{rel} no longer replaces IF's default")
+    # kjs.pinned_jar: mods/industrial-foregoing.pw.toml ships IF_JAR; skip only when .run/server/mods does not exist; fail on
+    # any other 'industrialforegoing-*.jar' (the hyphen right after the mod id, so an add-on jar with a longer name does not
+    # match). OVERRIDES were read from IF_JAR.
+    with zipfile.ZipFile(pinned_jar("industrialforegoing-", IF_JAR, "industrial-foregoing.pw.toml")) as jar:
+        default = jar_json(jar, "data/" + rel, f"kubejs/data/{rel} no longer replaces IF's default")
     ours = json.loads((DATA / rel).read_text())
     lose, add = OVERRIDES[rel]
     rest = lambda body: {k: v for k, v in body.items() if k != "input"}
-    assert rest(ours) == rest(default), f"{rel}: a key other than `input` differs from {IF_JAR.name}'s default"
+    assert rest(ours) == rest(default), f"{rel}: a key other than `input` differs from {IF_JAR}'s default"
     have = Counter(map(ingredient, default["input"]))
-    assert not lose - have, f"{rel}: {IF_JAR.name}'s default no longer holds {dict(lose - have)}"
-    assert have - lose + add == Counter(map(ingredient, ours["input"])), f"{rel}: not {IF_JAR.name}'s default with our swaps"
+    assert not lose - have, f"{rel}: {IF_JAR}'s default no longer holds {dict(lose - have)}"
+    assert have - lose + add == Counter(map(ingredient, ours["input"])), f"{rel}: not {IF_JAR}'s default with our swaps"

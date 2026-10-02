@@ -1,74 +1,33 @@
 """v0.3 Task 4: the Mekanism recipes in tiers/tier5.js and the D113 elite-circuit swaps in tiers/tier3.js match the v0.3
 spec's §5 rows T5.1, "T5.1 side" and X5.3 (decisions D104, D113, D116).
 
-node loads lib/ids.js, lib/gates.js, tiers/tier3.js and tiers/tier5.js into ONE vm context, as KubeJS 2101 gives every server
-script one shared scope, runs each ServerEvents.recipes handler against an event that records what it adds and removes, and
-prints the record as JSON. Each record names the file whose handler made it. The tests compare the six D113 rewrites and the
-Digital Miner with Mekanism's own defaults (DEFAULTS, checked against the jar by the last test), T5.1 with the spec, and check
-that tier3.js no longer asks for an ultimate circuit. A missing IDS key shows up before any boot, as '<undefined>' or as a
-tagId error in `errors`. Later tasks append their own handlers to tier5.js; one that throws here (an API this stub lacks) is
-listed in `errors` and does not hide the others' records. Each record also carries the index of the handler that made it, so
-a test can pin one handler's adds and removes (v0.3 Task 5's block, the last tests below).
+tools/tests/run_server_scripts.js (the shared runner, through kjs.run) loads lib/*.js, tiers/tier3.js and tiers/tier5.js into
+ONE vm context, as KubeJS 2101 gives every server script one shared scope, runs each ServerEvents.recipes handler against an
+event that records what it adds and removes, and prints the record as JSON. Each record names the file whose handler made it.
+The tests compare the six D113 rewrites and the Digital Miner with Mekanism's own defaults (DEFAULTS, checked against the jar
+by test_defaults_match_the_jar), T5.1 with the spec, and check that tier3.js no longer asks for an ultimate circuit. A missing
+IDS key shows up before any boot, as '<undefined>' or as a tagId error in `errors`. Later tasks append their own handlers to
+tier5.js; one that throws is listed in `errors` and does not hide the others' records. Each record also carries the index of
+the handler that made it, so a test can pin one handler's adds and removes (v0.3 Task 5's block, the last tests below).
+SOLE_MAKERS (each pinned output -> the one recipe id that may make it) is imported by test_recipe_scripts.py, which checks it
+over every server script.
 
-The harness runs under node's V8, not the pack's Rhino: it pins the recipes the handlers record, not that the files load in
-KubeJS. tools/server_boot.sh (KubeJS `0 errors`, `0 failed recipes`) is the load proof; tools/tests/test_rhino_hazards.py lints
-one known Rhino trap.
+The runner uses node's V8, not the pack's Rhino: it pins the recipes the handlers record, not that the files load in KubeJS.
+tools/server_boot.sh (KubeJS `0 errors`, `0 failed recipes`) is the load proof; tools/tests/test_rhino_hazards.py lints the
+known Rhino trap.
 """
 import json
-import os
-import shutil
-import subprocess
 import zipfile
 from collections import Counter
-from pathlib import Path
 
 import pytest
 
-ROOT = Path(__file__).resolve().parents[2]
+from kjs import all_rows, ingredient, jar_json, one, one_maker, pinned_jar, run
+
 TIER3 = "kubejs/server_scripts/tiers/tier3.js"
 TIER5 = "kubejs/server_scripts/tiers/tier5.js"
-SCRIPTS = ["kubejs/server_scripts/lib/ids.js", "kubejs/server_scripts/lib/gates.js", TIER3, TIER5]
-MODS = ROOT / ".run" / "server" / "mods"
-MEK_JAR = MODS / "Mekanism-1.21.1-10.7.19.85.jar"
-
-HARNESS = r"""
-const fs = require('fs'), path = require('path'), vm = require('vm')
-const out = { recipes: [], removed: [], errors: [] }
-const handlers = []
-let loading = null, current = null, currentHandler = null
-const noop = () => {}
-// `any` stands in for every other KubeJS global a script might touch at top level: callable, constructible, and every
-// property is itself.
-const any = new Proxy(function () {}, { get: (t, k) => (k === Symbol.toPrimitive ? () => '' : any), apply: () => any, construct: () => any })
-const sandbox = {
-  console: { log: noop, info: noop, warn: noop, error: noop },
-  ServerEvents: new Proxy({}, { get: (t, k) => (k === 'recipes' ? fn => { handlers.push([loading, fn]) } : any) }),
-  // Item.of(id), Item.of(id, n), Item.of(stack): kubejs-neoforge-2101.7.2-build.377.jar ItemWrapper.of(ItemStack) returns its
-  // argument and ItemWrapper.of(ItemStack, int) a copy with count n. A stack is {id, count} here.
-  Item: { of: (x, n) => (typeof x === 'string' ? { id: x, count: n === undefined ? 1 : n } : (n === undefined ? x : { id: x && x.id, count: n })) },
-}
-for (const g of ['Java', 'JsonIO', 'Utils', 'Ingredient', 'Fluid', 'Text', 'Platform', 'NativeEvents', 'BlockEvents',
-                 'PlayerEvents', 'EntityEvents', 'LootJS']) sandbox[g] = any
-vm.createContext(sandbox)
-for (const f of process.env.FILES.split(',')) {
-  const p = path.join(process.env.PACK_ROOT, f)
-  if (!fs.existsSync(p)) { out.errors.push(f + ': missing'); continue }
-  loading = f
-  try { vm.runInContext(fs.readFileSync(p, 'utf8'), sandbox, { filename: f }) } catch (e) { out.errors.push(f + ': ' + e) }
-}
-// Any call on a recipe returns the recipe, so chains like .id(...) work; .id records the id.
-const handle = entry => { const h = new Proxy({}, { get: (t, k) => (k === 'id' ? i => { entry.id = String(i); return h } : () => h) }); return h }
-const add = e => { e.file = current; e.handler = currentHandler; out.recipes.push(e); return handle(e) }
-const event = new Proxy({}, { get: (t, k) => {
-  if (k === 'shaped') return (output, pattern, keys) => add({ kind: 'shaped', output, pattern, keys })
-  if (k === 'shapeless') return (output, inputs) => add({ kind: 'shapeless', output, inputs })
-  if (k === 'custom') return json => add({ kind: 'custom', json })
-  if (k === 'remove') return filter => { out.removed.push({ file: current, handler: currentHandler, filter }) }
-  return () => handle({})
-} })
-handlers.forEach(([f, h], i) => { current = f; currentHandler = i; try { h(event) } catch (e) { out.errors.push(f + ' handler ' + i + ': ' + e) } })
-process.stdout.write(JSON.stringify(out, (k, v) => (v === undefined ? '<undefined>' : v)))
-"""
+MEK_JAR = "Mekanism-1.21.1-10.7.19.85.jar"
+GEN_JAR = "MekanismGenerators-1.21.1-10.7.19.85.jar"
 
 ELITE, ULTIMATE, ULTIMATE_ITEM = "#c:circuits/elite", "#c:circuits/ultimate", "mekanism:ultimate_control_circuit"
 
@@ -125,40 +84,29 @@ MOVED_TO_TIER5 = [
 LOADED_AS = {"minecraft:crafting_shaped": "kubejs:shaped"}
 
 
+T51 = "confluence:tier5/ultimate_control_circuit"
+
+
 @pytest.fixture(scope="module")
 def recorded():
-    node = shutil.which("node")
-    assert node, "node is not on PATH; `node --version` must print a version (v22.3.0 was used when this test was written)"
-    env = {**os.environ, "PACK_ROOT": str(ROOT), "FILES": ",".join(SCRIPTS)}
-    proc = subprocess.run([node, "-e", HARNESS], env=env, capture_output=True, text=True, timeout=60)
-    assert proc.returncode == 0, proc.stderr
-    return json.loads(proc.stdout)
-
-
-def ingredient(v):
-    """A key value as a script writes it ('#tag' or an item id) or as raw JSON ({"tag": ...} or {"item": ...})."""
-    if isinstance(v, dict):
-        return "#" + v["tag"] if "tag" in v else v.get("item", v)
-    return v
+    return run(TIER3, TIER5)
 
 
 def view(r):
     """(loaded_type, pattern, key, (result id, count)) of a recorded gate.shaped or gate.custom recipe. A gate.shaped recipe
     loads as kubejs:shaped (research/phase7-v0.3-test-log.md §2), a crafting-grid shaped recipe all the same (javap,
     kubejs-neoforge-2101.7.2-build.377.jar: ShapedKubeJSRecipe extends net.minecraft.world.item.crafting.ShapedRecipe).
-    A gate.custom recipe loads with its JSON's own type."""
+    A gate.custom recipe loads with its JSON's own type, and its key is recipe JSON ({"item"} or {"tag"} objects only)."""
     if r["kind"] == "shaped":
         out = r["output"] if isinstance(r["output"], dict) else {"id": r["output"], "count": None}
-        return ("kubejs:shaped", r["pattern"], {k: ingredient(v) for k, v in r["keys"].items()},
+        # Only {id, count}: a components patch ('id[...]' through Item.of) is not the spec's item.
+        assert set(out) == {"id", "count"}, out
+        return ("kubejs:shaped", r["pattern"], {k: ingredient(v) for k, v in r["key"].items()},
                 (out["id"], out["count"]))
+    assert r["kind"] == "custom", r
     j = r["json"]
-    return (j["type"], j["pattern"], {k: ingredient(v) for k, v in j["key"].items()}, (j["result"]["id"], j["result"]["count"]))
-
-
-def one(recorded, rid):
-    hits = [r for r in recorded["recipes"] if r.get("id") == rid]
-    assert len(hits) == 1, f"{rid}: {len(hits)} recipes recorded; script errors: {recorded['errors']}"
-    return hits[0]
+    return (j["type"], j["pattern"], {k: ingredient(v, json_only=True) for k, v in j["key"].items()},
+            (j["result"]["id"], j["result"]["count"]))
 
 
 @pytest.mark.parametrize("rid", sorted(REWRITES))
@@ -168,22 +116,33 @@ def test_rewrite_keeps_the_default_except_the_circuit(recorded, rid):
     assert r["file"] == (TIER5 if rid.startswith("confluence:tier5/") else TIER3)
     typ, pattern, key, result = DEFAULTS[name]
     assert view(r) == (LOADED_AS.get(typ, typ), pattern, {**key, letter: circuit}, result)
+    # One maker: no other recipe in these scripts makes the item (the default is removed by id).
+    assert one_maker(recorded, result[0]) == [rid], f"{result[0]} is made by {one_maker(recorded, result[0])}"
 
 
 def test_t51_ultimate_control_circuit(recorded):
-    r = one(recorded, "confluence:tier5/ultimate_control_circuit")
+    r = one(recorded, T51)
     assert r["file"] == TIER5
     assert view(r) == ("kubejs:shaped", ["EAE", "UTU", "EAE"],
                        {"E": ELITE, "A": "#mekanism:alloys/atomic", "U": "#c:ingots/unobtainium", "T": "ars_nouveau:wilden_tribute"},
                        (ULTIMATE_ITEM, 4))
+    assert one_maker(recorded, ULTIMATE_ITEM) == [T51], f"{ULTIMATE_ITEM} is made by {one_maker(recorded, ULTIMATE_ITEM)}"
 
 
 def test_defaults_removed_by_id(recorded):
-    removed = {e["filter"].get("id") for e in recorded["removed"] if isinstance(e["filter"], dict)}
+    filters = [e["filter"] for e in recorded["filters"]]
+    # Two filter shapes only, as test_ae2_recipes.py and test_tier6_space_recipes.py allow: {id: <a string>} and
+    # {output: <a string>} (tier3.js's replaceShaped). A regex id (written {"RegExp": ...}), a filter by mod, type or input,
+    # a stack as output, or a combined filter fails here.
+    odd = [f for f in filters if not (isinstance(f, dict) and len(f) == 1 and
+                                      (isinstance(f.get("id"), str) or isinstance(f.get("output"), str)))]
+    assert odd == [], odd
+    removed = {f["id"] for f in filters if "id" in f}
     assert sorted(set(REMOVED_BY_ID) - removed) == []
-    # No over-removal: no MOVED_TO_TIER5 id is removed, and nothing is removed by the circuit as output.
-    filters = [e["filter"] if isinstance(e["filter"], dict) else {"id": e["filter"]} for e in recorded["removed"]]
-    over = [f for f in filters if f.get("id") in MOVED_TO_TIER5 or f.get("output") in (ULTIMATE_ITEM, ULTIMATE)]
+    # No over-removal: no filter names the circuit (item or tag) or a MOVED_TO_TIER5 id, in any key. That catches
+    # {input: '#c:circuits/ultimate'}, {output: <a moved id>} and {output: Item.of(circuit)} as well as {id: <a moved id>}.
+    over = [f for f in filters
+            if any(s in json.dumps(f) for s in (ULTIMATE_ITEM, "c:circuits/ultimate", *MOVED_TO_TIER5))]
     assert over == []
 
 
@@ -195,25 +154,37 @@ def test_v02_qio_recipe_takes_elite_circuits(recorded, rid, cells):
 
 
 def test_tier3_asks_for_no_ultimate_circuit(recorded):
-    tier3 = [r for r in recorded["recipes"] if r["file"] == TIER3]
+    """No recipe tier3.js adds, and no other recipes-event call it makes (replaceInput and the like), names the circuit."""
+    tier3 = [r for r in all_rows(recorded) if r["file"] == TIER3]
     assert tier3, recorded["errors"]
-    asks = [r.get("id") for r in tier3
-            if "c:circuits/ultimate" in json.dumps(r) or '"%s"' % ULTIMATE_ITEM in json.dumps(r)]
+
+    def names_it(x):
+        return "c:circuits/ultimate" in json.dumps(x) or '"%s"' % ULTIMATE_ITEM in json.dumps(x)
+
+    asks = [r["id"] for r in tier3 if names_it(r)]
     assert asks == []
+    assert [o for o in recorded["other"] if o["file"] == TIER3 and names_it(o)] == []
 
 
 def test_defaults_match_the_jar():
-    if not MODS.is_dir():
-        pytest.skip(f"{MODS} does not exist (no server has been booted from this clone)")
-    # 'Mekanism-*.jar' does not match MekanismGenerators-*.jar or MekanismAdditions-*.jar: the hyphen follows 'Mekanism'.
-    found = sorted(MODS.glob("Mekanism-*.jar"))
-    assert found == [MEK_JAR], f"DEFAULTS were read from {MEK_JAR.name}; {MODS} holds {[p.name for p in found]}"
-    with zipfile.ZipFile(MEK_JAR) as jar:
+    """DEFAULTS are Mekanism's defaults, and each MOVED_TO_TIER5 id is still in its jar and still takes the ultimate control
+    circuit. All 26 name it by tag, as key {"tag": "c:circuits/ultimate"} (checked in both jars when Task 8b wrote this);
+    either form, tag or item, counts."""
+    mek = pinned_jar("Mekanism-", MEK_JAR, "mekanism.pw.toml")
+    gen = pinned_jar("MekanismGenerators-", GEN_JAR, "mekanism-generators.pw.toml")
+    with zipfile.ZipFile(mek) as jar:
         for name, want in DEFAULTS.items():
-            d = json.loads(jar.read(f"data/mekanism/recipe/{name}.json"))
-            got = (d["type"], d["pattern"], {k: ingredient(v) for k, v in d["key"].items()},
+            d = jar_json(jar, f"data/mekanism/recipe/{name}.json", f"DEFAULTS[{name!r}] no longer describes Mekanism's default")
+            got = (d["type"], d["pattern"], {k: ingredient(v, json_only=True) for k, v in d["key"].items()},
                    (d["result"]["id"], d["result"]["count"]))
             assert got == want, name
+    for rid in MOVED_TO_TIER5:
+        ns, path = rid.split(":")
+        with zipfile.ZipFile({"mekanism": mek, "mekanismgenerators": gen}[ns]) as jar:
+            d = jar_json(jar, f"data/{ns}/recipe/{path}.json", f"MOVED_TO_TIER5 names a recipe that is gone ({rid})")
+        letters = [k for k, v in d.get("key", {}).items() if ingredient(v, json_only=True) in (ULTIMATE, ULTIMATE_ITEM)]
+        assert letters and all(k in "".join(d["pattern"]) for k in letters), (
+            f"{rid} no longer takes the ultimate control circuit, so it no longer moves to tier 5 with it: {d}")
 
 
 # v0.3 Task 5: the three script recipes of tier5.js's "Key, Supreme frame, alloys" block (spec §4.1 D5.1, §5 M5.1 and X5.1;
@@ -221,7 +192,15 @@ def test_defaults_match_the_jar():
 # item.ars_nouveau.{air,earth,fire,water}_essence. T5.2 and X5.2 are datapack JSON: tools/tests/test_if_dissolution_data.py.
 KEY, UNOB_ATM, VIB_ATM = ("confluence:tier5/other_key", "confluence:tier5/unobtainium_allthemodium_alloy_ingot",
                           "confluence:tier5/vibranium_allthemodium_alloy_ingot")
+KEY_ITEM, UNOB_ATM_ITEM, VIB_ATM_ITEM = ("kubejs:other_key", "allthemodium:unobtainium_allthemodium_alloy_ingot",
+                                         "allthemodium:vibranium_allthemodium_alloy_ingot")
 HEART = "allthemodium:piglich_heart"
+
+# Each output this file pins -> the only recipe ids that may make it, in any server script (test_recipe_scripts.py).
+SOLE_MAKERS = {
+    **{DEFAULTS[name][3][0]: [rid] for rid, (name, _, _) in REWRITES.items()},
+    ULTIMATE_ITEM: [T51], KEY_ITEM: [KEY], UNOB_ATM_ITEM: [UNOB_ATM], VIB_ATM_ITEM: [VIB_ATM],
+}
 
 
 def test_d51_key_to_the_other(recorded):
@@ -230,7 +209,8 @@ def test_d51_key_to_the_other(recorded):
     assert view(r) == ("kubejs:shaped", [" E ", "VFB", " D "],
                        {"E": "kubejs:end_focus", "V": "#c:ingots/vibranium", "F": "#industrialforegoing:machine_frame/advanced",
                         "B": "the_bumblezone:essence_of_the_bees", "D": "minecraft:dragon_egg"},
-                       ("kubejs:other_key", 1))
+                       (KEY_ITEM, 1))
+    assert one_maker(recorded, KEY_ITEM) == [KEY]
 
 
 def test_m51_unobtainium_allthemodium_alloy(recorded):
@@ -239,12 +219,13 @@ def test_m51_unobtainium_allthemodium_alloy(recorded):
     j = r["json"]
     assert set(j) == {"type", "keepNbtOfReagent", "sourceCost", "reagent", "pedestalItems", "result"}, sorted(j)
     assert j["type"] == "ars_nouveau:enchanting_apparatus"
-    assert ingredient(j["reagent"]) == "#c:ingots/unobtainium"
-    assert Counter(map(ingredient, j["pedestalItems"])) == Counter([
+    assert ingredient(j["reagent"], json_only=True) == "#c:ingots/unobtainium"
+    assert Counter(ingredient(v, json_only=True) for v in j["pedestalItems"]) == Counter([
         "#c:ingots/allthemodium", HEART, "ars_nouveau:air_essence", "ars_nouveau:earth_essence", "ars_nouveau:fire_essence",
         "ars_nouveau:water_essence"])
     assert j["sourceCost"] == 10000 and j["keepNbtOfReagent"] is False
-    assert j["result"] == {"count": 1, "id": "allthemodium:unobtainium_allthemodium_alloy_ingot"}
+    assert j["result"] == {"count": 1, "id": UNOB_ATM_ITEM}
+    assert one_maker(recorded, UNOB_ATM_ITEM) == [UNOB_ATM]
 
 
 def test_x51_vibranium_allthemodium_alloy(recorded):
@@ -253,18 +234,21 @@ def test_x51_vibranium_allthemodium_alloy(recorded):
     j = r["json"]
     assert set(j) == {"type", "energy", "ingredients", "result"}, sorted(j)
     assert j["type"] == "powah:energizing"
-    assert Counter(map(ingredient, j["ingredients"])) == Counter([
+    assert Counter(ingredient(v, json_only=True) for v in j["ingredients"]) == Counter([
         "#c:ingots/allthemodium", "#c:ingots/vibranium", HEART, "powah:nitro_crystal_block"])
     assert j["energy"] == 1000000000
-    assert j["result"] == {"count": 1, "id": "allthemodium:vibranium_allthemodium_alloy_ingot"}
+    assert j["result"] == {"count": 1, "id": VIB_ATM_ITEM}
+    assert one_maker(recorded, VIB_ATM_ITEM) == [VIB_ATM]
 
 
 def test_task5_block_is_add_only(recorded):
     """One handler makes all three and removes nothing. No loaded recipe makes the key or an alloy ingot except Allthemodium's
     9-from-1 block recipes, which stay (research/phase7-tier5-ids.md §4.3); gate.custom given an `output` would remove every
-    recipe of that output, the block recipe included."""
+    recipe of that output, the block recipe included. The handler makes no other recipes-event call either (replaceInput and
+    the like)."""
     handlers = {one(recorded, rid)["handler"] for rid in (KEY, UNOB_ATM, VIB_ATM)}
     assert len(handlers) == 1, handlers
     h = handlers.pop()
-    assert sorted(r.get("id") for r in recorded["recipes"] if r["handler"] == h) == sorted([KEY, UNOB_ATM, VIB_ATM])
-    assert [e["filter"] for e in recorded["removed"] if e["handler"] == h] == []
+    assert sorted(r["id"] for r in all_rows(recorded) if r["handler"] == h) == sorted([KEY, UNOB_ATM, VIB_ATM])
+    assert [e["filter"] for e in recorded["filters"] if e["handler"] == h] == []
+    assert [o for o in recorded["other"] if o["handler"] == h] == []

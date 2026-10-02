@@ -1,25 +1,25 @@
 """v0.3 bypass closures (spec §7; plan Task 8): the Unobtainium 5x chain (X2.2, D125), the six ore/raw smelting removals
 (D112c), the tier-ore block tags (D112a, D112b) and the Drygmy blacklist (X3.4, D124).
 
-The KubeJS scripts run in node through tools/tests/run_server_scripts.js with recording stand-ins, so these tests need no
-server boot. They pin what the scripts ask KubeJS to do; the boot-time proof that KubeJS did it is tools/check_recipes.py
-and the tags.json counts in the plan's Verify step. node runs V8, not the pack's Rhino, so the load proof is
-tools/server_boot.sh. node must be on PATH: the `node` fixture asserts it, so these tests run rather than skip.
+The KubeJS scripts run in node through tools/tests/run_server_scripts.js (the shared runner, through kjs.run) with recording
+stand-ins, so these tests need no server boot. They pin what the scripts ask KubeJS to do; the boot-time proof that KubeJS
+did it is tools/check_recipes.py and the tags.json counts in the plan's Verify step. node runs V8, not the pack's Rhino, so
+the load proof is tools/server_boot.sh. node must be on PATH: the `node` fixture (kjs.node_fixture) and kjs.run assert it, so
+these tests run rather than skip.
 
-The lists are closed: bypass.js removes exactly REMOVED_ALL and adds exactly CUSTOM_IDS, in order, and the block-tag handler
-only adds, and only to the nine deny tags and the five immune tags. So a broader filter ({mod: ...}, {output: ...},
-{type: ...}, a regex), a gate.custom that also removes by output, a new custom recipe, a tag removal or an edit to any other
-block tag fails here. Two recipe shapes are not recorded yet (tools/tests/run_server_scripts.js header, plan Task 8b).
+The lists are closed: bypass.js removes exactly REMOVED_ALL and adds exactly CUSTOM_IDS, in order, and nothing else (no
+shaped or shapeless recipe, no id-less custom recipe, no other recipes-event call), and the block-tag handler only adds, and
+only to the nine deny tags and the five immune tags. So a broader filter ({mod: ...}, {output: ...}, {type: ...}, a regex),
+a gate.custom that also removes by output, a new recipe of any shape, a tag removal or an edit to any other block tag fails
+here. SOLE_MAKERS (each crystal -> the three recipe ids that may make it) is imported by test_recipe_scripts.py, which checks
+it over every server script.
 """
 import json
-import shutil
-import subprocess
-from pathlib import Path
 
 import pytest
 
-ROOT = Path(__file__).resolve().parents[2]
-HARNESS = ROOT / "tools" / "tests" / "run_server_scripts.js"
+from kjs import ROOT, node_fixture, one_maker, run  # noqa: F401  (node_fixture provides the `node` fixture)
+
 DRYGMY = ROOT / "kubejs" / "data" / "ars_nouveau" / "tags" / "entity_type" / "drygmy_blacklist.json"
 
 UNOB_CHAIN = [f"allthemodium:processing/unobtainium/slurry/dirty/{s}" for s in ("from_ore", "from_raw_ore", "from_raw_block")]
@@ -53,6 +53,11 @@ REMOVED_ALL = [
 # Everything bypass.js adds, in order: the three chains' combining replacements.
 CUSTOM_IDS = [f"confluence:bypass/{m}_crystal_from_{s}" for m in ("allthemodium", "vibranium", "unobtainium")
               for s in ("ore", "raw_ore", "raw_block")]
+# The crystal each chain makes: lib/ids.js IDS.allthemodium.crystal, .vibraniumCrystal and .unobtainiumCrystal.
+CRYSTALS = {m: f"allthemodium:{m}_crystal" for m in ("allthemodium", "vibranium", "unobtainium")}
+# Each crystal -> the only recipe ids that may make it, in any server script (test_recipe_scripts.py). Allthemodium's own
+# crystallizing recipe is datapack JSON, not a script recipe.
+SOLE_MAKERS = {CRYSTALS[m]: [rid for rid in CUSTOM_IDS if rid.startswith(f"confluence:bypass/{m}_")] for m in CRYSTALS}
 # The whole Drygmy blacklist, in file order: the pack's six mod entries, the three v0.3 bosses (D124), the three vanilla bosses.
 DRYGMY_VALUES = [
     {"id": "undergarden:forgotten_guardian", "required": False},
@@ -71,26 +76,13 @@ DRYGMY_VALUES = [
 
 
 @pytest.fixture(scope="module")
-def node():
-    path = shutil.which("node")
-    assert path, "node is not on PATH; `node --version` must print a version (v22.3.0 was used when this test was written)"
-    return path
-
-
-def run(node, *scripts):
-    res = subprocess.run([node, str(HARNESS), *scripts], cwd=ROOT, capture_output=True, text=True, timeout=60)
-    assert res.returncode == 0, res.stderr
-    return json.loads(res.stdout)
-
-
-@pytest.fixture(scope="module")
 def bypass(node):
-    return run(node, "kubejs/server_scripts/bypass.js")
+    return run("kubejs/server_scripts/bypass.js")
 
 
 @pytest.fixture(scope="module")
 def events(node):
-    return run(node, "kubejs/server_scripts/events.js")
+    return run("kubejs/server_scripts/events.js")
 
 
 def block_adds(result):
@@ -104,6 +96,9 @@ def block_adds(result):
 
 def test_bypass_loads_and_runs_cleanly(bypass):
     assert bypass["handlers"]["recipes"] == 1 and bypass["errors"] == []
+    # A recipes-event member the runner does not model (replaceInput, smelting, ...) is recorded under `other`, not thrown;
+    # Task 8's runner threw, so this test failed on it, and still does.
+    assert bypass["other"] == [], bypass["other"]
 
 
 def test_bypass_removes_exactly_these(bypass):
@@ -112,6 +107,13 @@ def test_bypass_removes_exactly_these(bypass):
 
 def test_bypass_adds_exactly_the_nine_crystal_recipes(bypass):
     assert [c["id"] for c in bypass["custom"]] == CUSTOM_IDS
+    # Recorded at call time: an id-less event.custom, a shaped or shapeless recipe, a chained call or any other
+    # recipes-event member (replaceInput, smelting, ...) would add or change a recipe unseen by the line above.
+    assert [c["id"] for c in bypass["customs"]] == CUSTOM_IDS
+    assert [c["chain"] for c in bypass["customs"]] == [[]] * len(CUSTOM_IDS)
+    assert bypass["recipes"] == [] and bypass["other"] == [], (bypass["recipes"], bypass["other"])
+    # Each crystal is made by its own chain's three recipes and no other.
+    assert {crystal: one_maker(bypass, crystal) for crystal in SOLE_MAKERS} == SOLE_MAKERS
 
 
 def test_unobtainium_chain_needs_an_etrium_ingot(bypass):
