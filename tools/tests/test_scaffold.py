@@ -268,6 +268,23 @@ def test_validate_allows_repeat_on_a_kill_task():
     assert _repeat_problems("kill:minecraft:blaze:10") == []
 
 
+# An item task that does not consume submits itself on every inventory change: ItemTask.submitItemsOnInventoryChange
+# returns !consumesResources(), and consumesResources() is the task's consume_items over the chapter default
+# (ftb-quests-neoforge-2101.1.35.jar, javap -p -c: offsets 0-12 and 0-17). A repeatable one re-completes from the items
+# still held and pays out again each time, so repeat on an item task needs consume: true (v0.3 Task 11 fix round 1, B5).
+def test_validate_flags_repeat_on_a_non_consuming_item_task():
+    problems = _repeat_problems("item:kubejs:coin:16")
+    assert len(problems) == 1 and "X1.1" in problems[0] and "consume" in problems[0], problems
+
+
+def test_validate_allows_repeat_on_a_consuming_item_task():
+    ch = parse_chapter(YAML)
+    ch["group"] = quest_id("chapter:nether")
+    ch["quests"][1].update(task="item:kubejs:coin:16", repeat=True, consume=True)
+    assert validate_chapter(ch, tables={}) == []
+    assert validate_chapter(parse_chapter(REPEAT_YAML)) == []      # the shop shape: repeat with consume
+
+
 # An unnamespaced advancement id is a silent never-completes: AdvancementTask.canSubmit looks the id up on the
 # server and returns false forever when it misses (§3).
 def _advancement_problems(task):
@@ -286,3 +303,24 @@ def test_validate_flags_an_advancement_task_without_a_namespace():
 def test_validate_accepts_a_namespaced_advancement_with_or_without_criterion():
     assert _advancement_problems("advancement:minecraft:nether/root") == []
     assert _advancement_problems("advancement:minecraft:nether/root:entered_nether") == []
+
+
+# B4 (v0.3 Task 11 fix round 1): the shipped questbook is exactly what the YAML renders. Quest text lives only in the YAML
+# and the chapter SNBT and lang file are only ever scaffolded (D79), so any difference is a hand edit or a missed
+# re-scaffold. The Task 11 snbt-integrity lens ran this comparison by hand through render_snbt() and build_lang().
+# Every shipped YAML also passes validate_chapter, as the scaffolder would demand before writing it.
+def test_every_shipped_chapter_and_the_lang_file_are_the_yaml_render():
+    from scaffold_chapter import CHAPTERS_DIR, QUESTS, LANG
+    yamls = sorted(CHAPTERS_DIR.glob("*.yaml"))
+    chs = [parse_chapter(p.read_text()) for p in yamls]
+    problems = {p.name: validate_chapter(c) for p, c in zip(yamls, chs)}
+    assert problems == {name: [] for name in problems}, f"validate_chapter problems: {problems}"
+    snbt, names = sorted(p.stem for p in (QUESTS / "chapters").glob("*.snbt")), sorted(c["chapter"] for c in chs)
+    assert snbt == names, (f"chapter SNBT files {snbt} are not one per tools/chapters/*.yaml {names}: scaffold the missing "
+                           f"ones with `python3 tools/scaffold_chapter.py tools/chapters/<name>.yaml` from pack/ (D79)")
+    drift = [c["chapter"] for c in chs if (QUESTS / "chapters" / f'{c["chapter"]}.snbt').read_text() != render_snbt(c)]
+    assert drift == [], (f"chapter SNBT differs from its YAML render: {drift}. Carry any in-game or hand edit into "
+                         f"tools/chapters/<name>.yaml, delete the SNBT and run `python3 tools/scaffold_chapter.py "
+                         f"tools/chapters/<name>.yaml` from pack/ (D79)")
+    assert LANG.read_text() == build_lang(yamls), ("lang/en_us.snbt is not build_lang() of tools/chapters/*.yaml: delete "
+                                                   "it and run `python3 tools/scaffold_chapter.py --lang-only` from pack/ (D79)")

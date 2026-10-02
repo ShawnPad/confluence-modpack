@@ -58,4 +58,5 @@ quests:
     task: item:minecraft:elytra
     deps: [D4.1]
     coins: 10
-    desc: "End cities hold the elytra, the only flight gate before space. The Soul Elytra flies as well, but it unlocks nothing. Keep this one: the space suit will need it."
+    # v0.3: spec §9.2 X4.1 (D128).
+    desc: "End cities hold the elytra. Jetpacks, spells, wings and mounts can fly before this, but the space suit is built from an elytra, so keep this one."

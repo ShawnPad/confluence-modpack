@@ -1,6 +1,9 @@
 """Diff the tree against the questbook (spec §5.2, §5.4); check what the questbook pays out (v0.3 spec §10; D126, D133).
 
-main() fails on: a tree node with no quest, a quest missing a gate dependency, a reward table not in the canonical shape
+main() fails on: a tree node with no quest, a tree-node quest whose dependencies are not exactly its gate refs that have a
+quest (plus TREE_DEP_EXCEPTIONS), a helper quest in HELPER_DEPS whose dependencies differ from its pin, a dependency id
+that names no quest in any chapter, a tree node's quest that has a lang title but no chapter block quest_deps can read
+(UNREAD), a reward table not in the canonical shape
 (canonical_problems), a chapter off the measured reward shapes (chapter_problems), an emergency_items key in data.snbt
 (data_problems), a reward table holding a FORBIDDEN id, a reward table holding an EXCLUDED id (legendary_bag may hold
 LEGENDARY_ALLOWED), a reward table holding what tools/bag_banned.json bars it from (bag_collisions: a tier-5/6 input, a
@@ -15,10 +18,20 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from scaffold_chapter import LANG, quest_id  # noqa: E402
+from scaffold_chapter import CHAPTERS_DIR, LANG, parse_chapter, quest_id  # noqa: E402
 TREE = ROOT.parent / "progression" / "combined-tree.md"
 QUESTS = ROOT / "config" / "ftbquests" / "quests"
 NO_QUEST = {"X0.3", "X3.3"}          # audit-only nodes with nothing to do (spec §5.2)
+# Tree-node quests whose dependencies go beyond their gate line. Only one, shipped in v0.1: [D1.3] waits on its own
+# chapter's boss-kill helper CATA.1 (D66 (1)-(2); D135: "The one older exception, v0.1's [D1.3] depending on CATA.1,
+# stays as shipped"). Every other tree-node quest mirrors its `gate:` line exactly (D135).
+TREE_DEP_EXCEPTIONS = {"D1.3": ["CATA.1"]}
+# Helper quests (not tree nodes) whose dependencies are pinned: the nine D135 logs for the v0.3 chapters (design/decisions.md
+# D135, "Helper-quest dependencies"). The older helpers (INTRO.1-3, CATA.1, AETHER.1, UG.1, END.1, OTHER.1-2, BZ.1-2) and the
+# shop purchases (SHOP.1-5; tools/tests/test_chapters_v03.py pins SHOP.4-5) are not pinned here. HELPER_DEPS is pinned by
+# tools/tests/test_check_quests.py D135_HELPERS; a change edits the YAML, both dicts, and logs a decision (D135).
+HELPER_DEPS = {"OTHER5.1": ["D5.1"], "OTHER5.2": ["OTHER5.1"], "OTHER5.3": ["OTHER5.1"], "OTHER5.4": ["M3.1"],
+               "SPACE.1": ["T6.1"], "SPACE.2": ["M0.2"], "ES.1": [], "ES.2": ["D6.10"], "ES.3": ["D6.10"]}
 # The recipe dump's verdicts on bag items (round 3, I3), written by tools/tests/test_bag_collisions.py from the last boot's
 # .run/server/kubejs/exported/{recipes,item_tag_members}.json and tools/gates.yaml, which test_bag_collisions.py also checks
 # it against whenever a dump exists. main() reads it, so a clone with no dump fails a gated output in a bag too.
@@ -283,6 +296,24 @@ def quests_in_lang(text: str, nodes) -> dict[str, str]:
     return found
 
 
+QUEST_BLOCK = re.compile(r"^\t\t\{\n(.*?)^\t\t\}", re.M | re.S)
+QUEST_ID = re.compile(r'^\t\t\tid: "([0-9A-F]{16})"$', re.M)
+QUEST_DEPS = re.compile(r"^\t\t\tdependencies: \[(.*?)\]", re.M | re.S)
+HEX_ID = re.compile(r'"([0-9A-F]{16})"')
+
+
+def quest_deps(text: str) -> dict[str, list[str]]:
+    """quest id -> its dependency ids, for each quest block of one chapter SNBT. Reads the scaffolder's one-line array
+    and the one-id-per-line array an FTB Quests re-save may write."""
+    out = {}
+    for block in QUEST_BLOCK.findall(text):
+        m = QUEST_ID.search(block)
+        if m:
+            d = QUEST_DEPS.search(block)
+            out[m.group(1)] = HEX_ID.findall(d.group(1)) if d else []
+    return out
+
+
 def forbidden_in_table(text: str) -> list[str]:
     return [m.group(1) for m in FORBIDDEN.finditer(text)]
 
@@ -445,20 +476,26 @@ def main(argv: list[str]) -> int:
     lang_text = LANG.read_text() if LANG.exists() else ""
     have = quests_in_lang(lang_text, expected)
     missing = sorted(n for n in expected if n not in have)
-    # dependency mirror: every gate ref that has a quest must be a dependency of the node's quest
-    chapters = "".join(p.read_text() for p in (QUESTS / "chapters").glob("*.snbt"))
-    mismatched = []
-    for node, deps in expected.items():
-        if node not in have:
+    # dependency mirror, both ways: a tree-node quest depends on exactly its gate refs that have a quest in some chapter
+    # (plus TREE_DEP_EXCEPTIONS), a pinned helper on exactly HELPER_DEPS, and no dependency id names a missing quest
+    quests = {qid: (c.name, deps) for c in sorted((QUESTS / "chapters").glob("*.snbt"))
+              for qid, deps in quest_deps(c.read_text()).items()}
+    # names for failure lines: every tree node and every quest in tools/chapters/*.yaml (raw hex only when none matches)
+    yaml_nodes = [q["node"] for y in sorted(CHAPTERS_DIR.glob("*.yaml")) for q in parse_chapter(y.read_text())["quests"]]
+    tree_labels = [m.group(1) for m in map(NODE.match, TREE.read_text().splitlines()) if m]
+    label = {quest_id(n): n for n in tree_labels + yaml_nodes}
+    want = {n: [d for d in refs if quest_id(d) in quests] + TREE_DEP_EXCEPTIONS.get(n, [])
+            for n, refs in expected.items() if n in have}
+    want.update({h: deps for h, deps in HELPER_DEPS.items() if quest_id(h) in quests})
+    mismatched, extra, unread = [], [], []
+    for node, deps in want.items():
+        if quest_id(node) not in quests:   # titled in the lang, but quest_deps read no block for it: check nothing silently
+            unread.append(node)
             continue
-        qid = have[node]
-        # FTB Quests writes keys alphabetically, so `dependencies:` precedes `id:` inside the quest block.
-        idx = chapters.find(f'id: "{qid}"')
-        start = chapters.rfind("\n\t\t{", 0, idx) if idx >= 0 else -1
-        block_text = chapters[start:idx] if idx >= 0 else ""
-        for d in deps:
-            if d in have and have[d] not in block_text:
-                mismatched.append((node, d))
+        have_deps = quests[quest_id(node)][1]
+        mismatched += [(node, d) for d in deps if quest_id(d) not in have_deps]
+        extra += [(node, label.get(i, i)) for i in have_deps if i in quests and i not in {quest_id(d) for d in deps}]
+    dangling = [(c, label.get(qid, qid), i) for qid, (c, deps) in quests.items() for i in deps if i not in quests]
     tables = list((QUESTS / "reward_tables").glob("*.snbt"))
     forbidden = [(t.name, f) for t in tables for f in forbidden_in_table(t.read_text())]
     noncanonical = [(t.name, n, why) for t in sorted(tables) for n, why in canonical_problems(t.read_text())]
@@ -476,11 +513,17 @@ def main(argv: list[str]) -> int:
                  for codes in [snapshot_codes(i, snap)] if codes]
     collisions = [(t.stem, i, codes) for t in sorted(tables) for i, codes in
                   bag_collisions(t.stem, [m.group(3) for m in ENTRY.finditer(t.read_text())], snap)] if snap else []
-    print(f"nodes: {len(expected)} expected, {len(missing)} missing; deps: {len(mismatched)} mismatched; reward tables: {len(tables)}, forbidden items: {len(forbidden)}")
+    print(f"nodes: {len(expected)} expected, {len(missing)} missing; deps: {len(mismatched) + len(extra) + len(dangling) + len(unread)} mismatched; reward tables: {len(tables)}, forbidden items: {len(forbidden)}")
     for m in missing:
         print("  MISSING quest for", m)
+    for n in unread:
+        print(f"  UNREAD quest {n}")
     for n, d in mismatched:
         print(f"  DEP {n} should depend on {d}")
+    for n, d in extra:
+        print(f"  EXTRA DEP {n}: {d}")
+    for c, n, i in dangling:
+        print(f"  DANGLING DEP {c}: {n} depends on {i}, which names no quest")
     for t, f in forbidden:
         print("  FORBIDDEN", t, f)
     for t, n, why in noncanonical:
@@ -493,7 +536,7 @@ def main(argv: list[str]) -> int:
         print(f"  CHAPTER REWARD {c}: {i}")
     if snap is None:
         print(f"  NO SNAPSHOT {SNAPSHOT}: regenerate with `{SNAPSHOT_COMMAND}` (from pack/, after a boot)")
-    return 1 if (missing or mismatched or forbidden or noncanonical or excluded or collisions or rewarded or snap is None) else 0
+    return 1 if (missing or mismatched or extra or dangling or unread or forbidden or noncanonical or excluded or collisions or rewarded or snap is None) else 0
 
 
 if __name__ == "__main__":

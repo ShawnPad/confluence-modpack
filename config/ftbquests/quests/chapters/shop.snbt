@@ -36,5 +36,23 @@
 			x: 0.0d
 			y: 4.0d
 		}
+		{
+			can_repeat: true
+			dependencies: ["1DE1E4C4EC7D8079"]
+			id: "54C1782830D5FC57"
+			rewards: [{ id: "06C719E3E9909344" table_id: 868942939919745028L type: "loot" }]
+			tasks: [{ consume_items: true count: 192L id: "5D0A5E6B6115B1D5" item: { count: 1, id: "kubejs:coin" } type: "item" }]
+			x: 0.0d
+			y: 6.0d
+		}
+		{
+			can_repeat: true
+			dependencies: ["2FCB9239317C8F4B"]
+			id: "1E3F5FFA2B965670"
+			rewards: [{ id: "0FFC975829EE4314" table_id: 868942939919745029L type: "loot" }]
+			tasks: [{ consume_items: true count: 384L id: "509C4EC5D8BE534F" item: { count: 1, id: "kubejs:coin" } type: "item" }]
+			x: 0.0d
+			y: 8.0d
+		}
 	]
 }

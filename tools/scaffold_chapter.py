@@ -142,6 +142,12 @@ def validate_chapter(ch: dict, tables: dict[str, int] | None = None) -> list[str
         if q["bag"] and q["bag"] not in tables:
             # An unknown table_id resolves to null in RandomReward.readData and the reward silently pays nothing.
             problems.append(f'{q["node"]}: no reward table named "{q["bag"]}" in config/ftbquests/quests/reward_tables/')
+        if q["repeat"] and kind == "item" and not q["consume"]:
+            # ItemTask.submitItemsOnInventoryChange returns !consumesResources() (ftb-quests-neoforge-2101.1.35.jar, javap),
+            # so a non-consuming item task submits on every inventory change and a repeatable one re-completes from the
+            # items still held, paying out each time.
+            problems.append(f'{q["node"]}: repeat on an item task needs consume: true, or it re-completes from the items '
+                            f'still held (ItemTask.submitItemsOnInventoryChange)')
         if q["repeat"] and kind in AUTO_SUBMITTING_TASKS:
             problems.append(f'{q["node"]}: repeat on a {kind} task re-completes itself on a timer (every 100 ticks for '
                             f'dimension, 5 for advancement -- {kind.capitalize()}Task.autoSubmitOnPlayerTick); drop repeat')

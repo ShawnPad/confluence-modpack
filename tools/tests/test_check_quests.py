@@ -683,3 +683,153 @@ def test_the_real_chapters_and_data_pass():
     assert {p.name: check_quests.chapter_problems(p.read_text(), longs) for p in (QUESTS / "chapters").glob("*.snbt")} == {
         p.name: [] for p in (QUESTS / "chapters").glob("*.snbt")}
     assert check_quests.data_problems((QUESTS / "data.snbt").read_text()) == []
+
+
+# ---- Dependency mirror, both ways (v0.3 Task 11 fix round 1, B2/B3). "deps: 0 mismatched" used to mean only that each
+# tree ref sits in its quest's block; the Task 11 gates lens showed an extra dep (probe A), a dropped helper dep (B) and a
+# dangling dep id (E) all passed it. Now a tree-node quest's dependencies must equal its gate refs that have a quest (plus
+# check_quests.TREE_DEP_EXCEPTIONS), a pinned helper's must equal check_quests.HELPER_DEPS, and every dependency id must
+# name a quest. The probes edit a copy of the shipped chapters and run main() over tiers 0-6. Each first reads the copy's
+# clean summary line and expects it back with only the dep count changed: node counts are not pinned here (see CLEAN).
+ALL = "0,1,2,3,4,5,6"
+
+
+def _main_tiers(monkeypatch, capsys, root, tiers):
+    monkeypatch.setattr(check_quests, "QUESTS", root)
+    rc = check_quests.main(["--tiers", tiers])
+    return rc, capsys.readouterr().out.splitlines()
+
+
+def _clean(monkeypatch, capsys, root, tiers):
+    """main()'s one summary line on an unedited copy: exit 0, no missing node, no dep mismatch, the shipped tables."""
+    rc, out = _main_tiers(monkeypatch, capsys, root, tiers)
+    assert rc == 0 and len(out) == 1 and ", 0 missing; deps: 0 mismatched; " in out[0] and out[0].endswith(CLEAN), out
+    return out[0]
+
+
+def _failing(clean, n):
+    """The clean summary line with `n` dependency mismatches."""
+    assert clean.count("; deps: 0 mismatched;") == 1
+    return clean.replace("; deps: 0 mismatched;", f"; deps: {n} mismatched;")
+
+
+def _edit_deps(root, chapter, node, edit):
+    """Apply `edit` to `node`'s `dependencies:` line in the copy, inside its own quest block (keys are alphabetical, so
+    the line sits between the block's opening brace and its `id:`); an empty result drops the line."""
+    path = root / "chapters" / chapter
+    text = path.read_text()
+    assert text.count(f'\t\t\tid: "{quest_id(node)}"\n') == 1
+    idx = text.index(f'\t\t\tid: "{quest_id(node)}"\n')
+    start = text.rindex("\n\t\t{\n", 0, idx)
+    head = text[start:idx]
+    line = next(l for l in head.split("\n") if l.startswith("\t\t\tdependencies: "))
+    new_head = head.replace(line + "\n", edit(line) + "\n" if edit(line) else "")
+    assert new_head != head
+    path.write_text(text[:start] + new_head + text[idx:])
+
+
+def _probe(tmp_path, monkeypatch, capsys, chapter, node, edit, tiers=ALL):
+    """(clean summary line, exit code, output) of main() on a copy of the shipped chapters, before and after the edit."""
+    root = _tree(tmp_path, _real_tables())
+    clean = _clean(monkeypatch, capsys, root, tiers)
+    _edit_deps(root, chapter, node, edit)
+    rc, out = _main_tiers(monkeypatch, capsys, root, tiers)
+    return clean, rc, out
+
+
+def test_the_shipped_book_is_clean_at_tiers_0_6_and_0_4(tmp_path, monkeypatch, capsys):
+    root = _tree(tmp_path, _real_tables())
+    _clean(monkeypatch, capsys, root, ALL)
+    _clean(monkeypatch, capsys, root, "0,1,2,3,4")
+
+
+def test_probe_a_an_extra_tree_dep_fails(tmp_path, monkeypatch, capsys):
+    # D6.8 (Glacio) gates on [D6.6] only; giving it D6.3 as well is an extra dependency
+    clean, rc, out = _probe(tmp_path, monkeypatch, capsys, "space.snbt", "D6.8",
+                            lambda l: l[:-1] + f', "{quest_id("D6.3")}"]')
+    assert rc == 1 and out == [_failing(clean, 1), "  EXTRA DEP D6.8: D6.3"], out
+
+
+def test_probe_b_a_dropped_helper_dep_fails(tmp_path, monkeypatch, capsys):
+    # ES.2 (Starlight Golem) is pinned to [D6.10] by D135; drop its only dependency
+    clean, rc, out = _probe(tmp_path, monkeypatch, capsys, "starlight.snbt", "ES.2", lambda l: "")
+    assert rc == 1 and out == [_failing(clean, 1), "  DEP ES.2 should depend on D6.10"], out
+
+
+def test_probe_b2_an_extra_helper_dep_fails(tmp_path, monkeypatch, capsys):
+    clean, rc, out = _probe(tmp_path, monkeypatch, capsys, "starlight.snbt", "ES.2",
+                            lambda l: l[:-1] + f', "{quest_id("ES.1")}"]')
+    assert rc == 1 and out == [_failing(clean, 1), "  EXTRA DEP ES.2: ES.1"], out
+
+
+def test_an_extra_dep_on_an_unpinned_helper_prints_its_yaml_name(tmp_path, monkeypatch, capsys):
+    # AETHER.1 is neither a tree node nor in HELPER_DEPS; main() names every quest from the YAML, so no raw hex here
+    clean, rc, out = _probe(tmp_path, monkeypatch, capsys, "space.snbt", "D6.8",
+                            lambda l: l[:-1] + f', "{quest_id("AETHER.1")}"]')
+    assert rc == 1 and out == [_failing(clean, 1), "  EXTRA DEP D6.8: AETHER.1"], out
+
+
+def test_probe_e_a_dangling_dep_id_fails(tmp_path, monkeypatch, capsys):
+    clean, rc, out = _probe(tmp_path, monkeypatch, capsys, "space.snbt", "D6.8", lambda l: l[:-1] + ', "0123456789ABCDEF"]')
+    assert rc == 1 and out == [_failing(clean, 1),
+                               "  DANGLING DEP space.snbt: D6.8 depends on 0123456789ABCDEF, which names no quest"], out
+
+
+def test_a_dangling_dep_fails_outside_the_checked_tiers_too(tmp_path, monkeypatch, capsys):
+    # the dangling scan covers every quest in every chapter, whatever --tiers says
+    clean, rc, out = _probe(tmp_path, monkeypatch, capsys, "space.snbt", "D6.8", lambda l: l[:-1] + ', "0123456789ABCDEF"]',
+                            tiers="0,1,2,3,4")
+    assert rc == 1 and out == [_failing(clean, 1),
+                               "  DANGLING DEP space.snbt: D6.8 depends on 0123456789ABCDEF, which names no quest"], out
+
+
+def test_the_d1_3_exception_is_required_not_just_allowed(tmp_path, monkeypatch, capsys):
+    # D66 (1)-(2) and D135: v0.1's [D1.3] waits on its chapter's boss-kill helper CATA.1, the one tree-node quest that
+    # depends on a helper. Dropping it is a missing dependency like any other.
+    assert check_quests.TREE_DEP_EXCEPTIONS == {"D1.3": ["CATA.1"]}
+    clean, rc, out = _probe(tmp_path, monkeypatch, capsys, "cataclysm.snbt", "D1.3",
+                            lambda l: l.replace(f', "{quest_id("CATA.1")}"', ""), tiers="0,1,2,3,4")
+    assert rc == 1 and out == [_failing(clean, 1), "  DEP D1.3 should depend on CATA.1"], out
+
+
+def test_a_quest_block_the_reader_misses_is_unread(tmp_path, monkeypatch, capsys):
+    # [X2.4] has no dependencies and no quest depends on it, so a block quest_deps cannot read used to pass with no line
+    # at all. Here the block's opening brace carries its first key, a layout QUEST_BLOCK does not match.
+    root = _tree(tmp_path, _real_tables())
+    clean = _clean(monkeypatch, capsys, root, ALL)
+    path = root / "chapters" / "twilight.snbt"
+    text = path.read_text()
+    qid = quest_id("X2.4")
+    every = {q: deps for c in (root / "chapters").glob("*.snbt")
+             for q, deps in check_quests.quest_deps(c.read_text()).items()}
+    assert every[qid] == [] and not any(qid in deps for deps in every.values())
+    old = f'\t\t{{\n\t\t\tid: "{qid}"\n'
+    assert text.count(old) == 1
+    path.write_text(text.replace(old, f'\t\t{{ id: "{qid}"\n'))
+    assert qid not in check_quests.quest_deps(path.read_text())
+    rc, out = _main_tiers(monkeypatch, capsys, root, ALL)
+    assert rc == 1 and out == [_failing(clean, 1), "  UNREAD quest X2.4"], out
+
+
+def test_quest_deps_reads_one_line_and_ftb_resaved_arrays():
+    one = '\t\t{\n\t\t\tdependencies: ["7402B74889DEA9C1", "426E087DF5AC9F9E"]\n\t\t\tid: "51B7CA5D3BD490D1"\n\t\t}\n'
+    multi = ('\t\t{\n\t\t\tdependencies: [\n\t\t\t\t"7402B74889DEA9C1"\n\t\t\t\t"426E087DF5AC9F9E"\n\t\t\t]\n'
+             '\t\t\tid: "51B7CA5D3BD490D1"\n\t\t}\n')
+    none = '\t\t{\n\t\t\tid: "426E087DF5AC9F9E"\n\t\t}\n'
+    want = {"51B7CA5D3BD490D1": ["7402B74889DEA9C1", "426E087DF5AC9F9E"]}
+    assert check_quests.quest_deps(one) == want and check_quests.quest_deps(multi) == want
+    assert check_quests.quest_deps(none) == {"426E087DF5AC9F9E": []}
+
+
+# B3: the nine helper-quest dependencies D135 logs (design/decisions.md D135, "Helper-quest dependencies"): OTHER5.1 on
+# [D5.1]; OTHER5.2 and OTHER5.3 on OTHER5.1; OTHER5.4 on [M3.1]; SPACE.1 on [T6.1]; SPACE.2 on [M0.2]; ES.1 on nothing;
+# ES.2 and ES.3 on [D6.10]. check_quests.main() holds the shipped SNBT to HELPER_DEPS; this pins HELPER_DEPS and the YAML.
+D135_HELPERS = {"OTHER5.1": ["D5.1"], "OTHER5.2": ["OTHER5.1"], "OTHER5.3": ["OTHER5.1"], "OTHER5.4": ["M3.1"],
+                "SPACE.1": ["T6.1"], "SPACE.2": ["M0.2"], "ES.1": [], "ES.2": ["D6.10"], "ES.3": ["D6.10"]}
+
+
+def test_helper_deps_are_d135s_nine():
+    from scaffold_chapter import CHAPTERS_DIR, parse_chapter
+    assert check_quests.HELPER_DEPS == D135_HELPERS
+    yaml = {q["node"]: q["deps"] for p in CHAPTERS_DIR.glob("*.yaml") for q in parse_chapter(p.read_text())["quests"]}
+    assert {h: yaml.get(h) for h in D135_HELPERS} == D135_HELPERS

@@ -34,7 +34,9 @@ quests:
     task: item:undergarden:forgotten_ingot
     deps: [D3.1]
     coins: 10
-    desc: "The Forgotten Guardian stalks the catacombs' tunnels and drops forgotten nuggets when a player kills it; nine make an ingot. Every Eye of Ender takes one, and the ME Controller will want two much later."
+    # v0.3: spec §9.2 D3.4; the ME Controller takes forgotten ingot x1 (spec §5 S5.2, D117; recipe dump
+    # confluence:tier5/controller, key B = undergarden:forgotten_ingot).
+    desc: "The Forgotten Guardian stalks the catacombs' tunnels and drops forgotten nuggets when a player kills it; nine make an ingot. Every Eye of Ender takes one, and the ME Controller will want one much later."
   - node: T3.1
     title: Nitro Crystal
     task: item:powah:crystal_nitro
@@ -46,7 +48,9 @@ quests:
     task: item:mekanism:elite_control_circuit
     deps: [T1.2, T1.1, D2.2]
     coins: 10
-    desc: "Elite circuits and refined obsidian both cost Allthemodium now: the circuit takes an ingot above the usual reinforced alloys and advanced circuit, and refined obsidian dust becomes ingots in the Combiner with an Allthemodium nugget instead of in the Osmium Compressor. The obsidian feeds the QIO dashboard and the Planarium; the circuit becomes the ultimate control circuit the drive array, importer and exporter each want."
+    # v0.3: spec §9.2 T3.2 (D113): the QIO drive array, drive base, importer and exporter and the three chemical
+    # machines take elite circuits (spec §5 "T5.1 side" rows); ultimate circuits move to tier 5 (spec §5 T5.1).
+    desc: "Elite circuits and refined obsidian both cost Allthemodium now: the circuit takes an ingot above the usual reinforced alloys and advanced circuit, and refined obsidian dust becomes ingots in the Combiner with an Allthemodium nugget instead of in the Osmium Compressor. The obsidian feeds the QIO dashboard and the Planarium; the circuit goes straight into the QIO drive array, drive base, importer and exporter, and the Chemical Dissolution Chamber, Washer and Crystallizer; ultimate circuits wait for Unobtainium in tier 5."
   - node: T3.3
     title: Teleportation Core
     task: item:mekanism:teleportation_core
@@ -75,4 +79,8 @@ quests:
     title: No Henge Boss Loot
     task: checkmark
     deps: [M3.1]
-    desc: "Good to know: a bound Drygmy still farms drops from ordinary mobs, but the Forgotten Guardian, the Otherside's Sludges and Stalker, Cataclysm's Ender Guardian and Netherite Monstrosity, the Bee Queen, the dragon, the Wither and the Warden are all blacklisted from it. The mobs this tree asks you to fight stay fights."
+    # v0.3: spec §9.2 and §7 X3.4 (D124). kubejs/data/ars_nouveau/tags/entity_type/drygmy_blacklist.json adds
+    # allthemodium:piglich "Piglich", irons_spellbooks:fire_boss "Echo of Tyros, First Flamebearer" and
+    # irons_spellbooks:dead_king "The Dead King" (entity lang in allthemodium-3.0.1_mc_1.21.1.jar and
+    # irons_spellbooks-1.21.1-3.16.3.jar; SS §1.5, §2).
+    desc: "Good to know: a bound Drygmy still farms drops from ordinary mobs, but the Forgotten Guardian, the Otherside's Sludges and Stalker, Cataclysm's Ender Guardian and Netherite Monstrosity, the Bee Queen, the Piglich, the Dead King, the dragon, the Wither and the Warden are all blacklisted from it, and so is the Echo of Tyros, First Flamebearer. The mobs this tree asks you to fight stay fights."

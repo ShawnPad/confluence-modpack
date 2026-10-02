@@ -30,3 +30,23 @@ quests:
     coins: 0
     bag: rare_bag
     desc: "Hand in 96 coins for a Rare bag. It opens once you hold the Undergarden catalyst, and it can be traded again and again."
+  - node: SHOP.4
+    title: Epic Bag
+    # v0.3: spec §9.1 (192 coins, after D5.1) and §10 (table 0C0F1B0000000004, plan Task 10).
+    task: item:kubejs:coin:192
+    deps: [D5.1]
+    consume: true
+    repeat: true
+    coins: 0
+    bag: epic_bag
+    desc: "Hand in 192 coins for an Epic bag. It opens once you hold the Key to The Other, and it can be traded again and again."
+  - node: SHOP.5
+    title: Legendary Bag
+    # v0.3: spec §9.1 (384 coins, after D6.7) and §10 (table 0C0F1B0000000005, plan Task 10).
+    task: item:kubejs:coin:384
+    deps: [D6.7]
+    consume: true
+    repeat: true
+    coins: 0
+    bag: legendary_bag
+    desc: "Hand in 384 coins for a Legendary bag. It opens once you have set foot on Mercury, and it can be traded again and again."
