@@ -30,7 +30,7 @@ hash = "474cf6ab45d97940d43d44e7cf2d73b0c9bcb0a81554a57b49babfbb0ba532f9"
 
 [[files]]
 file = "config/ftbquests/quests/chapters/nether.snbt"
-hash = "231b732aae25b86cd7d842cc8d968867c599489cc706c145286588d39ab4050d"
+hash = "b822dc9513b2541fb26d7ef074a79da892ca3cf14153bccd96ea63a57f55e395"
 
 [[files]]
 file = "config/ftbquests/quests/chapters/otherside.snbt"
@@ -42,11 +42,23 @@ hash = "3b0237ca880f14e9d432f808da58fe17546e1c084a557b614579df6f8c218c7e"
 
 [[files]]
 file = "config/ftbquests/quests/chapters/shop.snbt"
-hash = "c118ac20c426e92aab274178bbe9ba0981bf80e62a4d519e7c7143b5867714d1"
+hash = "2a944cacba869026f4b3a2f73710a8c07f7d873541159e4332038a585d1c53dc"
+
+[[files]]
+file = "config/ftbquests/quests/chapters/space.snbt"
+hash = "608e46783acf26e08793535f9ec6fab5b2af73d4af34f9b76b61a058b3c60db8"
+
+[[files]]
+file = "config/ftbquests/quests/chapters/starlight.snbt"
+hash = "14482ffc55164540c16d03f51eea692eb03acd02c4a55d0ccc81934f364bb8cd"
+
+[[files]]
+file = "config/ftbquests/quests/chapters/the_other.snbt"
+hash = "6fc6d62193c542c21a8e07893628ea0cbf1b838b94f984d51288feff600a867d"
 
 [[files]]
 file = "config/ftbquests/quests/chapters/twilight.snbt"
-hash = "ba23f8f40e834437de1ff9412c4d14b019f1727e20c5a2cd5b6515d4ab970614"
+hash = "a82a9973f0f6bc2565a70764e7e613dc5b318129c5b7ad527629158de17cfc04"
 
 [[files]]
 file = "config/ftbquests/quests/chapters/undergarden.snbt"
@@ -58,7 +70,7 @@ hash = "daed85b108619d4dd9044df7c0e38984dd6aa44b53e776cb493f453399776b3f"
 
 [[files]]
 file = "config/ftbquests/quests/lang/en_us.snbt"
-hash = "93a37ae05e177eeff88f27680c163fefe3215fa17d6dc9cf4c46fd4cc1838e73"
+hash = "7627401c4bbac39ed48f181d63883d21d5e17163549f976f5c94651bd4706f5f"
 
 [[files]]
 file = "config/ftbquests/quests/reward_tables/common_bag.snbt"
