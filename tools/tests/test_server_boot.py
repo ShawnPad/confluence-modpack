@@ -6,7 +6,12 @@ directory with stand-in checker scripts; the real boot is the script's own job.
   - tools/check_boot_log.py's exit codes get distinct labels: 1 BOOT LOG ERRORS (an unknown record or an incomplete log),
     2 a usage error, 3 BAD ALLOWLIST; none of them reads as an unknown log error it is not;
   - the background processes the boot starts (packwiz serve, run.sh and its java child) are killed by an EXIT trap, so a boot
-    that dies under `set -e` leaves nothing running.
+    that dies under `set -e` leaves nothing running;
+  - a boot whose checks fail keeps its evidence (v0.3 Task 10b, D134): post_boot_checks copies logs/latest.log,
+    logs/debug.log, console.log, logs/kubejs/startup.log, logs/kubejs/server.log and kubejs/exported/recipes.json into
+    .run/failed-boots/<UTC timestamp>/ and prints the path, since the next boot deletes or rotates every one of them. When
+    that directory cannot be made, it says so ("NOT CREATED") and the boot still ends with BOOT CHECKS FAILED. The archive
+    is always under the pack's own .run/, so a SOURCE file in it names the server directory the evidence came from.
 """
 import os
 import re
@@ -81,6 +86,103 @@ def test_every_check_runs_and_the_status_is_combined(fake):
         line.startswith("ran check_boot_log.py") for line in out)
 
 
+# ---- Task 10b: a failed boot's evidence is archived ------------------------------------------------------------------
+
+ARCHIVED = ("logs/latest.log", "logs/debug.log", "console.log", "logs/kubejs/startup.log", "logs/kubejs/server.log",
+            "kubejs/exported/recipes.json")
+
+
+def archives(root):
+    base = root / ".run" / "failed-boots"
+    return sorted(base.iterdir()) if base.is_dir() else []
+
+
+def full_run(run):
+    """The two files the fake run directory lacks, so every archived file exists."""
+    (run / "logs" / "debug.log").write_text("[01Oct2026 22:26:26.226] [main/DEBUG] [x/]: debug\n")
+    (run / "kubejs" / "exported").mkdir(parents=True)
+    (run / "kubejs" / "exported" / "recipes.json").write_text('{"recipes": 1}\n')
+
+
+def test_a_failed_check_archives_the_boot_evidence(fake):
+    root, run = fake
+    full_run(run)
+    code, out = checks(fake, STUB_BOOT_LOG="1")
+    assert code == 1 and out[-1] == "BOOT CHECKS FAILED", out
+    [archive] = archives(root)
+    assert re.fullmatch(r"\d{8}T\d{6}Z", archive.name), archive.name
+    assert f"failed-boot archive: {archive}" in out
+    assert sorted(str(p.relative_to(archive)) for p in archive.rglob("*") if p.is_file()) == sorted(ARCHIVED + ("SOURCE",))
+    for rel in ARCHIVED:
+        assert (archive / rel).read_bytes() == (run / rel).read_bytes(), rel
+
+
+def test_the_archive_names_the_run_dir_it_came_from(fake):
+    """Task 10b quality review M1: the archive always goes under ROOT/.run/failed-boots, whatever RUN_DIR `--check` was given,
+    so each archive's SOURCE file holds that directory's absolute path."""
+    root, run = fake
+    full_run(run)
+    checks(fake, STUB_CONFIGS="1")
+    [archive] = archives(root)
+    assert archive.parent == root / ".run" / "failed-boots" and not run.is_relative_to(root)
+    assert (archive / "SOURCE").read_text() == f"{run}\n"
+
+
+def test_each_failure_gets_its_own_archive(fake):
+    """Two failures, even in the same second, never share (or overwrite) an archive."""
+    root, run = fake
+    full_run(run)
+    checks(fake, STUB_CONFIGS="1")
+    checks(fake, STUB_CONFIGS="1")
+    got = archives(root)
+    assert len(got) == 2 and all(re.fullmatch(r"\d{8}T\d{6}Z(-\d+)?", a.name) for a in got), got
+
+
+def test_an_absent_file_is_named_and_the_rest_archived(fake):
+    root, run = fake
+    code, out = checks(fake, STUB_BOOT_LOG="1")
+    [archive] = archives(root)
+    assert code == 1 and out[-1] == "BOOT CHECKS FAILED", out
+    assert "  (not present, not archived: logs/debug.log kubejs/exported/recipes.json)" in out
+    assert sorted(str(p.relative_to(archive)) for p in archive.rglob("*") if p.is_file()) == sorted(
+        ["logs/latest.log", "console.log", "logs/kubejs/startup.log", "logs/kubejs/server.log", "SOURCE"])
+
+
+@pytest.mark.skipif(os.geteuid() == 0, reason="root ignores the read-only mode, so mkdir would succeed")
+def test_an_archive_that_cannot_be_made_is_reported_and_the_boot_still_fails(fake):
+    """Task 10b fix round 1: with .run/ read-only, mkdir fails. The script names the path it could not make, never prints it as
+    an archive, and still ends with BOOT CHECKS FAILED and 1 (under set -e a bare failing mkdir would end it first, rc 1 but
+    no label)."""
+    root, run = fake
+    full_run(run)
+    (root / ".run").mkdir()
+    (root / ".run").chmod(0o555)
+    try:
+        code, out = checks(fake, STUB_BOOT_LOG="1")
+    finally:
+        (root / ".run").chmod(0o755)
+    assert (code, out[-1]) == (1, "BOOT CHECKS FAILED"), out
+    [line] = [x for x in out if x.startswith("failed-boot archive:")]
+    assert re.fullmatch(rf"failed-boot archive: NOT CREATED \({re.escape(str(root))}/\.run/failed-boots/\d{{8}}T\d{{6}}Z\)",
+                        line), line
+    assert archives(root) == []
+    assert "BOOT LOG ERRORS" in out
+
+
+def test_passing_checks_archive_nothing(fake):
+    root, run = fake
+    full_run(run)
+    code, out = checks(fake)
+    assert (code, out[-1], archives(root)) == (0, "BOOT OK", []), out
+    assert not [line for line in out if "failed-boot archive" in line]
+
+
+def test_the_archive_stays_out_of_git_and_the_pack():
+    """.run/ (where failed-boots/ lives) is ignored by git and by packwiz."""
+    for name in (".gitignore", ".packwizignore"):
+        assert ".run/" in (ROOT / name).read_text().splitlines(), name
+
+
 def test_a_missing_log_fails_without_stopping_the_other_checks(fake):
     root, run = fake
     (run / "logs" / "kubejs" / "startup.log").unlink()
@@ -127,6 +229,9 @@ os.makedirs("logs/kubejs", exist_ok=True)
 open("logs/latest.log", "w").write(T + " [main/INFO] [x/]: starting\n")
 for name in ("startup", "server"):
     open("logs/kubejs/%s.log" % name, "w").write("[23:15:00] [INFO] ok\n")
+open("logs/debug.log", "w").write(T + " [main/DEBUG] [x/]: stub debug\n")
+os.makedirs("kubejs/exported", exist_ok=True)
+open("kubejs/exported/recipes.json", "w").write('{"stub": %d}\n' % os.getpid())
 time.sleep(float(os.environ.get("STUB_DONE_AFTER", "0")))
 print('[23:15:24] [Server thread/INFO] [minecraft/DedicatedServer]: Done (1.0s)! For help, type "help"', flush=True)
 print("[23:15:25] [Server thread/INFO] [FTB Quests/]: Loaded 4 chapter groups", flush=True)
@@ -195,6 +300,7 @@ def stub_boot(tmp_path, stub_kit):
         assert not (state / "canary").exists(), (state / "canary").read_text()
         return p.returncode, out, pids, {n: pid for n, pid in pids.items() if running(pid)}
 
+    boot.root = root
     yield boot
     for p in started:   # never leave a stub behind, whatever the test did
         if p.poll() is None:
@@ -219,6 +325,7 @@ def test_a_clean_stub_boot_passes_and_clears_the_trap_before_the_checks(stub_boo
     code, out, pids, alive = stub_boot(trace=True)
     assert (set(pids), alive) == (set(STUB_NAMES), {})
     assert (code, labels(out)) == (0, ["BOOT OK"]), out
+    assert archives(stub_boot.root) == [], "a clean boot archives nothing (Task 10b)"
     # after the shutdown nothing signals a PID again: no kill or pgrep runs once the checks start (the EXIT trap is gone)
     trace = out.splitlines()
     first = next(i for i, line in enumerate(trace) if re.match(r"^\++ post_boot_checks ", line))
@@ -250,3 +357,18 @@ def test_a_server_that_ignores_sigterm_is_killed_and_fails_the_boot(stub_boot):
     code, out, pids, alive = stub_boot({"STUB_JAVA_IGNORES_TERM": "1"})
     assert (set(pids), alive) == (set(STUB_NAMES), {})
     assert (code, labels(out)) == (1, ["SERVER DID NOT STOP", "BOOT CHECKS FAILED"]), out
+
+
+def test_a_stub_boot_whose_checks_fail_keeps_its_evidence(stub_boot):
+    """Task 10b: the forced boot-log failure leaves .run/failed-boots/<UTC timestamp>/ holding this boot's six files."""
+    code, out, pids, alive = stub_boot({"STUB_BOOT_LOG": "1"})
+    assert (set(pids), alive) == (set(STUB_NAMES), {})
+    assert (code, labels(out)) == (1, ["BOOT LOG ERRORS", "BOOT CHECKS FAILED"]), out
+    run = stub_boot.root / ".run" / "server"
+    [archive] = archives(stub_boot.root)
+    assert f"failed-boot archive: {archive}" in out.splitlines()
+    for rel in ARCHIVED:
+        assert (archive / rel).read_bytes() == (run / rel).read_bytes(), rel
+    assert "Done (1.0s)" in (archive / "console.log").read_text()
+    assert (archive / "SOURCE").read_text() == f"{run}\n"
+    assert (archive / "kubejs" / "exported" / "recipes.json").read_text() == '{"stub": %s}\n' % pids["java"]

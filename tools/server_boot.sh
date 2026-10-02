@@ -3,9 +3,12 @@
 # its java child), however the script ends before the server is stopped; a server still running 60 s after the stop is killed
 # with SIGKILL and fails the boot (SERVER DID NOT STOP), and the trap is cleared before the checks. Exit 0 iff the server reached "Done" with no KubeJS errors, no recipe parse errors
 # (logs/latest.log must exist), every shipped config/ file loaded unchanged (tools/check_configs.py), no FTB Quests errors and
-# no ERROR or FATAL line in logs/latest.log that tools/boot_allowlist.txt does not explain (tools/check_boot_log.py).
+# no ERROR or FATAL line in logs/latest.log that tools/boot_allowlist.txt does not explain, no missing-tag WARN at all, and
+# Moonlight's pinned generated-pack set (tools/check_boot_log.py; D134). When a check fails, the boot's logs and recipe dump are
+# copied to .run/failed-boots/<UTC timestamp>/ and the path is printed (or "NOT CREATED (<path>)" when it cannot be made).
 # tools/server_boot.sh --check [RUN_DIR] runs only those post-boot checks, on the logs a boot already left in RUN_DIR (default
-# .run/server), without booting.
+# .run/server), without booting. When the checks pass it only reads the logs; each failing --check is archived too, as a new
+# copy under this pack's .run/failed-boots/ whatever RUN_DIR is (about 11 MB each; its SOURCE file names RUN_DIR).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 NEO=21.1.250
@@ -41,10 +44,11 @@ post_boot_checks() {
   # Questbook: print the load line and fail on any FTB Quests error (a malformed SNBT id or reward is logged, not thrown).
   grep '\[FTB Quests/\]: Loaded' console.log || echo "WARN: no FTB Quests 'Loaded' line within the grace period"
   if grep -E '/(ERROR|WARN)\] \[FTB Quests/\]' console.log | grep -v -i 'translation'; then echo "FTBQUESTS ERRORS"; status=1; fi
-  # Every ERROR/FATAL record in logs/latest.log must match a documented tools/boot_allowlist.txt entry, and the log must reach
-  # the server's Done line (v0.3 Task 8c). WARN lines are not checked: the config WARNs are check_configs.py's, and the
-  # allowlist header lists the known WARN noise. Its exit codes (its docstring): 1 an unknown record or an incomplete log,
-  # 2 a usage error, 3 a missing or bad allowlist.
+  # Every ERROR/FATAL record in logs/latest.log must match a documented tools/boot_allowlist.txt entry, and Minecraft's
+  # missing-tag WARN fails whatever the allowlist says; the log must reach the server's Done line (v0.3 Task 8c); and
+  # Moonlight's generated data packs must be the pinned set (v0.3 Task 10b, D134). Other WARN lines are not checked: the
+  # config WARNs are check_configs.py's, and the allowlist header lists the known WARN noise. Its exit codes (its docstring):
+  # 1 an unknown record, a dynamic-pack problem or an incomplete log, 2 a usage error, 3 a missing or bad allowlist.
   python3 "$ROOT/tools/check_boot_log.py" "$1" || rc=$?
   case "$rc" in
     0) ;;
@@ -52,6 +56,32 @@ post_boot_checks() {
     3) echo "BAD ALLOWLIST"; status=1 ;;
     *) echo "BOOT LOG ERRORS"; status=1 ;;
   esac
+  if [ "$status" -ne 0 ]; then
+    # Keep the failed boot's evidence (v0.3 Task 10b, D134): the next boot deletes latest.log, console.log and the KubeJS
+    # logs, rotates debug.log, and rewrites the recipe dump. Each failure gets its own .run/failed-boots/<UTC timestamp>/
+    # (git and packwiz both ignore .run/). A file that is not there is named, not fatal, and so is an archive directory that
+    # cannot be made (a read-only .run/, a full disk): the boot still ends with its label and status.
+    local stamp archive n=0 f missing=""
+    stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+    archive="$ROOT/.run/failed-boots/$stamp"
+    while [ -e "$archive" ]; do n=$((n + 1)); archive="$ROOT/.run/failed-boots/$stamp-$n"; done
+    if mkdir -p "$archive" 2>/dev/null; then
+      for f in logs/latest.log logs/debug.log console.log logs/kubejs/startup.log logs/kubejs/server.log \
+               kubejs/exported/recipes.json; do
+        if [ -f "$f" ]; then
+          { mkdir -p "$archive/$(dirname "$f")" && cp -p "$f" "$archive/$f"; } || echo "  (could not archive $f)"
+        else
+          missing="$missing $f"
+        fi
+      done
+      # The archive is always under this pack's .run/, so it records which server directory it came from.
+      printf '%s\n' "$1" > "$archive/SOURCE" || true
+      echo "failed-boot archive: $archive"
+      if [ -n "$missing" ]; then echo "  (not present, not archived:$missing)"; fi
+    else
+      echo "failed-boot archive: NOT CREATED ($archive)"
+    fi
+  fi
   if [ "$status" -eq 0 ]; then echo "BOOT OK"; else echo "BOOT CHECKS FAILED"; fi
   exit "$status"
 }

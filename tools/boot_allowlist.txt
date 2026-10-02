@@ -1,13 +1,20 @@
-# ERROR/FATAL lines in .run/server/logs/latest.log that a boot may log (tools/check_boot_log.py; tools/server_boot.sh runs it
-# last). One regex per line, matched against a whole record: the text from the logger bracket on ("[Curios API/]: ..."), with
-# any continuation lines joined by '\n' (re.fullmatch; see check_boot_log.py). Each entry sits right below a comment naming
-# the mod and why the line is harmless, with its evidence. Add a line only when you can say that; never to make a boot pass.
+# ERROR/FATAL lines in .run/server/logs/latest.log that a boot may log (the one WARN that also fails a boot is never here: below)
+# (tools/check_boot_log.py; tools/server_boot.sh runs it last). One regex per line, matched against a whole record: the text
+# from the logger bracket on ("[Curios API/]: ..."), with any continuation lines joined by '\n' (re.fullmatch; see
+# check_boot_log.py). Each entry sits right below a comment naming the mod and why the line is harmless, with its evidence.
+# Add a line only when you can say that; never to make a boot pass.
 # Seeded from the boot of 2026-10-01 (v0.3 Task 8c, pack branch v0.3 at a88d9e4): 26 ERROR records, 0 FATAL.
 #
 # Never allowlisted: "Couldn't load tag" (that boot's 20 were allthemodium's unregistered ids, fixed at the source in
 # kubejs/server_scripts/events.js, D132) and "Tried to load invalid item" (0 at that boot).
 #
-# Known WARN noise, not checked here (WARN never fails a boot; config WARNs are tools/check_configs.py's):
+# One WARN also fails a boot (v0.3 Task 10b, D134): vanilla MappedRegistry's "[net.minecraft.core.MappedRegistry/]:
+# Not all defined tags for registry ...", logged when a data pack names a tag that no loaded pack defines. 0 per boot since
+# D132; the boot of 2026-10-02 00:01 logged it twice, for the six biome tags of Supplementaries' lost generated pack (D134).
+# Never allowlisted, like "Couldn't load tag", and check_boot_log.py enforces it: it reports the WARN as unknown without
+# consulting this file. Fix the cause or, for the Moonlight provider race, restart the server.
+#
+# Known WARN noise, not checked here (no other WARN fails a boot; config WARNs are tools/check_configs.py's):
 #   5x [KubeJS Server/]: RecipeComponentValue.java#102: Failed to parse recipe 'allthemodium:<x>_crushing[minecraft:crafting_shapeless]'
 #   @ [ingredients][1]! Falling back to vanilla: ... Component 'ingredient' is not allowed to be empty!  for
 #   allthemodium:{allthemodium,vibranium,unobtainium}_dust_from_ore_crushing and ancient_{chiseled,cracked}_stone_bricks_from_crushing.
