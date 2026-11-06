@@ -22,6 +22,9 @@ CHAPTERS_DIR = ROOT / "tools" / "chapters"
 # Chapter-group titles. Ids are the ones committed in config/ftbquests/quests/chapter_groups.snbt (D63); the key shape
 # is `chapter_group.<%016X id>.title` (TranslationManager.makeKey, QuestObjectType.CHAPTER_GROUP, report §2).
 GROUPS = {"0C0F1A0000000001": "Trunk", "0C0F1A0000000002": "Spurs", "0C0F1A0000000003": "Shop"}
+# Reward table titles, shown where FTB Quests names the table. The bag item's own name is the table's loot_crate item_name.
+TABLE_TITLES = {"0C0F1B0000000001": "Common Bag", "0C0F1B0000000002": "Uncommon Bag", "0C0F1B0000000003": "Rare Bag",
+                "0C0F1B0000000004": "Epic Bag", "0C0F1B0000000005": "Legendary Bag"}
 # Tasks that complete on their own on a player tick and would instantly re-complete if repeatable:
 # DimensionTask.autoSubmitOnPlayerTick() == 100, AdvancementTask == 5 (research/phase7-ftbquests-task-shapes.md §1, §3).
 # KillTask is not one: it accrues kills toward `value` (§2), so a repeatable kill bounty is legitimate.
@@ -142,6 +145,12 @@ def validate_chapter(ch: dict, tables: dict[str, int] | None = None) -> list[str
         if q["bag"] and q["bag"] not in tables:
             # An unknown table_id resolves to null in RandomReward.readData and the reward silently pays nothing.
             problems.append(f'{q["node"]}: no reward table named "{q["bag"]}" in config/ftbquests/quests/reward_tables/')
+        if q["repeat"] and kind == "item" and not q["consume"]:
+            # ItemTask.submitItemsOnInventoryChange returns !consumesResources() (ftb-quests-neoforge-2101.1.35.jar, javap),
+            # so a non-consuming item task submits on every inventory change and a repeatable one re-completes from the
+            # items still held, paying out each time.
+            problems.append(f'{q["node"]}: repeat on an item task needs consume: true, or it re-completes from the items '
+                            f'still held (ItemTask.submitItemsOnInventoryChange)')
         if q["repeat"] and kind in AUTO_SUBMITTING_TASKS:
             problems.append(f'{q["node"]}: repeat on a {kind} task re-completes itself on a timer (every 100 ticks for '
                             f'dimension, 5 for advancement -- {kind.capitalize()}Task.autoSubmitOnPlayerTick); drop repeat')
@@ -267,8 +276,9 @@ def render_lang(ch: dict) -> str:
 
 
 def build_lang(chapter_paths: list[Path]) -> str:
-    """The whole lang/en_us.snbt: GROUPS plus every chapter YAML given (normally all of tools/chapters/*.yaml)."""
+    """The whole lang/en_us.snbt: GROUPS, TABLE_TITLES and every chapter YAML given (normally all of tools/chapters/*.yaml)."""
     entries = {f"chapter_group.{gid}.title": f'"{title}"' for gid, title in GROUPS.items()}
+    entries.update({f"reward_table.{tid}.title": f'"{title}"' for tid, title in TABLE_TITLES.items()})
     for p in chapter_paths:
         entries.update(lang_entries(parse_chapter(p.read_text())))
     return render_lang_text(entries)

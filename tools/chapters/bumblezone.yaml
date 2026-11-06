@@ -20,4 +20,5 @@ quests:
     task: item:the_bumblezone:essence_of_the_bees
     deps: [BZ.1]
     coins: 15
-    desc: "Eating it grants the bees' favour, but the key to The Other consumes one - and whether the Bee Queen gives out a second is unconfirmed. Build the key first; do not eat your first essence until it is done."
+    # v0.3: SS §3.5 (reset path), §3.8 (DRINK, consumed on drinking); spec §9.2 BZ.2 (D108).
+    desc: "Drinking it grants the bees' favour. The key to The Other consumes one Essence of the Bees. If you already drank yours, a teammate's spare works, or right-click the Bee Queen twice with an empty hand to reset her requests and earn another, at the full cost again."

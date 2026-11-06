@@ -9,7 +9,9 @@
 # Each spec is table,item,min,max: the item must appear in between min and max of the -n rolls (default 200)
 # or the probe exits 1. One `loot insert` per roll into a chest at 0 300 0 in the Overworld, `data get` to
 # read it, `data merge` to empty it; the three commands for every roll are queued at once and the log is parsed
-# after the queue drains, so 300 rolls take seconds, not minutes.
+# after the queue drains, so 300 rolls take seconds, not minutes. The chest's chunk is force-loaded for the run and released
+# before the stop (`forceload remove 0 0`; its EXIT trap does it when the probe fails mid-run); a removal the server does not
+# confirm fails the probe (tools/probe_lib.sh; v0.3 Task 11c, D136).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 RUN="$ROOT/.run/server"
@@ -31,36 +33,14 @@ cd "$RUN"
 java -jar packwiz-installer-bootstrap.jar -g -s server http://localhost:8087/pack.toml >/dev/null
 kill "$SERVE_PID" || true
 
-FIFO="$(mktemp -u "${TMPDIR:-/tmp}/probe_in.XXXXXX")"
-mkfifo "$FIFO"
-sleep 100000 > "$FIFO" &            # holds the pipe open; the server reads commands from it
-HOLD_PID=$!
-LOG="$RUN/console.loot.log"
-./run.sh nogui < "$FIFO" > "$LOG" 2>&1 &
-SERVER_PID=$!
-cleanup() {
-  printf 'stop\n' > "$FIFO" 2>/dev/null || true
-  for i in $(seq 1 60); do pgrep -P "$SERVER_PID" >/dev/null 2>&1 || break; sleep 1; done
-  JAVA_PID="$(pgrep -P "$SERVER_PID" || true)"; kill $JAVA_PID "$SERVER_PID" "$HOLD_PID" 2>/dev/null || true
-  rm -f "$FIFO"
-}
-trap cleanup EXIT
-
-# Send one console command and return the server's reply line(s) (logged as [minecraft/MinecraftServer]).
-cmd() {
-  local before; before=$(wc -l < "$LOG")
-  printf '%s\n' "$1" > "$FIFO"
-  for i in $(seq 1 "${2:-60}"); do
-    sleep 1
-    tail -n +"$((before + 1))" "$LOG" | grep -q 'minecraft/MinecraftServer\]: ' && break
-  done
-  tail -n +"$((before + 1))" "$LOG" | grep 'minecraft/MinecraftServer\]: ' | sed 's/.*MinecraftServer\]: //'
-}
+. "$ROOT/tools/probe_lib.sh"           # start_server, cmd, release and the EXIT trap (v0.3 Task 11c, D136)
+start_server "$RUN/console.loot.log"
 
 for i in $(seq 1 60); do grep -q 'Done (' "$LOG" 2>/dev/null && break; sleep 5; done
 grep -q 'Done (' "$LOG" || { echo "BOOT FAILED (see $LOG)"; exit 1; }
 
 POS="0 300 0"
+FORCED="forceload remove 0 0"     # before the add: a probe ended while it waits still removes it
 cmd "forceload add 0 0" | grep -E 'Marked|Unable|already' || true
 cmd "setblock $POS minecraft:chest" >/dev/null
 cmd "gamerule sendCommandFeedback true" >/dev/null
@@ -71,13 +51,15 @@ for spec in "$@"; do
   MIN=${MIN:-1}; MAX=${MAX:-$ROLLS}
   START=$(wc -l < "$LOG")
   for i in $(seq 1 "$ROLLS"); do
-    printf 'loot insert %s loot %s\ndata get block %s Items\ndata merge block %s {Items:[]}\n' "$POS" "$TABLE" "$POS" "$POS" > "$FIFO"
+    alive || break                  # a server that is gone reads nothing: 300 rolls would fill the pipe, and a write block
+    printf 'loot insert %s loot %s\ndata get block %s Items\ndata merge block %s {Items:[]}\n' "$POS" "$TABLE" "$POS" "$POS" >&3
   done
   # The queue is drained when every `data merge` has been answered ("Modified block data", or "Nothing changed" when
   # the chest was already empty because the table rolled nothing).
   answered() { tail -n +"$((START + 1))" "$LOG" | grep -cE 'Modified block data of|Nothing changed' || true; }
   for i in $(seq 1 300); do
     [ "$(answered)" -ge "$ROLLS" ] && break
+    alive || break
     sleep 1
   done
   n=$(answered)
@@ -89,4 +71,5 @@ for spec in "$@"; do
   printf '%-40s %-55s %4d / %d rolls (%5.1f%%), %d empty chests, expected %d..%d\n' "$TABLE" "$ITEM" "$HITS" "$ROLLS" "$(echo "100 * $HITS / $ROLLS" | bc -l)" "$EMPTY" "$MIN" "$MAX"
   { [ "$HITS" -ge "$MIN" ] && [ "$HITS" -le "$MAX" ]; } || FAIL=1
 done
+release || FAIL=1
 exit $FAIL

@@ -16,7 +16,10 @@ quests:
     task: item:allthemodium:raw_allthemodium
     deps: [D2.1, X1.1]
     coins: 10
-    desc: "Allthemodium spawns only in the Twilight Forest here, in the floors of caves below y 10, so look down rather than up. Bring a netherite-tier pickaxe or it will not break. The raw ore is what the smithing template and the Teleport Pad wait on."
+    # The smelting sentence: D112(c)/D130 removed allthemodium:*_ingot_from_{ore,raw}_smelting. Export (recipes.json): only
+    # *_from_{ore,raw}_blasting cooks it; processing/allthemodium/dust/from_raw_ore (mekanism:enriching) and
+    # *_ingot_from_dust_smelting remain. Probed for Unobtainium and Vibranium, rows P5.5, P5.6 (phase7-v0.3-test-log.md §2).
+    desc: "Allthemodium spawns only in the Twilight Forest here, in the floors of caves below y 10, so look down rather than up. Bring a netherite-tier pickaxe or it will not break. The raw ore is what the smithing template and the Teleport Pad wait on. Raw Allthemodium Ore will not cook in a furnace or an Energized Smelter. Use a blast furnace, or turn it into dust in an Enrichment Chamber first, because the dust cooks in either."
   - node: D2.3
     title: Allthemodium Template
     task: item:allthemodium:allthemodium_upgrade_smithing_template
@@ -76,16 +79,20 @@ quests:
   - node: X2.2
     title: Ore Quintupling
     task: checkmark
-    deps: [T0.2, D3.2]
-    desc: "Good to know: Mekanism's 5x slurry chain runs on base metals with no restriction at all. Tier ores are different - each one's chain consumes the next tier's material, so it multiplies a tier you have already reached and can never open one early."
+    deps: [T0.2, D3.2, D5.2, D6.9]
+    # v0.3: spec §9.2 X2.2; the Unobtainium crystal steps take an Etrium ingot (spec §7 X2.2, BA §1.3). The base-metal clause
+    # follows the tree's [X2.2] and D113: confluence:tier3/chemical_{dissolution_chamber,washer,crystallizer} take c:circuits/elite.
+    desc: "Good to know: Mekanism's 5x slurry chain for base metals opens with Elite Control Circuits, because the Chemical Dissolution Chamber, Chemical Washer and Chemical Crystallizer each take them here. Tier ores are different - each one's chain consumes the next tier's material, so it multiplies a tier you have already reached and can never open one early. Unobtainium's chain needs an Etrium ingot from Space."
   - node: X2.3
     title: No Tier-Ore Seeds
     task: checkmark
     desc: "Good to know: Mystical Agriculture ships no seed for Allthemodium, Vibranium, Unobtainium or any planet metal, and none has been added. Its default crops are still here to enjoy, just not as a shortcut past a gate."
   - node: X2.4
-    title: No Tier-Ore Bees
+    title: Tier-Metal Bees Need the Metal
     task: checkmark
-    desc: "Good to know: Productive Bees ships no bee for Allthemodium, Vibranium, Unobtainium or any planet metal, and none has been added. Keep the mod for its own sake, not as a way around a dimension."
+    # v0.3: spec §9.2 X2.4 (D103). Flower tags and conversions: productivebees-1.21.1-13.13.5.jar
+    # data/productivebees/productivebees/{atm,ad_astra}/*.json and recipe/bee_conversion/{ad_astra,atm}/ (BA §2.3, T5 §4.4).
+    desc: "Good to know: Productive Bees has bees for Allthemodium, Vibranium, Unobtainium, desh, ostrum, calorite and soul lava. Each one works only next to a block of its own metal as its flower - soul lava for the soul lava bee - and the desh, ostrum, calorite and soul lava bees are converted from another bee with that metal's block or a soul lava bucket. A bee renews a metal you have already reached; it never opens a new one."
   - node: X2.5
     title: No Laser-Drilled Debris
     task: checkmark

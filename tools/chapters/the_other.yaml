@@ -1,0 +1,223 @@
+chapter: the_other
+title: The Other
+group: 0C0F1A0000000001
+order: 6
+icon: kubejs:other_key
+# Tier 5 (v0.3 spec docs/superpowers/specs/2026-09-25-v0.3-tiers-5-6-design.md, "spec" below, §9.1).
+# Deps mirror the tree's "- gate:" refs as tools/check_quests.py reads them after plan Task 1; helper quests
+# (OTHER5.*) are never deps of tree-node quests (v0.2 precedent: UG.1, END.1, OTHER.1).
+# Research keys (spec key table): PAD research/phase7-other-pad-script.md, OD research/phase7-other-dimension.md,
+# BP research/phase7-other-boss-pairing.md, T5 research/phase7-tier5-ids.md, AE2 research/phase7-ae2-ids.md,
+# BA research/phase7-tier5-6-bypass-audit.md, GAP research/phase7-v0.3-gaps.md, SS research/phase7-soulshard-essence.md.
+# Names are lang strings (D98): allthemodium-3.0.1_mc_1.21.1.jar, ars_nouveau-1.21.1-5.13.1.jar,
+# Mekanism-1.21.1-10.7.19.85.jar, industrialforegoing-1.21-3.6.39.jar, Powah-6.2.10.jar, appliedenergistics2-19.2.17.jar,
+# toms_storage-1.21-2.4.2.jar (all in pack/.run/server/mods/, assets/<ns>/lang/en_us.json).
+# ATM structures have no structure.* lang key (OD §3, §4); the text uses the mod's own guide wording from
+# allthemodium jar assets/allthemodium/patchouli_books/allthemodium_book/en_us/entries/dimensions/otherdim.json:
+# "dungeons and ancient pyramids", "huge underground cities". The book itself is not in game (Patchouli is not in
+# the pack, D50; no patchouli jar in pack/.run/server/mods), so no desc refers players to it.
+quests:
+  - node: D5.1
+    title: Key to The Other
+    # kubejs:other_key, displayName "Key to The Other" (pack/kubejs/startup_scripts/items.js line 4).
+    # Recipe: spec §4.1 (End Focus, #c:ingots/vibranium, advanced frame, essence of the bees, dragon egg, one of each).
+    # Epic bag: spec §9.1, table 0C0F1B0000000004 (spec §10, plan Task 10).
+    task: item:kubejs:other_key
+    deps: [D3.2, D4.2, D4.3, T4.1, M4.2]
+    coins: 25
+    bag: epic_bag
+    desc: "The key takes the End Focus, a Vibranium ingot, an Advanced Machine Frame, an Essence of the Bees and the dragon egg, one of each. It opens The Other for your whole team, as the next quest explains, and the Epic bag now opens in the Coin Shop."
+  - node: OTHER5.1
+    title: Into The Other
+    # Two clicks, either hand, team scope, Beyond closed: spec §4.2 table and tooltip text §4.5 (D100, D101, D109);
+    # PAD §1.2-1.3 (the pad acts for a crouching player with both hands empty), PAD §3a (FTB Teams flag).
+    # No follow-in: spec §4.3 travel check (tpa, home, back, warp, Mekanism teleporter, portals) and §4.4 arrival
+    # check (Tombstone tablets and keys); PAD §4.2-4.3, BA §4.2, GAP §5.
+    # Pad in the End leads to allthemodium:the_beyond (PAD §1.4 table); the pack cancels it (spec §4.2).
+    # Pad drops: a player-placed pad drops itself, a pad spawned by a teleport does not (PAD §1.9, §4.4;
+    # lang jade.allthemodium.teleport_pad.no_drop "Does not drop when mined!").
+    # Always night: dimension_type the_other.json fixed_time 18000 (OD §1). Dimension id allthemodium:the_other
+    # (allthemodium jar data/allthemodium/dimension/the_other.json; lang dimension.allthemodium.the_other "The Other").
+    task: dimension:allthemodium:the_other
+    deps: [D5.1]
+    coins: 10
+    desc: "Place a Teleport Pad in the Nether and right-click it while holding the Key to The Other in either hand. That uses up one key and opens The Other for your whole FTB team. Then sneak and right-click the pad with both hands empty to travel. The unlock belongs to the team: a player whose team has not opened The Other cannot follow you in - /tpa, homes, warps and teleporters are refused, and anyone who arrives by a Tombstone tablet is sent to the Overworld spawn. The Beyond, which a pad in the End leads to, is closed. The Other is always night, and the pad that appears where you land does not drop if you mine it - your own pad does."
+  - node: D5.2
+    title: Unobtainium Ore
+    # allthemodium:raw_unobtainium, lang "Raw Unobtainium Ore" (OD §2).
+    # Only in The Other, cave floors, y 8 to 128, ancient stone, all seven Other biomes: spec §8 row unobtainium_other
+    # (plan Task 3 writes it; its count may be tuned, the band and the floor scan are fixed). OD §1-2.
+    # "Mostly": the floor scan also seats some ore at y 1-7, below the band (research/phase7-v0.3-test-log.md line 22,
+    # §1 Result; kubejs/server_scripts/worldgen.js line 63).
+    # Vibranium pickaxe: #c:needs_vibranium_tool holds unobtainium_ore and incorrect_for_vibranium_tool does not
+    # exclude it (OD §2 "Mining tier"). Other mods' tools closed from 0.3.0: spec §7 D112(a), changelog sentence
+    # "a Forgotten or Resonarium pickaxe stops mining Vibranium".
+    # Not in the desc: the ATM guide page says End Highlands (allthemodium jar
+    # assets/allthemodium/patchouli_books/allthemodium_book/en_us/entries/ore/unobtainium.json), but that book is not
+    # in game (Patchouli is not in the pack, D50), and ATM's own Unobtainium placement stays off (spec §8, neoforge:none).
+    task: item:allthemodium:raw_unobtainium
+    deps: [D5.1, D3.3]
+    coins: 15
+    desc: "Unobtainium is found only in The Other, on the floors of caves mostly between y 8 and 128, in every one of its biomes, and it needs a Vibranium pickaxe. The other mods' tools that could skip the tier gates, the Forgotten and Resonarium pickaxes among them, now stop at Allthemodium. Raw Unobtainium Ore will not cook in a furnace or an Energized Smelter. Use a blast furnace, or turn it into dust in an Enrichment Chamber first, because the dust cooks in either."
+  - node: OTHER5.2
+    title: Unobtainium Template
+    # allthemodium:unobtainium_upgrade_smithing_template, lang "Unobtainium Smithing Template".
+    # Only source: the trial spawner in the dungeon's library piece (loot allthemodium:chest/template, evokers),
+    # dungeons only in allthemodium:warped_forest = "Ancient Warped Forest"; library weight 10 of 203, not guaranteed;
+    # trial spawner cooldown 36000 ticks; copy recipe 1 template + 7 Vibranium ingots + 1 end stone -> 2 (OD §3).
+    # The copy recipe needs a template, so the first one comes only from the spawner. Upgrade: allthemodium jar
+    # data/allthemodium/recipe/smithing/unobtainium_*_smithing.json, minecraft:smithing_transform: the template, a
+    # Vibranium tool or armour piece and allthemodium:unobtainium_ingot (recipe dump, e.g. unobtainium_pickaxe_smithing).
+    # The one exception: unobtainium_mace_smithing.json takes allthemodium:unobtainium_block, lang
+    # block.allthemodium.unobtainium_block "Block of Unobtainium", on allthemodium:vibranium_mace (jar and dump).
+    task: item:allthemodium:unobtainium_upgrade_smithing_template
+    deps: [OTHER5.1]
+    coins: 10
+    desc: "The first Unobtainium Smithing Template comes only from the trial spawner in the library of the Ancient Warped Forest's dungeons. Not every dungeon has a library, so keep looking. The spawner calls evokers and can pay out again every 30 minutes. At a crafting table, one template, seven Vibranium ingots and an end stone make two. At a smithing table, a template, a piece of Vibranium gear and an Unobtainium ingot make its Unobtainium version; the mace takes a Block of Unobtainium instead."
+  - node: D5.3
+    title: The Piglich
+    # PROBED 2026-11-06 (research/phase7-v0.3-test-log.md §2, rows P6.1-P6.5): health 1024, armor 24, toughness 20,
+    # attack 12; melee yes (7.0 a hit), fireball volleys yes (seen from 12 blocks; 3.5 direct), both on difficulty easy only,
+    # so the desc gives the melee figure for Easy alone. Witches after 10 hits 13 (Witch clause: code, below). The desc
+    # states only the attacks that fired (spec §9.1).
+    # Entity allthemodium:piglich, lang "Piglich" (BP §1.1). Health 1024, armor 24, toughness 20 after the vanilla
+    # clamps (BP §1.2). Stated only as the PROBED lines say: melee (attack 12, BP §1.2) and 3 volleys of 3 small fireballs within
+    # 16 blocks (BP §1.3, a code fact; "Whether the attacks fire in play is [UNVERIFIED]"). Witches: PiglichEntity.hurt
+    # (offsets 0-109) calls spawnSupport after any damage that lands, from any source, when its target (or else the attacker)
+    # is a player; no cooldown; five placement tries of one Witch, none if no spot fits (BP §1.4, offsets re-read 2026-11-06).
+    # So at most one per damage, not per hit you land: P6.4 counted 13 after 10 hits, with Health down 156 for hits of
+    # 0.4-1.6, and 2 of 3 later hits called none. tools/gate_probe.py's monitor saw `magic` damage to it among the player's hits,
+    # never two Witches in a tick, never a Witch in a tick without damage (research/phase7-v0.3-probe-evidence/fix/). This replaces spec §9.1's wording "up to one Witch per hit you land". Fire immune, no boss bar (BP §1.1, §1.4).
+    # Spawns only inside ancient_pyramid pieces, pyramid only in allthemodium:soul_sand_valley = "The Other Soul Sand
+    # Valley"; despawnable and keeps respawning (BP §1.5). Exactly one heart per death, Looting does nothing (BP §1.6).
+    # Heart count: spec §5 says 10 to the end of tier 6; spec §14 (errata row for §5) corrects it: 10 is the trunk
+    # questline's count (quest S5.2 asks for an ME Controller), nothing consumes the controller (D117), so the gating
+    # minimum is 9.
+    task: kill:allthemodium:piglich:1
+    deps: [D5.1]
+    coins: 20
+    desc: "The Piglich spawns only inside the ancient pyramids of The Other Soul Sand Valley, and new ones keep spawning while a pyramid is loaded. It has 1024 health, 24 armor and 20 toughness. On Easy it hits for 7 up close, it throws volleys of small fireballs from up to 16 blocks away, and it calls up to one Witch each time it takes damage in a fight with a player, whatever dealt the damage. It is immune to fire and has no boss bar. Every Piglich drops exactly one Piglich Heart, and Looting adds nothing. Every ingot of the three alloys in this chapter takes a heart: nine to reach the end of Space, ten with the ME Controller."
+  - node: OTHER5.4
+    title: Wilden Tribute
+    # ars_nouveau:wilden_tribute, lang "Wilden Tribute". One per Wilden Chimera death, in code; no recipe, no loot
+    # table (T5 §5.1). Chimera = ars_nouveau:wilden_boss "Wilden Chimera", summoned only by the "Summon Wilden" ritual
+    # augmented with Wilden Horn, Wing and Spike; the ritual destroys blocks around the brazier (T5 §5.2, ritual
+    # description text). Drops: wilden_guardian "Wilden Defender" -> spike, wilden_hunter "Wilden Hunter" -> horn,
+    # wilden_stalker "Wilden Stalker" -> wing (T5 §5.2). A Drygmy cannot yield it (DrygmyTile, T5 §5.2).
+    # Ritual Brazier is tree node M3.1. One Tribute per ultimate-circuit craft of four: spec §5 T5.1.
+    task: item:ars_nouveau:wilden_tribute
+    deps: [M3.1]
+    coins: 15
+    desc: "The Wilden Tribute has no recipe: only the Wilden Chimera drops it, one per kill. Summon the Chimera with the Summon Wilden ritual at a Ritual Brazier, augmented with a Wilden Spike, a Wilden Horn and a Wilden Wing - Wilden Defenders, Hunters and Stalkers drop them. The ritual destroys blocks around the brazier, so run it somewhere you can spare. A Drygmy cannot farm the Tribute. Every craft of four ultimate control circuits takes one."
+  - node: T5.1
+    title: Ultimate Control Circuit
+    # mekanism:ultimate_control_circuit, lang "Ultimate Control Circuit". Recipe EAE/UTU/EAE -> 4: 4 elite circuits,
+    # 2 atomic alloy, 2 Unobtainium ingots, 1 Wilden Tribute; both Mekanism defaults removed (spec §5 T5.1, D104, D113;
+    # T5 §1). What waits on it: spec §7 changelog sentence (ultimate factories, induction provider, MekaSuit, Meka-Tool,
+    # fusion, SPS, Digital Miner); Supreme frame, NASA Workbench, refinery, steel engine: spec §5-§6. Of the induction
+    # providers only mekanism:induction/provider/ultimate takes #c:circuits/ultimate (dump; basic, advanced and elite
+    # take their own tier's circuit); lang block.mekanism.ultimate_induction_provider "Ultimate Induction Provider".
+    task: item:mekanism:ultimate_control_circuit
+    deps: [T3.2, D5.2]
+    coins: 15
+    desc: "Four elite circuits, two atomic alloys, two Unobtainium ingots and a Wilden Tribute make four ultimate control circuits; Mekanism's own two recipes are gone. Ultimate factories, the ultimate induction provider, the MekaSuit, the Meka-Tool, fusion, the SPS and the Digital Miner all wait for it, and so do the Supreme frame, the Nasa Workbench, the Fuel Refinery and the Steel Engine."
+  - node: OTHER5.3
+    title: Soul Lava
+    # allthemodium:soul_lava_bucket, lang "Soul Lava Bucket". Sources: soul deltas (soul lava, with a magma rim only
+    # sometimes: allthemodium jar worldgen/configured_feature/soul_deltas.json has rim_size uniform 0-2, and vanilla
+    # DeltaFeature.place draws no rim on its 10% roll or a 0 sample, javap of
+    # server-1.21.1-20240808.144430-srg.jar offsets 28-108) in
+    # allthemodium:basalt_deltas = "Ancient Basalt Deltas"; the prisoners piece (a 4x3 source pool) of the underground
+    # piglin_village in allthemodium:crimson_forest = "Ancient Crimson Forest" and allthemodium:the_other = "The Other"
+    # (ancient grass surface, OD §1); forge and mob_forge hold only falling flow, which gives no bucket;
+    # canConvertToSource false (not infinite); Productive Bees soul lava bee from a ghostly bee + soul lava bucket
+    # (T5 §4.4). 100 mB per Unob-Vib alloy ingot: spec §5 X5.2. Spec §9.1 must: both soul-lava sources.
+    # Not every city has a prison: prisoners is weight 10 of 271 in template_pool/village/main_pool.json (T5 §4.4).
+    # "Generates only in The Other": once a bucket leaves, the Productive Bees route renews it anywhere (T5 §4.4
+    # "Renewable route through Productive Bees", T5 open question 7).
+    task: item:allthemodium:soul_lava_bucket
+    deps: [OTHER5.1]
+    coins: 10
+    desc: "Soul lava generates only in The Other, and it is not infinite: two sources never make a third. Bucket it from the soul lava pools in the Ancient Basalt Deltas, some of them rimmed with magma, or, in some of the huge underground cities below the Ancient Crimson Forest and the grassy biome also called The Other, from the 4 by 3 pool in their prison. The falling soul lava in their forges cannot be bucketed. Once you have a bucket, a Productive Bees soul lava bee, converted from a ghostly bee with it, keeps soul lava coming. The Unobtainium - Vibranium alloy drinks 100 mB per ingot."
+  - node: X5.3
+    title: Digital Miner
+    # mekanism:digital_miner, lang "Digital Miner". Default recipe with #c:circuits/ultimate for the basic circuit
+    # (spec §5 X5.3, D116; T5 §1.3). The Miner's search skips destroy speed -1, and every ATM tier ore is -1
+    # (BA §3.1 table row "Unobtainium ore (tool tier)"; ThreadMinerSearch.run).
+    task: item:mekanism:digital_miner
+    deps: [T5.1]
+    coins: 10
+    desc: "The Digital Miner now takes an ultimate control circuit where it took a basic one. It only paces you: the Miner skips the tier ores, so Allthemodium, Vibranium and Unobtainium still come from your own pickaxe."
+  - node: M5.1
+    title: Unobtainium - Allthemodium Alloy
+    # allthemodium:unobtainium_allthemodium_alloy_ingot, lang "Unobtainium - Allthemodium Alloy Ingot".
+    # Ars apparatus: reagent #c:ingots/unobtainium; pedestals #c:ingots/allthemodium, piglich_heart, the four elemental
+    # essences; sourceCost 10000 (spec §5 M5.1, D105, D115). Consumers: T5.2 Supreme frame, D6.1 Workbench (spec §5-§6).
+    task: item:allthemodium:unobtainium_allthemodium_alloy_ingot
+    deps: [M1.1, D5.2, D2.2, D5.3, M1.2]
+    coins: 15
+    desc: "At the Enchanting Apparatus: an Unobtainium ingot as the reagent, and on the pedestals an Allthemodium ingot, a Piglich Heart and the four elemental essences, for 10,000 Source. The Supreme frame and the Nasa Workbench each take one."
+  - node: X5.1
+    title: Vibranium - Allthemodium Alloy
+    # allthemodium:vibranium_allthemodium_alloy_ingot, lang "Vibranium - Allthemodium Alloy Ingot".
+    # Powah energizing: #c:ingots/allthemodium, #c:ingots/vibranium, piglich_heart, powah:nitro_crystal_block
+    # ("Block Of Nitro Crystal"); 1,000,000,000 FE (spec §5 X5.1, D115). Energizing Orb: powah lang
+    # block.powah.energizing_orb. Consumer: T6.1 refinery (spec §6).
+    task: item:allthemodium:vibranium_allthemodium_alloy_ingot
+    deps: [T0.3, D2.2, D3.2, D5.3, T3.1]
+    coins: 15
+    desc: "At Powah's Energizing Orb: an Allthemodium ingot, a Vibranium ingot, a Piglich Heart and a block of nitro crystal, charged with 1,000,000,000 FE. The Fuel Refinery takes one."
+  - node: X5.2
+    title: Unobtainium - Vibranium Alloy
+    # allthemodium:unobtainium_vibranium_alloy_ingot, lang "Unobtainium - Vibranium Alloy Ingot".
+    # IF Dissolution Chamber: 4 pink slime, #c:ingots/vibranium, #c:ingots/unobtainium, piglich_heart; 100 mB
+    # allthemodium:soul_lava; 200 ticks (spec §5 X5.2). Consumer: T6.2 steel engine, nested by every rocket engine
+    # (spec §6 T6.2, D118; AA §1.4).
+    # Pink slime: industrialforegoing-1.21-3.6.39.jar data/industrialforegoing/recipe/dissolution_chamber/pink_slime_ball.json
+    # (minecraft:glass_pane + 300 mB industrialforegoing:pink_slime fluid -> 1 industrialforegoing:pink_slime, 200 ticks);
+    # the fluid fills the Mob Slaughter Factory's pink_slime tank on each kill (same jar, javap of
+    # com/buuz135/industrial/block/agriculturehusbandry/tile/SlaughterFactoryTile: pinkSlime.fillForced with
+    # ModuleCore.PINK_SLIME); lang block.industrialforegoing.mob_slaughter_factory "Mob Slaughter Factory",
+    # item.industrialforegoing.pink_slime "Pink Slime". The same fluid as [T4.1]'s 500 mB (tree [T4.1]).
+    task: item:allthemodium:unobtainium_vibranium_alloy_ingot
+    deps: [T2.2, D3.2, D5.2, D5.3]
+    coins: 15
+    desc: "In the Dissolution Chamber with 100 mB of soul lava: four pink slime, a Vibranium ingot, an Unobtainium ingot and a Piglich Heart. The Steel Engine takes one, so every rocket does. Pink slime comes from the chamber too: a glass pane in 300 mB of pink slime fluid, which a Mob Slaughter Factory makes."
+  - node: T5.2
+    title: Supreme Machine Frame
+    # block.industrialforegoing.machine_frame_supreme "Supreme Machine Frame". IF dissolution override: advanced frame,
+    # 2 plastic, 1 nitro crystal, 1 ultimate circuit, 2 Unobtainium ingots, 1 Unob-ATM alloy ingot; 135 mB
+    # industrialforegoing:ether_gas; 300 ticks (spec §5 T5.2, D114; T5 §3.1). Consumers: inscriber, controller,
+    # terminal, crafting unit (spec §5 heart count, §6 S6.2).
+    task: item:industrialforegoing:machine_frame_supreme
+    deps: [T4.1, T2.2, T4.2, T3.1, T5.1, D5.2, M5.1]
+    coins: 20
+    desc: "In the Dissolution Chamber with 135 mB of Ether Gas: an Advanced Machine Frame, two plastic, a nitro crystal, an ultimate control circuit, two Unobtainium ingots and an Unobtainium - Allthemodium alloy ingot. The Inscriber, the ME Controller, the ME Terminal and the Crafting Unit each take one."
+  - node: S5.1
+    title: Inscriber
+    # ae2:inscriber "Inscriber": ABA/CDC/ABA, A = mekanism:hdpe_sheet x4 ("HDPE Sheet"), B = piston x2,
+    # C = #c:ingots/copper x2, D = Supreme frame. ae2:charger "Charger": knightmetal x5, copper x2 (spec §5 S5.1;
+    # AE2 §1, §3).
+    task: item:ae2:inscriber
+    deps: [T5.2, D2.4, T1.1]
+    coins: 15
+    desc: "The Inscriber now takes a Supreme Machine Frame, four HDPE sheets, two pistons and two copper ingots, and the Charger takes five knightmetal ingots and two copper. Every processor Applied Energistics needs starts here."
+  - node: S5.2
+    title: ME Controller
+    # ae2:controller "ME Controller": 2 ae2:fluix_crystal, 1 undergarden:forgotten_ingot, 2 ae2:engineering_processor,
+    # Supreme frame, 2 ae2:smooth_sky_stone_block ("Sky Stone Block"), toms_storage:inventory_connector
+    # ("Inventory Connector") (spec §5 S5.2, D117). Networks of 8 channels or fewer run with no controller; above the
+    # cap an ad-hoc network drops to zero channels (AE2 §4.4, ChannelMode DEFAULT = 8).
+    task: item:ae2:controller
+    deps: [T5.2, D3.4, S2.1, S5.1]
+    coins: 15
+    desc: "The ME Controller takes two fluix crystals, a forgotten ingot, two engineering processors, a Supreme Machine Frame, two sky stone blocks and a Tom's Inventory Connector. A network of 8 channels or fewer runs without one; past that it shuts down until a controller runs it."
+  - node: S5.3
+    title: ME Terminal
+    # item.ae2.terminal "ME Terminal": A = ae2:semi_dark_monitor ("Illuminated Panel"), formation core, Supreme frame,
+    # annihilation core, 2 ae2:logic_processor, mekanism:qio_dashboard ("QIO Dashboard"). ME Drive takes the QIO Drive
+    # Array; import/export buses take the QIO Importer/Exporter (spec §5 S5.3, D117; AE2 §1).
+    task: item:ae2:terminal
+    deps: [S3.1, T5.2, S5.1]
+    coins: 15
+    desc: "The ME Terminal is built from an Illuminated Panel, a formation core, an annihilation core, a Supreme Machine Frame, two logic processors and a QIO Dashboard. The ME Drive takes a QIO Drive Array, and the import and export buses take a QIO Importer and Exporter: Applied Energistics grows out of the Mekanism storage you already run."

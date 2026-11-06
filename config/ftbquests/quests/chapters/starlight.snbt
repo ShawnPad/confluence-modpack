@@ -1,0 +1,52 @@
+{
+	default_hide_dependency_lines: false
+	default_quest_shape: "rsquare"
+	filename: "starlight"
+	group: "0C0F1A0000000002"
+	icon: { id: "eternal_starlight:orb_of_prophecy" }
+	id: "796EC2C2796AAF7D"
+	images: [ ]
+	order_index: 14
+	progression_mode: "flexible"
+	quest_links: [ ]
+	quests: [
+		{
+			id: "3D9681B042C8C8B1"
+			rewards: [{ id: "78738466F0AF2532" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ advancement: "eternal_starlight:challenge_gatekeeper" id: "28B70F48D57ECC62" type: "advancement" }]
+			x: 0.0d
+			y: 0.0d
+		}
+		{
+			id: "094E34E0EEB09262"
+			rewards: [{ id: "5C0666B6EF352AA9" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ dimension: "eternal_starlight:starlight" id: "68B8F6EED0E3F426" type: "dimension" }]
+			x: 0.0d
+			y: 2.0d
+		}
+		{
+			dependencies: ["094E34E0EEB09262"]
+			id: "7FF7CB41A6949C6F"
+			rewards: [{ id: "6B1FABB53A26C1F2" item: { count: 15, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ advancement: "eternal_starlight:kill_golem" id: "3D7E2BB141C3D903" type: "advancement" }]
+			x: 2.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["094E34E0EEB09262"]
+			id: "18E57222FAD0E4FC"
+			rewards: [{ id: "100D3AD63C622FC7" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "71440DC67E745E3E" item: { count: 1, id: "eternal_starlight:soul_dew" } type: "item" }]
+			x: 2.0d
+			y: 2.0d
+		}
+		{
+			dependencies: ["094E34E0EEB09262"]
+			id: "703F68AB69BA5192"
+			rewards: [{ id: "1FD79ED5826D2168" item: { count: 20, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "4734E1C8587FBA82" item: { count: 1, id: "eternal_starlight:unrealium_ingot" } type: "item" }]
+			x: 2.0d
+			y: 4.0d
+		}
+	]
+}

@@ -1,0 +1,24 @@
+{
+	id: "0C0F1B0000000004"
+	loot_crate: {
+		color: 16755200
+		drops: { boss: 0 monster: 0 passive: 0 }
+		glow: 1b
+		item_name: "Epic Bag"
+		string_id: "epic_bag"
+	}
+	loot_size: 3
+	order_index: 3
+	rewards: [
+		{ id: "0C0F1B0000000401" item: { count: 4, id: "minecraft:netherite_ingot" } weight: 15.0f }
+		{ id: "0C0F1B0000000402" item: { count: 16, id: "minecraft:diamond" } weight: 15.0f }
+		{ id: "0C0F1B0000000403" item: { count: 8, id: "mekanism:ingot_refined_obsidian" } weight: 15.0f }
+		{ id: "0C0F1B0000000404" item: { count: 8, id: "powah:crystal_spirited" } weight: 10.0f }
+		{ id: "0C0F1B0000000405" item: { count: 4, id: "ars_nouveau:source_gem_block" } weight: 10.0f }
+		{ id: "0C0F1B0000000406" item: { count: 32, id: "irons_spellbooks:arcane_essence" } weight: 10.0f }
+		{ id: "0C0F1B0000000407" item: { count: 16, id: "minecraft:experience_bottle" } weight: 10.0f }
+		{ id: "0C0F1B0000000408" item: { count: 8, id: "mekanism:alloy_reinforced" } weight: 5.0f }
+		{ id: "0C0F1B0000000409" item: { count: 48, id: "kubejs:coin" } weight: 10.0f }
+	]
+	use_title: true
+}

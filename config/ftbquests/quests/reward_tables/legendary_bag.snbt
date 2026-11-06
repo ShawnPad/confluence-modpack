@@ -1,0 +1,24 @@
+{
+	id: "0C0F1B0000000005"
+	loot_crate: {
+		color: 16777045
+		drops: { boss: 0 monster: 0 passive: 0 }
+		glow: 1b
+		item_name: "Legendary Bag"
+		string_id: "legendary_bag"
+	}
+	loot_size: 3
+	order_index: 4
+	rewards: [
+		{ id: "0C0F1B0000000501" item: { count: 8, id: "minecraft:netherite_ingot" } weight: 15.0f }
+		{ id: "0C0F1B0000000502" item: { count: 4, id: "minecraft:diamond_block" } weight: 15.0f }
+		{ id: "0C0F1B0000000503" item: { count: 16, id: "mekanism:ingot_refined_obsidian" } weight: 15.0f }
+		{ id: "0C0F1B0000000504" item: { count: 32, id: "industrialforegoing:plastic" } weight: 10.0f }
+		{ id: "0C0F1B0000000505" item: { count: 8, id: "mekanism:elite_control_circuit" } weight: 10.0f }
+		{ id: "0C0F1B0000000506" item: { count: 8, id: "ars_nouveau:source_gem_block" } weight: 10.0f }
+		{ id: "0C0F1B0000000507" item: { count: 32, id: "minecraft:experience_bottle" } weight: 10.0f }
+		{ id: "0C0F1B0000000508" item: { count: 16, id: "powah:crystal_spirited" } weight: 5.0f }
+		{ id: "0C0F1B0000000509" item: { count: 64, id: "kubejs:coin" } weight: 10.0f }
+	]
+	use_title: true
+}

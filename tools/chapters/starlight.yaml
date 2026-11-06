@@ -1,0 +1,78 @@
+chapter: starlight
+title: Eternal Starlight
+group: 0C0F1A0000000002
+order: 14
+icon: eternal_starlight:orb_of_prophecy
+# Tier-6 spur (v0.3 spec docs/superpowers/specs/2026-09-25-v0.3-tiers-5-6-design.md §9.1; pack spec §5.2: spur nodes
+# D6.10 and D6.11 live only here, and D6.1 in space.yaml depends on D6.11 across chapters).
+# Research key ES = research/phase7-eternal-starlight.md. Names are lang strings (D98) from
+# pack/.run/server/mods/eternalstarlight-0.9.0+1.21.1+neoforge.jar assets/eternal_starlight/lang/en_us.json.
+quests:
+  - node: ES.1
+    title: The Gatekeeper
+    # Advancement eternal_starlight:challenge_gatekeeper ("Duke it out!"), fired by permitPlayer on a won fight or on
+    # the dragon-kill permit (ES §2.2, §2.6; D123). A won fight never kills him (no LivingDeathEvent), so no kill task
+    # (ES §2.3). Portal Ruins names (D98): structure.eternal_starlight.portal_ruins_common "Common Portal Ruins",
+    # _forest "Forest Portal Ruins", _desert "Desert Portal Ruins", _jungle "Jungle Portal Ruins", _cold "Cold Portal
+    # Ruins" (eternalstarlight jar assets/eternal_starlight/lang/en_us.json). Each template holds a complete
+    # 8-block Chiseled Voidstone frame and the_gatekeeper_spawner (ES §1.4). Overworld surface: step
+    # surface_structures, biome tags #c:is_plains/savanna/forest/desert/badlands/jungle/cold (ES §1.4); the End
+    # placement of Cold ruins is [UNVERIFIED] (ES §1.4) and is not claimed here.
+    # Talks first (Npc, Merchant; ES §2.1). Dragon path: advancement minecraft:end/kill_dragon -> permit + Loot Bag at
+    # challenge count 0 (ES §2.2); the Orb drops while the count is at most 1 (ES §2.4). Trade: 1 Starlight Silver
+    # Coin -> 1 Orb, permitted players only (ES §2.5).
+    task: advancement:eternal_starlight:challenge_gatekeeper
+    coins: 10
+    desc: "Common, Forest, Desert, Jungle and Cold Portal Ruins stand on the Overworld surface, each with a finished Chiseled Voidstone frame and The Gatekeeper. Talk to him first. Win his challenge and your first victory drops the Orb of Prophecy; he is never really killed, so this quest completes when he lets you pass. If you have already slain the dragon, just talk to him: he lets you pass and drops a loot bag with the Orb in it. Once he trusts you, he also trades an Orb for one Starlight Silver Coin."
+  - node: D6.10
+    title: Eternal Starlight
+    # dimension eternal_starlight:starlight, lang "Eternal Starlight" (ES §1.1). Orb of Prophecy on a frame block;
+    # never consumed; failure is silent PASS (ES §1.3). Frame: diamond, 8 blocks at size 2; the 5 interior cells must be
+    # air (or portal); vines, water and torches fail it (ES §1.2, §5). Gate refs: none (plan Task 1 table).
+    # Spec §9.1 musts: the Orb is not used up; the five centre cells must be clear.
+    task: dimension:eternal_starlight:starlight
+    coins: 10
+    desc: "Right-click a Portal Ruin's Chiseled Voidstone frame with the Orb of Prophecy. The Orb is never used up, so one Orb opens every portal. A failed click does nothing at all, so first clear all five centre cells of the diamond-shaped frame to bare air - vines, water and torches all block it."
+  - node: ES.2
+    title: Starlight Golem
+    # Advancement eternal_starlight:kill_golem ("Ancient Wisdom" / "Defeat the Starlight Golem", player_killed_entity;
+    # ES §2.6, §5). Golem in the Golem Forge boss room; loot: one oxidized_alloy_furnace ("Oxidized Alloy Furnace"),
+    # 8-10 oxidized golem steel ingots, which smelt to golem_steel_ingot; the Alloy Furnace has no recipe; the forge's
+    # alloy room holds an 18-block oxidized furnace; any axe scrapes oxidized -> normal (ES §3.2, §3.3, §3.5).
+    # Seeking Eye locates only #eternal_starlight:boss_landmarks (golem_forge, cursed_garden); a specific target needs
+    # a locator item in the other hand (ES §4 item 4, §5; lang book.eternal_starlight.seeking_eye "You need to hold a
+    # locator item too if you wish to find a specific structure", tooltip "Hold associated item in the other hand").
+    # eternalstarlight jar data/eternal_starlight/tags/item/golem_forge_locators.json = minecraft:redstone,
+    # eternal_starlight:oxidized_golem_steel_ingot, eternal_starlight:golem_steel_ingot.
+    # Names: structure.eternal_starlight.golem_forge "Golem Forge", item.eternal_starlight.seeking_eye "Seeking Eye".
+    task: advancement:eternal_starlight:kill_golem
+    deps: [D6.10]
+    coins: 15
+    desc: "The Starlight Golem guards the Golem Forge; hold redstone in your other hand and a Seeking Eye leads to the Forge. The Alloy Furnace has no recipe, and the Golem always drops one, oxidized - scrape it with an axe to clean it. It also drops 8 to 10 oxidized golem steel ingots that smelt into golem steel."
+  - node: ES.3
+    title: Soul Dew
+    # eternal_starlight:soul_dew "Soul Dew": no recipe; Tangled 1-3 (always) and Lunar Monstrosity 3-4, both placed by
+    # the Cursed Garden structure code (ES §3.3, §3.5). Seeking Eye with a vine in the other hand: eternalstarlight jar
+    # data/eternal_starlight/tags/item/cursed_garden_locators.json lists minecraft:vine (ES §4 item 4); lang
+    # structure.eternal_starlight.cursed_garden "Cursed Garden".
+    task: item:eternal_starlight:soul_dew
+    deps: [D6.10]
+    coins: 10
+    desc: "Soul Dew has no recipe. The Tangled drop one to three each and the Lunar Monstrosity three or four, and both live in the Cursed Garden; hold a vine in your other hand and a Seeking Eye leads there. Every Unrealium ingot takes one."
+  - node: D6.11
+    title: Unrealium
+    # eternal_starlight:unrealium_ingot "Unrealium Ingot": eternal_starlight:alloy/unrealium = #c:ingots/deepsilver +
+    # #c:ingots/golem_steel + #c:gems/malarite + soul_dew -> 1 (ES §3.3). Deepsilver ore in 21 of 22 biomes (not
+    # Solaris Isles); Malarite ore only in dark_swamp "Dark Swamp"; Stranghoul 10% malarite, Stranghoul Den only in
+    # the Dark Swamp (ES §3.5). D6.1 takes one ingot (spec §6, D123).
+    # Stranghouls at the Den: javap of eternalstarlight jar
+    # cn/leolezury/eternalstarlight/common/world/gen/structure/StranghoulDenStructure.afterPlace, offsets 25-38
+    # (StranghoulConfig.canSpawn, then RandomSource.nextInt(3, 6)) and 229-297 (new Stranghoul, setPos,
+    # setPersistenceRequired, finalizeSpawn, addFreshEntity): up to 3-5 persistent Stranghouls on dirt or Starlight base
+    # stone inside the Den, per chunk the Den is placed in (vanilla StructureStart.placeInChunk calls afterPlace with the
+    # chunk's box, server-1.21.1-20240808.144430-srg.jar). None of the jar's 22
+    # data/eternal_starlight/worldgen/biome/*.json names a Stranghoul spawn.
+    task: item:eternal_starlight:unrealium_ingot
+    deps: [D6.10]
+    coins: 20
+    desc: "In the Alloy Furnace, a Deepsilver ingot, a Golem Steel ingot, a Malarite and a Soul Dew make one Unrealium ingot. Deepsilver ore is in nearly every Starlight biome; Malarite comes from ore in the Dark Swamp or from the Stranghouls around its Stranghoul Den. The Nasa Workbench takes one ingot."

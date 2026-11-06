@@ -25,7 +25,7 @@ ServerEvents.recipes(event => {
   // 9-crystal block (data/powah/recipe/crafting/spirited_crystal_block.json) a one-way trap.
   gate.remove(event, { id: IDS.powah.spiritedRecipe })
   gate.custom(event, 'confluence:tier2/crystal_spirited', {
-    type: 'powah:energizing', energy: 1000000,
+    type: IDS.powah.energizingType, energy: 1000000,
     ingredients: [{ item: IDS.powah.uraninite }],
     result: { count: 1, id: IDS.powah.spirited },
   })

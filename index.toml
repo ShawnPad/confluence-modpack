@@ -1,6 +1,14 @@
 hash-format = "sha256"
 
 [[files]]
+file = "config/confluence/adastra-stations.json"
+hash = "a3477527827036765981224c534223710cc153fa3fcaeb1af1d8e6dae9afa8e5"
+
+[[files]]
+file = "config/fml.toml"
+hash = "b1bb40abeaf0c8854999eb54c964926b27abbb7e1b217af6cdc595ee93c05520"
+
+[[files]]
 file = "config/ftbquests/quests/chapter_groups.snbt"
 hash = "2b42c663287cba587e437daec921d3be1ac845c4b1efc1320d22b795f07c2cf6"
 
@@ -26,7 +34,7 @@ hash = "474cf6ab45d97940d43d44e7cf2d73b0c9bcb0a81554a57b49babfbb0ba532f9"
 
 [[files]]
 file = "config/ftbquests/quests/chapters/nether.snbt"
-hash = "231b732aae25b86cd7d842cc8d968867c599489cc706c145286588d39ab4050d"
+hash = "b822dc9513b2541fb26d7ef074a79da892ca3cf14153bccd96ea63a57f55e395"
 
 [[files]]
 file = "config/ftbquests/quests/chapters/otherside.snbt"
@@ -38,11 +46,23 @@ hash = "3b0237ca880f14e9d432f808da58fe17546e1c084a557b614579df6f8c218c7e"
 
 [[files]]
 file = "config/ftbquests/quests/chapters/shop.snbt"
-hash = "c118ac20c426e92aab274178bbe9ba0981bf80e62a4d519e7c7143b5867714d1"
+hash = "2a944cacba869026f4b3a2f73710a8c07f7d873541159e4332038a585d1c53dc"
+
+[[files]]
+file = "config/ftbquests/quests/chapters/space.snbt"
+hash = "608e46783acf26e08793535f9ec6fab5b2af73d4af34f9b76b61a058b3c60db8"
+
+[[files]]
+file = "config/ftbquests/quests/chapters/starlight.snbt"
+hash = "14482ffc55164540c16d03f51eea692eb03acd02c4a55d0ccc81934f364bb8cd"
+
+[[files]]
+file = "config/ftbquests/quests/chapters/the_other.snbt"
+hash = "6fc6d62193c542c21a8e07893628ea0cbf1b838b94f984d51288feff600a867d"
 
 [[files]]
 file = "config/ftbquests/quests/chapters/twilight.snbt"
-hash = "ba23f8f40e834437de1ff9412c4d14b019f1727e20c5a2cd5b6515d4ab970614"
+hash = "a82a9973f0f6bc2565a70764e7e613dc5b318129c5b7ad527629158de17cfc04"
 
 [[files]]
 file = "config/ftbquests/quests/chapters/undergarden.snbt"
@@ -54,19 +74,31 @@ hash = "daed85b108619d4dd9044df7c0e38984dd6aa44b53e776cb493f453399776b3f"
 
 [[files]]
 file = "config/ftbquests/quests/lang/en_us.snbt"
-hash = "93a37ae05e177eeff88f27680c163fefe3215fa17d6dc9cf4c46fd4cc1838e73"
+hash = "3854b493c02b2f32c865dd9d9c0faa01635c751fdb44e5fc62eba2fb18f1f868"
 
 [[files]]
 file = "config/ftbquests/quests/reward_tables/common_bag.snbt"
-hash = "b6e34fe221dacf1cc5c38711976e7e1a00288a87a55e9cc47e2af5addf59ed0e"
+hash = "190993c52053142363f052a9bc881396c63ee26663ae052658bac6688b8954e5"
+
+[[files]]
+file = "config/ftbquests/quests/reward_tables/epic_bag.snbt"
+hash = "2432ada7a8d022081dd26ac9d41d387a868d421eef044134913e4833a9a1e92c"
+
+[[files]]
+file = "config/ftbquests/quests/reward_tables/legendary_bag.snbt"
+hash = "8297af8d8283642a58af32aedff5cc1cee49cfabf3dd8f9f3afb04202dcdf56d"
 
 [[files]]
 file = "config/ftbquests/quests/reward_tables/rare_bag.snbt"
-hash = "b0e9b674ea2543bf541ad0018016af3fec11d31e8bf134f1af7fc1abf67fa0d2"
+hash = "fac0be089d91d6adfa3b07b30fb48bdeb2898ade95898f8f2b963a46d919b95b"
 
 [[files]]
 file = "config/ftbquests/quests/reward_tables/uncommon_bag.snbt"
-hash = "86339e09c0a2bea970b03ac6c09f780b20fc915c4061313bd940c2cee0ee43b1"
+hash = "b2b4c23b54087ac82b6960be62d99ec233f50e7df94fcff6768544a319f37599"
+
+[[files]]
+file = "config/tombstone-common.toml"
+hash = "6c6fa3e6a55c28b0ce426b6691d882fbf9f6c4788eb9e0a0f8d10cb160389e20"
 
 [[files]]
 file = "config/twilightforest-common.toml"
@@ -118,7 +150,7 @@ hash = "c0a70a74875312dde0795174253991461df1f14c761e63135a1e3331028a5c89"
 
 [[files]]
 file = "kubejs/client_scripts/tooltips.js"
-hash = "918183357ec86103fcf8074a00191974a73f7b9b8cf65a9867b19d5f216e3738"
+hash = "e0c20b0c81115c5e0fed727ac9a6298f4aae14e3efee2d9c214a72788e16d3b1"
 
 [[files]]
 file = "kubejs/data/allthemodium/neoforge/biome_modifier/allthemodium/allthemodium.json"
@@ -146,7 +178,11 @@ hash = "2b925da45ae9ccc37f6f5ae1fd1f62fb64d9155a6df14a5d44e9d3ab6538cf9d"
 
 [[files]]
 file = "kubejs/data/ars_nouveau/tags/entity_type/drygmy_blacklist.json"
-hash = "14da5ae2aba2d4269bde8d061906ef37b6a46fa8e5c49bf5e1a810d5068a9b7b"
+hash = "1694a5cf094dab243450acf70f544c2e19af9f3f4b1746279d038643866910ca"
+
+[[files]]
+file = "kubejs/data/confluence/recipe/tier5/unobtainium_vibranium_alloy_ingot.json"
+hash = "1c4eba70aec503eccb261a218ddead0d51c042aabbeb04b3575f3fac6a2f1277"
 
 [[files]]
 file = "kubejs/data/confluence/tags/item/ars_essences.json"
@@ -163,6 +199,10 @@ hash = "7d069f3f92624335065af12b8afcf90521158cb6a9c7baa231cc3c347cdb11eb"
 [[files]]
 file = "kubejs/data/industrialforegoing/recipe/dissolution_chamber/simple_machine_frame.json"
 hash = "ed71d60e38f9e98d5ff3a71df2c9a8ff93b544c0d1e231068f728fd753f4d952"
+
+[[files]]
+file = "kubejs/data/industrialforegoing/recipe/dissolution_chamber/supreme_machine_frame.json"
+hash = "f0b5d7030d3eaf30d0bb4723d386e37f149824e176f977e5fa1a751d34a779a7"
 
 [[files]]
 file = "kubejs/data/industrialforegoing/recipe/machine_frame_pity.json"
@@ -182,15 +222,19 @@ hash = "2b925da45ae9ccc37f6f5ae1fd1f62fb64d9155a6df14a5d44e9d3ab6538cf9d"
 
 [[files]]
 file = "kubejs/server_scripts/bypass.js"
-hash = "067d44714d44518e84b729bba5eb98c8107dbea2564d69c4c7d8ac51319439af"
+hash = "aa0fe0abe1e63548b3fb691059e82813879968dbb2feb8b7cdb058e83e822b14"
 
 [[files]]
 file = "kubejs/server_scripts/dump.js"
-hash = "11752aa1e3cf64ae3226e946d1a4408c840f3670ab529399b5a9d7e683c3145c"
+hash = "faf61916cd8117e807b0c8601eb2b38f1226a673da4fbbc5ee1894164ea07379"
 
 [[files]]
 file = "kubejs/server_scripts/events.js"
-hash = "18e8f28fd8b30c3c7b9916248cb73c61418a8f25fd134337f6220bad295db19e"
+hash = "cf9807325c43fd14155ff25d92d95ad250a354fc075260242394849e503b6dab"
+
+[[files]]
+file = "kubejs/server_scripts/gamerules.js"
+hash = "0406810f1dd74b63473eb5bd80171a1afb6e0c935e8e12967c7b493d6f9e0dfe"
 
 [[files]]
 file = "kubejs/server_scripts/lib/gates.js"
@@ -198,11 +242,15 @@ hash = "513125401cee98784accfb0f317786d06cc67c3c46c093dc24b1715413c1781e"
 
 [[files]]
 file = "kubejs/server_scripts/lib/ids.js"
-hash = "4e3b88b10f2772c1c4b40ef653b7f46335d1aa146c3c3994ae6e775d2fc69fcf"
+hash = "b01a8f073ebaeb61219280aa5f98d902dd510166c743ec7a7f6034003c7a9c47"
 
 [[files]]
 file = "kubejs/server_scripts/lib/loot.js"
 hash = "62f43223a93e6e05d48bbdc2781244f1904066d280157617be310b48b3af2b4b"
+
+[[files]]
+file = "kubejs/server_scripts/lib/other_gate.js"
+hash = "c9b7075cb9a9b765ea2ce52c556f809195bf0167d748b7dbd8175fd69117fa3c"
 
 [[files]]
 file = "kubejs/server_scripts/loot.js"
@@ -210,7 +258,7 @@ hash = "2de905a8fd27d109802dfb1b1feb8ce92d0407de78142855bfc25dd4c6224562"
 
 [[files]]
 file = "kubejs/server_scripts/tagcheck.js"
-hash = "59b44e8540a7a0d1c6578587fd84d474db294c946a666479b4422735ecf75d48"
+hash = "71beae2bffbb372b57e1dba8855f0ce8a3817e3a4252dbb856339a6dd4eed14d"
 
 [[files]]
 file = "kubejs/server_scripts/tiers/tier0.js"
@@ -222,23 +270,35 @@ hash = "e799d0a5f24247b3c5f7400d97b3d48f75b862e36191ff67759dd64e5cfe740f"
 
 [[files]]
 file = "kubejs/server_scripts/tiers/tier2.js"
-hash = "d75c37df6f3a34c84b37d28141165584f3236083c9eb2b7ded107d26b7c3a8e5"
+hash = "e49913d064a49a594b27fa1ee9ecc4d9c4e1bbb5430baf33f3ed5ad3ba338a75"
 
 [[files]]
 file = "kubejs/server_scripts/tiers/tier3.js"
-hash = "09c200713f2e0b9a7f78b56d1d3c1d3864e5d790f213e9fb63d4e6da1f517ed0"
+hash = "c4d5aa14944202d087867ba96458a4769d8244087270ae19cf5710a337cd1308"
 
 [[files]]
 file = "kubejs/server_scripts/tiers/tier4.js"
 hash = "0bce97fcea6e10522098d2ba81252b465204b1064228418060aa6fa7424d61e3"
 
 [[files]]
+file = "kubejs/server_scripts/tiers/tier5.js"
+hash = "6591dec7e7d82b8f0c4914cd9f02f582b28703e9b2f669b511ca04697ccc3926"
+
+[[files]]
+file = "kubejs/server_scripts/tiers/tier6.js"
+hash = "d851e52276a145daaff9b87286b3827f0fd1bcf25a017089d79237849d82c1a7"
+
+[[files]]
 file = "kubejs/server_scripts/worldgen.js"
-hash = "d300cbb3e6621136424b87a8cb926d04a6e52bced8ac44da5295ab488c914983"
+hash = "51c94b2e32db3f5dd0fef9367168c3da94e782a320547d72b9370f67ed89704b"
 
 [[files]]
 file = "kubejs/startup_scripts/items.js"
 hash = "ab15a1b8804bb4ed0f06fdee3284e8aaf2905515c233f11f8368d66a57435919"
+
+[[files]]
+file = "kubejs/startup_scripts/tf_gamerules_guard.js"
+hash = "ef8603c01f732edad0121e7e5397f311f641d293efcb03bf1a751864af76fa3a"
 
 [[files]]
 file = "mods/ad-astra.pw.toml"

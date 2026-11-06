@@ -1,0 +1,198 @@
+chapter: space
+title: Space
+group: 0C0F1A0000000001
+order: 7
+icon: ad_astra:tier_1_rocket
+# Tier 6 (v0.3 spec docs/superpowers/specs/2026-09-25-v0.3-tiers-5-6-design.md, "spec" below, §9.1).
+# Deps mirror the tree's "- gate:" refs as tools/check_quests.py reads them after plan Task 1; helper quests
+# (SPACE.*) are never deps of tree-node quests.
+# Research keys: AA research/phase7-tier6-adastra.md, AE2 research/phase7-ae2-ids.md, SS research/phase7-soulshard-essence.md,
+# GAP research/phase7-v0.3-gaps.md, ES research/phase7-eternal-starlight.md.
+# Names are lang strings (D98) from adastra-1.21.1-1.16.25-neoforge.jar, irons_spellbooks-1.21.1-3.16.3.jar,
+# appliedenergistics2-19.2.17.jar, Mekanism-1.21.1-10.7.19.85.jar (pack/.run/server/mods/, assets/<ns>/lang/en_us.json)
+# and pack/kubejs/startup_scripts/items.js. Ad Astra and Iron's structures have no structure.* lang key: the oil well
+# is described in plain words, and the Citadel uses item.irons_spellbooks.citadel_map = "The Citadel".
+# Dimension ids: adastra jar data/ad_astra/dimension/{moon,mars,venus,mercury,glacio}.json (AA §4.1).
+quests:
+  - node: D6.1
+    title: Nasa Workbench
+    # ad_astra:nasa_workbench, lang block.ad_astra.nasa_workbench "Nasa Workbench". Recipe X#Y/ZCW/#B#: ultimate
+    # circuit, Unob-ATM alloy ingot, #c:storage_blocks/unobtainium ("Block of Unobtainium"), #c:ingots/unrealium,
+    # 3 steel plates, crafting table, steel block (spec §6 D6.1, AA §1.8). Rockets are nasa_workbench recipes (AA §1.5).
+    # Epic bag: spec §9.1.
+    task: item:ad_astra:nasa_workbench
+    deps: [T5.1, M5.1, D5.2, D6.11]
+    coins: 25
+    bag: epic_bag
+    desc: "Every rocket is built at the Nasa Workbench. It now takes an ultimate control circuit, an Unobtainium - Allthemodium alloy ingot, a Block of Unobtainium and an Unrealium ingot from Eternal Starlight, with three steel plates, a crafting table and a steel block."
+  - node: T6.1
+    title: Fuel Refinery
+    # ad_astra:fuel_refinery "Fuel Refinery": aCe/BFB/wVf, the four elemental essences, ultimate circuit, Vib-ATM alloy
+    # ingot, 2 buckets, furnace; the six steel plates are the replaced fillers (spec §6 T6.1; default recipe AA §1.3).
+    task: item:ad_astra:fuel_refinery
+    deps: [T5.1, X5.1, M1.2]
+    coins: 20
+    desc: "The Fuel Refinery trades its six steel plates for the four elemental essences, an ultimate control circuit and a Vibranium - Allthemodium alloy ingot, around the usual two buckets and a furnace."
+  - node: SPACE.1
+    title: Rocket Fuel
+    # ad_astra:fuel_bucket "Fuel Bucket". Oil wells: structure ad_astra:oil_well in #minecraft:is_ocean /
+    # ocean-monument biomes, Overworld (AA §6); oil is a LiquidBlock, so bucketable (AA §6). Refining 5 mB oil ->
+    # 5 mB fuel (ad_astra:refining/fuel_from_refining_oil, AA §1.7). Refinery fills an empty container from its output
+    # tank: FuelRefineryBlockEntity.updateSlots calls FluidUtils.moveContainerToItem(container, fluid, 3, 4, 1)
+    # (javap -p -c of adastra jar earth/terrarium/adastra/common/blockentities/machines/FuelRefineryBlockEntity, offsets
+    # 0-19, read at plan time). Launch 3000 mB fuel, 1000 mB cryo fuel (ad_astra.jsonc launchFuelCost /
+    # launchEfficientFuelCost, AA §1.7).
+    task: item:ad_astra:fuel_bucket
+    deps: [T6.1]
+    coins: 10
+    desc: "Oil wells sit in Overworld oceans; bucket the oil and feed it to the Fuel Refinery, which turns oil into the same amount of fuel and fills an empty bucket from its fuel tank. A launch burns 3000 mB of fuel, three buckets. On Mars you can switch to cryo fuel."
+  - node: T6.2
+    title: Steel Engine
+    # ad_astra:steel_engine "Steel Engine": #N#/#E#/CFA - 4 steel plates, nitro crystal for one plate, engine frame,
+    # fan, ultimate circuit and Unob-Vib alloy ingot in the two empty bottom corners (spec §6 T6.2, D107, D118).
+    # Desh/ostrum/calorite engines stay default and each takes the previous engine (AA §1.4); rockets T1-T4 each take
+    # their own engine (AA §1.5).
+    task: item:ad_astra:steel_engine
+    deps: [T5.1, X5.2, T3.1]
+    coins: 20
+    desc: "The Steel Engine trades one steel plate for a nitro crystal and adds an ultimate control circuit and an Unobtainium - Vibranium alloy ingot in its bottom corners. The desh, ostrum and calorite engines are unchanged, but each is built around the one before it, so every rocket from tier 1 to tier 4 costs one alloy."
+  - node: D6.2
+    title: Tier 1 Rocket
+    # ad_astra:tier_1_rocket "Tier 1 Rocket". RocketItem.useOn needs a block in ad_astra:launch_pads = launch_pad
+    # (AA §1.6). Planets menu opens at Y >= 600 (atmosphereLeave default 600; GAP §1). Tier -> planets:
+    # T1 Moon, T2 Mars, T3 Venus and Mercury, T4 Glacio (AA §5.2). Rocket is the only non-op first entry; follow-in
+    # accepted (spec §4.3, §6 D6.2, D118; GAP §1).
+    task: item:ad_astra:tier_1_rocket
+    deps: [D6.1, T6.2, T6.1]
+    coins: 20
+    desc: "Build a Tier 1 Rocket at the Nasa Workbench, place it on a Launch Pad, fuel it and ride it up: at y 600 the planet menu opens. Tier 1 reaches the Moon, tier 2 adds Mars, tier 3 Venus and Mercury, and tier 4 Glacio. A rocket is the only way for the first of you to reach a planet; a teammate already there can bring friends over."
+  - node: D6.3
+    title: Space Suit
+    # ad_astra:space_suit "Space Suit" (the chest piece; pants, helmet, boots are separate items). Recipe gains
+    # minecraft:elytra in the empty top-middle (spec §6 D6.3, D107). Oxygen loader: electric pump replaces the redstone
+    # block (spec §6). Oxygen check: full space-suit set and oxygen in the chest piece (AA §5.3 OxygenApiImpl.entityTick).
+    # Glacio: oxygen true, -20 is not cold (AA §5.1, §5.5). Elytra from X4.1.
+    task: item:ad_astra:space_suit
+    deps: [X4.1, T3.3]
+    coins: 15
+    desc: "The Space Suit now needs an elytra in its top middle, and the Oxygen Loader takes a Mekanism Electric Pump in place of its redstone block. Wear the full suit with oxygen in the chest piece anywhere without air. Glacio is the one planet that needs no suit."
+  - node: D6.4
+    title: The Moon
+    # dimension ad_astra:moon "Moon": -173, no oxygen (AA §5.1); survival kit: space suit with oxygen (AA §5.5).
+    # Desh on the Moon, ice shard in lunar_wastelands (AA §3, §3.3). Tier 2 rocket: desh blocks, desh tanks, desh
+    # engine (AA §1.4-1.5). Wireless Receiver takes desh x3 (spec §6 S6.1).
+    task: dimension:ad_astra:moon
+    deps: [D6.2, D6.3]
+    coins: 15
+    desc: "The Moon is -173 degrees with no air: full suit with oxygen. Mine desh and ice shards. Desh builds the tier 2 rocket's hull, tanks and engine, and Applied Energistics' Wireless Receiver."
+  - node: D6.5
+    title: Mars
+    # dimension ad_astra:mars "Mars": -65, no oxygen (AA §5.1, §5.5). Ostrum and ice shards on Mars (AA §3, §3.3).
+    # Cryo Freezer: ###/IGI/### with #ad_astra:ostrum_plates, blue ice, large gas tank (AA §1.3). Cryo freezing: ice ->
+    # 1 mB, packed ice -> 2, blue ice -> 10, ice shard -> 25 cryo fuel (AA §1.7). Launch 1000 mB efficient fuel vs
+    # 3000 mB fuel (AA §1.7). Ostrum: tier 3 rocket (AA §1.5), crafting unit and pattern provider (spec §6 S6.2).
+    # Spec §9.1 must: Cryo Freezer from ostrum plates, vanilla ice, no oil or refinery, 1000 mB vs 3000 mB.
+    # Name: appliedenergistics2-19.2.17.jar lang block.ae2.pattern_provider "ME Pattern Provider".
+    task: dimension:ad_astra:mars
+    deps: [D6.4, D6.3]
+    coins: 15
+    desc: "Mars is -65 degrees with no air: full suit with oxygen. Mine ostrum and ice shards. The Cryo Freezer, built from ostrum plates, blue ice and a large gas tank, freezes ice, packed ice, blue ice or ice shards into cryo fuel with no oil and no refinery, and a launch takes only 1000 mB of cryo fuel instead of 3000 mB of fuel. Ostrum also builds the tier 3 rocket and Applied Energistics' Crafting Unit and ME Pattern Provider."
+  - node: D6.6
+    title: Venus
+    # dimension ad_astra:venus "Venus": 464, no oxygen, acid rain in both Venus biomes while the Overworld rains, under
+    # open sky; no suit or effect exemption; shelter = roof, rocket or lander (AA §5.1, §5.3, §5.5). Heat: netherite
+    # suit or any suit plus Fire Resistance (AA §5.5). Calorite on Venus; tier 4 rocket uses calorite (AA §3, §1.5).
+    # Spec §9.1 musts: Fire Resistance; acid rain stopped only by a roof, rocket or lander.
+    task: dimension:ad_astra:venus
+    deps: [D6.5, D6.3]
+    coins: 15
+    desc: "Venus is 464 degrees: wear a Netherite Space Suit, or any space suit with Fire Resistance, and keep oxygen in it. Acid rain falls on Venus whenever it rains in the Overworld and hurts you under open sky; no suit or potion stops it, only a roof, a rocket or a lander over your head. Mine calorite here for the tier 4 rocket."
+  - node: D6.7
+    title: Mercury
+    # dimension ad_astra:mercury "Mercury": 167, no oxygen; netherite suit or any suit plus Fire Resistance
+    # (AA §5.1, §5.5). kubejs:mercury_ore "Mercury Ore" drops kubejs:mercury_shard, needs_diamond_tool
+    # (items.js lines 14-17); placed in ad_astra:mercury_deltas "Mercury Deltas" (spec §8 row mercury_ore).
+    # Legendary bag: spec §9.1, table 0C0F1B0000000005 (spec §10, plan Task 10).
+    task: dimension:ad_astra:mercury
+    deps: [D6.5, D6.3]
+    coins: 25
+    bag: legendary_bag
+    desc: "Mercury is 167 degrees: a Netherite Space Suit, or any space suit with Fire Resistance, plus oxygen. Mercury Ore in the Mercury Deltas breaks with a diamond pickaxe and drops Mercury Shards for the Astral Focus. The Legendary bag now opens in the Coin Shop."
+  - node: D6.8
+    title: Glacio
+    # dimension ad_astra:glacio "Glacio": solar_system ad_astra:proxima_centauri, oxygen true, -20 (not below -50, so
+    # not cold): nothing needed on the surface (AA §5.1, §5.5); tier 4 (AA §5.2). kubejs:glacio_ore "Glacio Ore" ->
+    # kubejs:glacio_shard, needs_diamond_tool (items.js lines 18-21); ice shards on Glacio (AA §3.3).
+    # Spec §9.1 must: Glacio needs no suit.
+    task: dimension:ad_astra:glacio
+    deps: [D6.6]
+    coins: 20
+    desc: "Glacio circles another star and has breathable air at -20 degrees: no suit is needed on the surface. It takes a tier 4 rocket. Glacio Ore breaks with a diamond pickaxe and drops Glacio Shards for the Astral Focus, and ice shards are here too."
+  - node: D6.9
+    title: Etrium
+    # ad_astra:etrium_ingot "Etrium Ingot": ad_astra:alloying in the Etrionic Blast Furnace, 1 desh + 1 ostrum +
+    # 1 calorite + 1 ice shard -> 1 (spec §6 D6.9, D119; AA §2.1, §2.3). Plate by ad_astra:compressing in the
+    # Compressor (spec §6). Astral Focus reagent (spec §6 M6.1). Unobtainium's 5x chain: only its three entry recipes
+    # (mekanism:combining, confluence:bypass/unobtainium_crystal_from_{ore,raw_ore,raw_block}) take Etrium x1, with
+    # main inputs 1 ore, 3 raw ores, 1 raw block (spec §7 X2.2; BA §1.3 table; the counts copy the removed
+    # allthemodium jar data/allthemodium/recipe/processing/unobtainium/slurry/dirty/from_*.json item_input). The later
+    # steps take none.
+    task: item:ad_astra:etrium_ingot
+    deps: [D6.4, D6.5, D6.6]
+    coins: 20
+    desc: "Etrium is alloyed in the Etrionic Blast Furnace from one desh, one ostrum and one calorite ingot and an ice shard, and the Compressor presses it into plates. The Astral Focus takes an ingot, and the first step of Unobtainium's 5x chain takes one per ore, per three raw ores or per raw block."
+  - node: SPACE.2
+    title: Divine Soulshard
+    # irons_spellbooks:divine_soulshard "Divine Soulshard": only from fire_boss "Echo of Tyros, First Flamebearer",
+    # one per kill, killed_by_player (SS §1.2). Cinderous Soulcaller: 6 cinder essence, 2 netherite scrap, 1 echo shard;
+    # use within 22 blocks of the Cinderous Soul Rune; shrink(1) per summon (SS §1.2). Rune generated only in
+    # structure irons_spellbooks:citadel (Nether, #minecraft:has_structure/bastion_remnant; SS §2, §2.4); name from
+    # item.irons_spellbooks.citadel_map "The Citadel". Look-alike named per D98: vanilla lang
+    # advancements.nether.find_bastion.description "Enter a Bastion Remnant" (server-1.21.1-20240808.144430-unpacked.jar
+    # assets/minecraft/lang/en_us.json); the Citadel's own biomes are #minecraft:has_structure/bastion_remnant (SS §2.4).
+    # Cinder essence sources (research/phase7-soulshard-essence.md lines 108-110), in irons_spellbooks-1.21.1-3.16.3.jar
+    # data/irons_spellbooks/loot_table/: entities/citadel_keeper.json "Ancient Knight", one per kill by a player
+    # (killed_by_player; SS §2.3); chests/citadel/spawner_reward.json, one, ejected by the trial spawners in
+    # structure/citadel/citadel.nbt and structure/citadel/rampart/decoration/{rampart,trophy}/spawner.nbt; and
+    # chests/battleground/burial_loot.json pool 1, 0-1 per chest, in structure/battleground/decorations/burial_4.nbt,
+    # weight 1 of 33 in worldgen/template_pool/battleground/decoration_pool.json. That piece holds one double chest: two
+    # minecraft:chest blocks, type right at [1,1,1] and type left at [2,1,1], each with LootTable
+    # irons_spellbooks:chests/battleground/burial_loot (gunzipped NBT), so 0-2 essence. Structure name per D98:
+    # item.irons_spellbooks.ancient_battleground_map "Legion Outpost" (chests/citadel/citadel_bookshelf.json's
+    # furled_map has destination irons_spellbooks:ancient_battleground).
+    # Tyros returns 8-16 per kill (SS §1.2 pool 3). Spec §9.1 must: one kill per soulshard; soulcaller used up.
+    task: item:irons_spellbooks:divine_soulshard
+    deps: [M0.2]
+    coins: 15
+    desc: "Only the Echo of Tyros, First Flamebearer drops a Divine Soulshard: one per kill, and only when a player lands the kill. Summon it with a Cinderous Soulcaller - six cinder essence, two netherite scrap and an echo shard - within 22 blocks of the Cinderous Soul Rune in The Citadel, a Nether structure of its own (not a Bastion Remnant) that generates in the same biomes as bastions. Every summon uses up the Soulcaller. Ancient Knights drop cinder essence when you kill them, The Citadel's trial spawners eject it, and a rare burial chest in a Legion Outpost may hold one or two; each Tyros kill returns 8 to 16."
+  - node: M6.1
+    title: Astral Focus
+    # kubejs:astral_focus "Astral Focus" (items.js line 6). Ars apparatus: reagent ad_astra:etrium_ingot; pedestals
+    # divine_soulshard, kubejs:mercury_shard, kubejs:glacio_shard; sourceCost 0 (spec §6 M6.1, D120). The catalyst
+    # (tree X7.1) arrives in a later version (spec §1 scope; §5 "the v1.0 catalyst").
+    task: item:kubejs:astral_focus
+    deps: [D6.9, M0.2, D6.7, D6.8, M1.1]
+    coins: 25
+    desc: "At the Enchanting Apparatus: an Etrium ingot as the reagent, and a Divine Soulshard, a Mercury Shard and a Glacio Shard on the pedestals, with no Source cost. Keep it: the Confluence Catalyst, coming in a later version, is built from it."
+  - node: S6.1
+    title: Wireless Receiver
+    # ae2:wireless_receiver "Wireless Receiver": A/BCB/B, A = ae2:fluix_pearl, B = #c:ingots/desh x3,
+    # C = ae2:quartz_fiber (spec §6 S6.1). The wireless terminal recipe takes it
+    # (appliedenergistics2-19.2.17.jar data/ae2/recipe/network/wireless_terminal.json).
+    task: item:ae2:wireless_receiver
+    deps: [D6.4, S5.1]
+    coins: 15
+    desc: "The Wireless Receiver takes a fluix pearl, three desh ingots and a quartz fiber, so wireless terminals start on the Moon."
+  - node: S6.2
+    title: Crafting Unit
+    # ae2:crafting_unit "Crafting Unit": ABA/CDF/AEA, fluix crystal x4, calculation processor, #c:ingots/ostrum x1 in
+    # one cable slot, Supreme frame, fluix glass cable x1, logic processor. ae2:pattern_provider "ME Pattern Provider":
+    # ostrum in the empty centre. Molecular Assembler and ME Pattern Encoding Terminal unchanged (spec §6 S6.2, D117;
+    # GAP §3.4; AE2 §4.5). Pack recipe in the dump: confluence:tier6/crafting_unit, A ae2:fluix_crystal x4,
+    # B ae2:calculation_processor, C #c:ingots/ostrum, D #industrialforegoing:machine_frame/supreme, F ae2:fluix_glass_cable
+    # (lang "Fluix ME Glass Cable"), E ae2:logic_processor. AE2's default ME Pattern Provider has an empty centre
+    # (appliedenergistics2-19.2.17.jar data/ae2/recipe/network/blocks/pattern_providers_interface.json "aba"/"c d"/"aba").
+    task: item:ae2:crafting_unit
+    deps: [D6.5, S5.3, T5.2]
+    coins: 20
+    desc: "The Crafting Unit takes four fluix crystals, a calculation processor, an ostrum ingot, a Supreme Machine Frame, a fluix ME glass cable and a logic processor, and the ME Pattern Provider takes an ostrum ingot in its empty centre. The Molecular Assembler and the ME Pattern Encoding Terminal are unchanged, so a single assembler already works in tier 5; network autocrafting waits for Mars."

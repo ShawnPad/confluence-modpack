@@ -27,12 +27,76 @@ gates:
   - confluence:tier4/ender_eye
   - confluence:tier4/planarium
   - confluence:tier4/end_focus
-  # in-place datapack override: the id is present with or without our file; inputs are checked in PLAYTEST H3
+  # in-place datapack override (D91): the id is present with or without our file; inputs are checked against the jar default
+  # by tools/tests/test_if_dissolution_data.py and in PLAYTEST H3
   - industrialforegoing:dissolution_chamber/advanced_machine_frame
   # v0.2 bypass
   - confluence:bypass/vibranium_crystal_from_ore
   - confluence:bypass/vibranium_crystal_from_raw_ore
   - confluence:bypass/vibranium_crystal_from_raw_block
+  # v0.3 Mekanism tier 5: T5.1 ultimate circuit, X5.3 Digital Miner (tiers/tier5.js)
+  - confluence:tier5/ultimate_control_circuit
+  - confluence:tier5/digital_miner
+  # v0.3 tier-3 elite-circuit swaps, D113 (tiers/tier3.js)
+  - confluence:tier3/qio_drive_base
+  - confluence:tier3/qio_redstone_adapter
+  - confluence:tier3/quantum_entangloporter
+  - confluence:tier3/chemical_crystallizer
+  - confluence:tier3/chemical_dissolution_chamber
+  - confluence:tier3/chemical_washer
+  # v0.3 key, Supreme frame, alloys: D5.1, M5.1, X5.1 (tiers/tier5.js); T5.2, X5.2 (kubejs/data); D105, D114, D115
+  - confluence:tier5/other_key
+  - confluence:tier5/unobtainium_allthemodium_alloy_ingot
+  - confluence:tier5/vibranium_allthemodium_alloy_ingot
+  # X5.2 and T5.2 are IF dissolution datapack files; T5.2 overrides IF's default in place, so its id is present even without
+  # our file. A gate row proves the id is in the dump, not that the file passed IF's codec. For that, see the docstring of
+  # tools/tests/test_if_dissolution_data.py, tools/server_boot.sh (it fails on "Parsing error loading recipe") and the
+  # PLAYTEST tier-5 recipe probe (spec §12 item 4)
+  - confluence:tier5/unobtainium_vibranium_alloy_ingot
+  - industrialforegoing:dissolution_chamber/supreme_machine_frame
+  # v0.3 Space: D6.1, D6.3, T6.1, T6.2, D6.9, M6.1 (tiers/tier6.js); D107, D118–D120, D123
+  - confluence:tier6/nasa_workbench
+  - confluence:tier6/space_suit
+  - confluence:tier6/oxygen_loader
+  - confluence:tier6/fuel_refinery
+  - confluence:tier6/steel_engine
+  - confluence:tier6/etrium_ingot
+  - confluence:tier6/etrium_plate
+  - confluence:tier6/astral_focus
+  # v0.3 AE2: S5.1–S5.3 (tiers/tier5.js); S6.1–S6.2 (tiers/tier6.js); D107, D117
+  - confluence:tier5/inscriber
+  - confluence:tier5/charger
+  - confluence:tier5/controller
+  - confluence:tier5/drive
+  - confluence:tier5/import_bus
+  - confluence:tier5/export_bus
+  - confluence:tier5/terminal
+  - confluence:tier6/wireless_receiver
+  - confluence:tier6/crafting_unit
+  - confluence:tier6/pattern_provider
+  # v0.3 AE2: defaults that must stay (provider conversions, assembler, crafting and pattern encoding terminals; D117; AE2 §3, §4.5)
+  - ae2:network/blocks/pattern_providers_interface_alt
+  - ae2:network/blocks/pattern_providers_interface_part
+  - ae2:network/crafting/molecular_assembler
+  - ae2:network/parts/terminals_pattern_encoding
+  - ae2:network/parts/terminals_crafting
+  # v0.3 bypass: X2.2 Unobtainium 5x chain waits for Etrium (bypass.js); D125
+  - confluence:bypass/unobtainium_crystal_from_ore
+  - confluence:bypass/unobtainium_crystal_from_raw_ore
+  - confluence:bypass/unobtainium_crystal_from_raw_block
+  # v0.3 bypass: tier-ore recipes D112(c) keeps, blast furnace and dust (bypass.js); D112, D130
+  - allthemodium:allthemodium_ingot_from_ore_blasting
+  - allthemodium:allthemodium_ingot_from_raw_blasting
+  - allthemodium:allthemodium_ingot_from_dust_smelting
+  - allthemodium:allthemodium_ingot_from_dust_blasting
+  - allthemodium:vibranium_ingot_from_ore_blasting
+  - allthemodium:vibranium_ingot_from_raw_blasting
+  - allthemodium:vibranium_ingot_from_dust_smelting
+  - allthemodium:vibranium_ingot_from_dust_blasting
+  - allthemodium:unobtainium_ingot_from_ore_blasting
+  - allthemodium:unobtainium_ingot_from_raw_blasting
+  - allthemodium:unobtainium_ingot_from_dust_smelting
+  - allthemodium:unobtainium_ingot_from_dust_blasting
 removed:
   # v0.1 tiers 0–2
   - minecraft:flint_and_steel
@@ -70,3 +134,131 @@ removed:
   - allthemodium:processing/vibranium/slurry/dirty/from_ore
   - allthemodium:processing/vibranium/slurry/dirty/from_raw_ore
   - allthemodium:processing/vibranium/slurry/dirty/from_raw_block
+  # v0.3 Mekanism tier 5: T5.1 ultimate circuit, X5.3 Digital Miner (tiers/tier5.js)
+  - mekanism:control_circuit/ultimate
+  - mekanism:control_circuit/infused_ultimate
+  - mekanism:digital_miner
+  # v0.3 tier-3 elite-circuit swaps, D113 (tiers/tier3.js)
+  - mekanism:qio_drive_base
+  - mekanism:qio_redstone_adapter
+  - mekanism:quantum_entangloporter
+  - mekanism:chemical_crystallizer
+  - mekanism:chemical_dissolution_chamber
+  - mekanism:chemical_washer
+  # v0.3 key, Supreme frame, alloys: nothing removed. No loaded recipe makes the key or an alloy ingot except the 9-from-1
+  # block recipes, which stay; the Supreme frame is overridden in place at IF's own id.
+  # v0.3 Space: the five Ad Astra defaults, removed by output (tiers/tier6.js); recipe id = item id. Rockets, launch pad and
+  # the three later engines stay (D6.2, D118)
+  - ad_astra:nasa_workbench
+  - ad_astra:space_suit
+  - ad_astra:oxygen_loader
+  - ad_astra:fuel_refinery
+  - ad_astra:steel_engine
+  # v0.3 AE2: S5.1–S5.3 (tiers/tier5.js); S6.1–S6.2 (tiers/tier6.js); D107, D117. The ten AE2 defaults, removed by id.
+  # The pattern provider's part <-> block conversions, the molecular assembler and the crafting and pattern encoding
+  # terminals stay (D117; AE2 §3, §4.5; asserted under gates:)
+  - ae2:network/blocks/inscribers
+  - ae2:network/blocks/crystal_processing_charger
+  - ae2:network/blocks/controller
+  - ae2:network/blocks/storage_drive
+  - ae2:network/parts/import_bus
+  - ae2:network/parts/export_bus
+  - ae2:network/parts/terminals
+  - ae2:network/wireless_part
+  - ae2:network/crafting/cpu_crafting_unit
+  - ae2:network/blocks/pattern_providers_interface
+  # v0.3 bypass: X2.2 Unobtainium 5x chain entry recipes (bypass.js); D125
+  - allthemodium:processing/unobtainium/slurry/dirty/from_ore
+  - allthemodium:processing/unobtainium/slurry/dirty/from_raw_ore
+  - allthemodium:processing/unobtainium/slurry/dirty/from_raw_block
+  # v0.3 bypass: tier-ore and raw-drop smelting; blasting and dust stay (bypass.js); D112(c), D130
+  - allthemodium:allthemodium_ingot_from_ore_smelting
+  - allthemodium:vibranium_ingot_from_ore_smelting
+  - allthemodium:unobtainium_ingot_from_ore_smelting
+  - allthemodium:allthemodium_ingot_from_raw_smelting
+  - allthemodium:vibranium_ingot_from_raw_smelting
+  - allthemodium:unobtainium_ingot_from_raw_smelting
+sole_producers:
+  # Each gated output -> exactly the recipe ids whose dump `json` body makes it (tools/check_recipes.py's producer rule, in
+  # its docstring); [] means nothing may make it. An entry is an item unless written {kind: chemical, producers: [...]}.
+  # Each list was confirmed against the boot dump of 2026-10-01 (v0.3 Task 8c), and replaces a one-off producer check in
+  # plan Tasks 4-8.
+  # v0.3 Mekanism tier 5: T5.1 ultimate circuit, X5.3 Digital Miner (tiers/tier5.js); D104, D116
+  mekanism:ultimate_control_circuit: [confluence:tier5/ultimate_control_circuit]
+  mekanism:digital_miner: [confluence:tier5/digital_miner]
+  # v0.3 tier-3 elite-circuit swaps (tiers/tier3.js); D113
+  mekanism:qio_drive_base: [confluence:tier3/qio_drive_base]
+  mekanism:qio_redstone_adapter: [confluence:tier3/qio_redstone_adapter]
+  mekanism:quantum_entangloporter: [confluence:tier3/quantum_entangloporter]
+  mekanism:chemical_crystallizer: [confluence:tier3/chemical_crystallizer]
+  mekanism:chemical_dissolution_chamber: [confluence:tier3/chemical_dissolution_chamber]
+  mekanism:chemical_washer: [confluence:tier3/chemical_washer]
+  # v0.3 key, Supreme frame, alloys: D5.1, M5.1, X5.1 (tiers/tier5.js); T5.2, X5.2 (kubejs/data); D105, D114, D115.
+  # Allthemodium's 9-from-1 block recipes stay on purpose (plan Task 5: "Nothing is removed").
+  kubejs:other_key: [confluence:tier5/other_key]
+  industrialforegoing:machine_frame_supreme: [industrialforegoing:dissolution_chamber/supreme_machine_frame]
+  allthemodium:unobtainium_allthemodium_alloy_ingot: [allthemodium:unobtainium_allthemodium_alloy_ingot_from_block,
+    confluence:tier5/unobtainium_allthemodium_alloy_ingot]
+  allthemodium:vibranium_allthemodium_alloy_ingot: [allthemodium:vibranium_allthemodium_alloy_ingot_from_block,
+    confluence:tier5/vibranium_allthemodium_alloy_ingot]
+  allthemodium:unobtainium_vibranium_alloy_ingot: [allthemodium:unobtainium_vibranium_alloy_ingot_from_block,
+    confluence:tier5/unobtainium_vibranium_alloy_ingot]
+  # v0.3 Space: D6.1, D6.3, T6.1, T6.2, D6.9, M6.1 (tiers/tier6.js); D107, D118-D120, D123
+  ad_astra:nasa_workbench: [confluence:tier6/nasa_workbench]
+  ad_astra:space_suit: [confluence:tier6/space_suit]
+  ad_astra:oxygen_loader: [confluence:tier6/oxygen_loader]
+  ad_astra:fuel_refinery: [confluence:tier6/fuel_refinery]
+  ad_astra:steel_engine: [confluence:tier6/steel_engine]
+  ad_astra:etrium_ingot: [confluence:tier6/etrium_ingot]
+  ad_astra:etrium_plate: [confluence:tier6/etrium_plate]
+  kubejs:astral_focus: [confluence:tier6/astral_focus]
+  # v0.3 Space: Ad Astra defaults that stay, rockets, launch pad and the three later engines (D6.2); D118
+  ad_astra:tier_1_rocket: [ad_astra:nasa_workbench/tier_1_rocket_from_nasa_workbench]
+  ad_astra:tier_2_rocket: [ad_astra:nasa_workbench/tier_2_rocket_from_nasa_workbench]
+  ad_astra:tier_3_rocket: [ad_astra:nasa_workbench/tier_3_rocket_from_nasa_workbench]
+  ad_astra:tier_4_rocket: [ad_astra:nasa_workbench/tier_4_rocket_from_nasa_workbench]
+  ad_astra:launch_pad: [ad_astra:launch_pad]
+  ad_astra:desh_engine: [ad_astra:desh_engine]
+  ad_astra:ostrum_engine: [ad_astra:ostrum_engine]
+  ad_astra:calorite_engine: [ad_astra:calorite_engine]
+  # v0.3 AE2: S5.1-S5.3 (tiers/tier5.js); S6.1-S6.2 (tiers/tier6.js); D107, D117. The pattern provider's second producer is
+  # AE2's part -> block conversion (_alt), and _part (block -> part) is the cable pattern provider's only one (AE2 §4.5).
+  ae2:inscriber: [confluence:tier5/inscriber]
+  ae2:charger: [confluence:tier5/charger]
+  ae2:controller: [confluence:tier5/controller]
+  ae2:drive: [confluence:tier5/drive]
+  ae2:import_bus: [confluence:tier5/import_bus]
+  ae2:export_bus: [confluence:tier5/export_bus]
+  ae2:terminal: [confluence:tier5/terminal]
+  ae2:wireless_receiver: [confluence:tier6/wireless_receiver]
+  ae2:crafting_unit: [confluence:tier6/crafting_unit]
+  ae2:pattern_provider: [ae2:network/blocks/pattern_providers_interface_alt, confluence:tier6/pattern_provider]
+  ae2:cable_pattern_provider: [ae2:network/blocks/pattern_providers_interface_part]
+  # v0.1, v0.2, v0.3 bypass: the three 5x chains' combining replacements (bypass.js) plus Allthemodium's own crystallizing
+  # recipe (from clean slurry, which nothing below can make); D62, D125
+  allthemodium:allthemodium_crystal: [allthemodium:processing/allthemodium/crystal/from_slurry,
+    confluence:bypass/allthemodium_crystal_from_ore, confluence:bypass/allthemodium_crystal_from_raw_ore,
+    confluence:bypass/allthemodium_crystal_from_raw_block]
+  allthemodium:vibranium_crystal: [allthemodium:processing/vibranium/crystal/from_slurry,
+    confluence:bypass/vibranium_crystal_from_ore, confluence:bypass/vibranium_crystal_from_raw_ore,
+    confluence:bypass/vibranium_crystal_from_raw_block]
+  allthemodium:unobtainium_crystal: [allthemodium:processing/unobtainium/crystal/from_slurry,
+    confluence:bypass/unobtainium_crystal_from_ore, confluence:bypass/unobtainium_crystal_from_raw_ore,
+    confluence:bypass/unobtainium_crystal_from_raw_block]
+  # v0.1, v0.2, v0.3 bypass: the dirty slurries are Mekanism chemicals; with the nine dissolution entries removed nothing may
+  # make them (bypass.js); D62, D125
+  allthemodium:dirty_allthemodium: {kind: chemical, producers: []}
+  allthemodium:dirty_vibranium: {kind: chemical, producers: []}
+  allthemodium:dirty_unobtainium: {kind: chemical, producers: []}
+  # v0.3 bypass: tier-ore ingots, exactly today's producers: nuggets and block (crafting), ore and raw blasting, dust smelting
+  # and blasting. Listing the whole set is the type rule as well: the only minecraft:smelting row allowed is
+  # *_from_dust_smelting, so a returning ore or raw smelting recipe is an extra producer (bypass.js); D112(c), D130
+  allthemodium:allthemodium_ingot: [allthemodium:allthemodium_ingot, allthemodium:allthemodium_ingot_from_block,
+    allthemodium:allthemodium_ingot_from_ore_blasting, allthemodium:allthemodium_ingot_from_raw_blasting,
+    allthemodium:allthemodium_ingot_from_dust_smelting, allthemodium:allthemodium_ingot_from_dust_blasting]
+  allthemodium:vibranium_ingot: [allthemodium:vibranium_ingot, allthemodium:vibranium_ingot_from_block,
+    allthemodium:vibranium_ingot_from_ore_blasting, allthemodium:vibranium_ingot_from_raw_blasting,
+    allthemodium:vibranium_ingot_from_dust_smelting, allthemodium:vibranium_ingot_from_dust_blasting]
+  allthemodium:unobtainium_ingot: [allthemodium:unobtainium_ingot, allthemodium:unobtainium_ingot_from_block,
+    allthemodium:unobtainium_ingot_from_ore_blasting, allthemodium:unobtainium_ingot_from_raw_blasting,
+    allthemodium:unobtainium_ingot_from_dust_smelting, allthemodium:unobtainium_ingot_from_dust_blasting]

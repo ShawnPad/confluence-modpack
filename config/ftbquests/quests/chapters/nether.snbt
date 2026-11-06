@@ -27,11 +27,10 @@
 			y: 0.0d
 		}
 		{
-			dependencies: ["7402B74889DEA9C1"]
 			id: "7E28C2FF2CEBAE0A"
 			rewards: [{ id: "0DFCFA93AC59E592" item: { count: 3, id: "kubejs:coin" } type: "item" }]
 			tasks: [{ id: "25E21E5DB3EAA02C" item: { count: 1, id: "minecraft:nether_star" } type: "item" }]
-			x: 2.0d
+			x: 0.0d
 			y: 2.0d
 		}
 		{
@@ -40,7 +39,7 @@
 			rewards: [{ id: "10D03292F013706D" item: { count: 3, id: "kubejs:coin" } type: "item" }]
 			tasks: [{ id: "207B0B1F6DD68B48" item: { count: 1, id: "mekanism:metallurgic_infuser" } type: "item" }]
 			x: 0.0d
-			y: 2.0d
+			y: 4.0d
 		}
 		{
 			dependencies: ["507D016CAAF0609B"]
@@ -48,7 +47,7 @@
 			rewards: [{ id: "0B407F9C997E13B7" item: { count: 3, id: "kubejs:coin" } type: "item" }]
 			tasks: [{ id: "6EBE85ECC4BCE0E7" item: { count: 1, id: "mekanism:advanced_control_circuit" } type: "item" }]
 			x: 2.0d
-			y: 4.0d
+			y: 2.0d
 		}
 		{
 			dependencies: ["027FE16448966127", "53D85380B599D907"]
@@ -56,7 +55,7 @@
 			rewards: [{ id: "10E197496AE0B09D" item: { count: 3, id: "kubejs:coin" } type: "item" }]
 			tasks: [{ id: "089E4C5C7728C269" item: { count: 1, id: "ars_nouveau:enchanting_apparatus" } type: "item" }]
 			x: 0.0d
-			y: 4.0d
+			y: 6.0d
 		}
 		{
 			dependencies: ["532F495217179193"]
@@ -64,7 +63,7 @@
 			rewards: [{ id: "0AD3DE73B1FC0465" item: { count: 3, id: "kubejs:coin" } type: "item" }]
 			tasks: [{ id: "2DDE7E7FA86EC704" item: { count: 1, id: "ars_nouveau:fire_essence" } type: "item" }]
 			x: 2.0d
-			y: 6.0d
+			y: 4.0d
 		}
 		{
 			dependencies: ["412E53F722A070FB", "42D307D4117DBAA3"]

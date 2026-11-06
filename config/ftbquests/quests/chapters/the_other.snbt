@@ -1,0 +1,142 @@
+{
+	default_hide_dependency_lines: false
+	default_quest_shape: "rsquare"
+	filename: "the_other"
+	group: "0C0F1A0000000001"
+	icon: { id: "kubejs:other_key" }
+	id: "14485A12D98CD82D"
+	images: [ ]
+	order_index: 6
+	progression_mode: "flexible"
+	quest_links: [ ]
+	quests: [
+		{
+			dependencies: ["4D7ABB8D3D3668EF", "1D427134CD615C79", "048CE4CA6B1BD4EA", "1D0BCB2E7D3ED925", "6885D6C2C3465F52"]
+			id: "1DE1E4C4EC7D8079"
+			rewards: [{ id: "2E0E098774A26133" item: { count: 25, id: "kubejs:coin" } type: "item" }, { id: "527AEA5834C34C30" table_id: 868942939919745028L type: "loot" }]
+			tasks: [{ id: "382E37137F69E29C" item: { count: 1, id: "kubejs:other_key" } type: "item" }]
+			x: 0.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["1DE1E4C4EC7D8079"]
+			id: "7A17509F1B91C73B"
+			rewards: [{ id: "510054526C3C7AD9" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ dimension: "allthemodium:the_other" id: "3F959FF00C653931" type: "dimension" }]
+			x: 2.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["1DE1E4C4EC7D8079", "5C7B38CC9B640C57"]
+			id: "4167FA1ABBF32E3B"
+			rewards: [{ id: "04253B40282E4953" item: { count: 15, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "091D89AD9C47C0F5" item: { count: 1, id: "allthemodium:raw_unobtainium" } type: "item" }]
+			x: 2.0d
+			y: 2.0d
+		}
+		{
+			dependencies: ["7A17509F1B91C73B"]
+			id: "1C96EE01961369A0"
+			rewards: [{ id: "4C232FBB5C0D719F" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "104D799EB81EC45A" item: { count: 1, id: "allthemodium:unobtainium_upgrade_smithing_template" } type: "item" }]
+			x: 4.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["1DE1E4C4EC7D8079"]
+			id: "5D93952B29860654"
+			rewards: [{ id: "4A8F962D89B56033" item: { count: 20, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ entity: "allthemodium:piglich" id: "503542E95CCD4889" type: "kill" value: 1L }]
+			x: 2.0d
+			y: 4.0d
+		}
+		{
+			dependencies: ["2E9D5FE7F6CF191E"]
+			id: "65A07DAAA847ABC9"
+			rewards: [{ id: "26ACB1E05B091118" item: { count: 15, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "571305241940D996" item: { count: 1, id: "ars_nouveau:wilden_tribute" } type: "item" }]
+			x: 0.0d
+			y: 2.0d
+		}
+		{
+			dependencies: ["4B96AE2352774081", "4167FA1ABBF32E3B"]
+			id: "6F8979047D2C3098"
+			rewards: [{ id: "30E31C95E1BEF49B" item: { count: 15, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "0AE629BF45C878DC" item: { count: 1, id: "mekanism:ultimate_control_circuit" } type: "item" }]
+			x: 4.0d
+			y: 2.0d
+		}
+		{
+			dependencies: ["7A17509F1B91C73B"]
+			id: "4E5F478A22B5AF19"
+			rewards: [{ id: "0279B1F96F07946A" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "04C97F31CD5740A1" item: { count: 1, id: "allthemodium:soul_lava_bucket" } type: "item" }]
+			x: 4.0d
+			y: 4.0d
+		}
+		{
+			dependencies: ["6F8979047D2C3098"]
+			id: "01A650E4C2A4E17D"
+			rewards: [{ id: "02655F436F3227BE" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "543036CAFC819DCB" item: { count: 1, id: "mekanism:digital_miner" } type: "item" }]
+			x: 6.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["532F495217179193", "4167FA1ABBF32E3B", "34C4DC4DF5B82831", "5D93952B29860654", "72EBE60DB9DAB561"]
+			id: "22B1EC29A7933B31"
+			rewards: [{ id: "37604641007B5174" item: { count: 15, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "599868E687930F90" item: { count: 1, id: "allthemodium:unobtainium_allthemodium_alloy_ingot" } type: "item" }]
+			x: 4.0d
+			y: 6.0d
+		}
+		{
+			dependencies: ["7497F7C8118F3795", "34C4DC4DF5B82831", "4D7ABB8D3D3668EF", "5D93952B29860654", "30182D96B88BDA83"]
+			id: "079FCEA0591FA038"
+			rewards: [{ id: "4390A4D58BA291CB" item: { count: 15, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "4967027758BD891E" item: { count: 1, id: "allthemodium:vibranium_allthemodium_alloy_ingot" } type: "item" }]
+			x: 4.0d
+			y: 8.0d
+		}
+		{
+			dependencies: ["315020D6830FCDD8", "4D7ABB8D3D3668EF", "4167FA1ABBF32E3B", "5D93952B29860654"]
+			id: "151B9F57CD64BD06"
+			rewards: [{ id: "4032FDAA64B18ACD" item: { count: 15, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "4CEB5974AE549E7E" item: { count: 1, id: "allthemodium:unobtainium_vibranium_alloy_ingot" } type: "item" }]
+			x: 4.0d
+			y: 10.0d
+		}
+		{
+			dependencies: ["1D0BCB2E7D3ED925", "315020D6830FCDD8", "37C946B9E11F98EC", "30182D96B88BDA83", "6F8979047D2C3098", "4167FA1ABBF32E3B", "22B1EC29A7933B31"]
+			id: "5A3E41C6B3A15B38"
+			rewards: [{ id: "42AD6F4C13D213F0" item: { count: 20, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "5C096DFA9F11E405" item: { count: 1, id: "industrialforegoing:machine_frame_supreme" } type: "item" }]
+			x: 6.0d
+			y: 2.0d
+		}
+		{
+			dependencies: ["5A3E41C6B3A15B38", "41A5B57830B98089", "507D016CAAF0609B"]
+			id: "6D26D80AC44CFFA7"
+			rewards: [{ id: "27E038D26F56D6A0" item: { count: 15, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "6C77F943CCA81581" item: { count: 1, id: "ae2:inscriber" } type: "item" }]
+			x: 8.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["5A3E41C6B3A15B38", "212C206BB74F7374", "03A64F0DB6424DEE", "6D26D80AC44CFFA7"]
+			id: "224604BB6A113636"
+			rewards: [{ id: "204DFFC71EF540CE" item: { count: 15, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "6965581733882F0C" item: { count: 1, id: "ae2:controller" } type: "item" }]
+			x: 10.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["2A9F87E95A613EC9", "5A3E41C6B3A15B38", "6D26D80AC44CFFA7"]
+			id: "28351C2AA5C24437"
+			rewards: [{ id: "549C07DE61909767" item: { count: 15, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "58A784AA7B2431A3" item: { count: 1, id: "ae2:terminal" } type: "item" }]
+			x: 10.0d
+			y: 2.0d
+		}
+	]
+}

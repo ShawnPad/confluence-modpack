@@ -1,0 +1,35 @@
+{
+  "type": "industrialforegoing:dissolution_chamber",
+  "input": [
+    {
+      "item": "industrialforegoing:pink_slime"
+    },
+    {
+      "tag": "c:ingots/vibranium"
+    },
+    {
+      "item": "industrialforegoing:pink_slime"
+    },
+    {
+      "item": "allthemodium:piglich_heart"
+    },
+    {
+      "item": "industrialforegoing:pink_slime"
+    },
+    {
+      "tag": "c:ingots/unobtainium"
+    },
+    {
+      "item": "industrialforegoing:pink_slime"
+    }
+  ],
+  "inputFluid": {
+    "amount": 100,
+    "fluid": "allthemodium:soul_lava"
+  },
+  "output": {
+    "count": 1,
+    "id": "allthemodium:unobtainium_vibranium_alloy_ingot"
+  },
+  "processingTime": 200
+}

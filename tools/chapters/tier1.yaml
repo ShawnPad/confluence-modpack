@@ -19,7 +19,7 @@ quests:
   - node: X1.2
     title: Nether Star
     task: item:minecraft:nether_star
-    deps: [D1.1]
+    # v0.3: no deps; the tree's [X1.2] gate is none (D127, plan Task 1).
     desc: "Beat a Wither for its nether star. Nothing needs it yet - ether gas asks for one much later - so bank it somewhere safe."
   - node: T1.1
     title: Metallurgic Infuser
