@@ -22,7 +22,7 @@ quests:
     task: item:allthemodium:raw_vibranium
     deps: [D3.1, D2.3]
     coins: 10
-    desc: "Vibranium spawns only in the Undergarden here, in the floors of caves deep down (below y -16), and needs an Allthemodium-tier pickaxe. Its ingots go into the Eye of Ender, the QIO storage line and the Advanced Machine Frame - and Mekanism's 5x chain for Allthemodium runs on them."
+    desc: "Vibranium spawns only in the Undergarden here, in the floors of caves deep down (below y -16), and needs an Allthemodium-tier pickaxe. Its ingots go into the Eye of Ender, the QIO storage line and the Advanced Machine Frame - and Mekanism's 5x chain for Allthemodium runs on them. Raw Vibranium Ore will not cook in a furnace or an Energized Smelter. Use a blast furnace, or turn it into dust in an Enrichment Chamber first, because the dust cooks in either."
   - node: D3.3
     title: Vibranium Template
     task: item:allthemodium:vibranium_upgrade_smithing_template

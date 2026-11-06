@@ -74,7 +74,7 @@ LOADED = re.compile(r"\]: Loaded TOML config file (.+)$")
 FML_CONFIG = "fml.toml"   # FMLConfig's file (docstring), checked by its own lines below
 FML_LOADED = re.compile(r"\[net\.neoforged\.fml\.loading\.FMLConfig/[A-Z]*\]: Loaded FML config from (.+)$")
 FML_THREADS = re.compile(r"\[net\.neoforged\.fml\.ModWorkManager/[A-Z]*\]: Using (\d+) threads for parallel mod-loading$")
-FML_KEY_CORRECTED = re.compile(r"\[net\.neoforged\.fml\.loading\.FMLConfig/CORE\]: Incorrect key (.+?) was corrected from ")
+FML_KEY_CORRECTED = re.compile(r"\[net\.neoforged\.fml\.loading\.FMLConfig/[A-Z]*\]: Incorrect key (.+?) was corrected from ")
 FML_BANNER = re.compile(r"\[net\.neoforged\.fml\.loading\.FMLConfig/[A-Z]*\]: (Dependency overrides for mod '.*)$")
 OVERRIDE_MESSAGES = {"+": "adding explicit AFTER ordering against", "-": "softening dependency constraints against"}
 # Appended to the fml.toml failures a server-side change can cause: the copy differs, FML never loaded it, a banner line is

@@ -463,3 +463,48 @@ def test_const_in_loop_cases(name):
     src, lines, bare = LOOP_CASES[name]
     assert const_in_loop(src) == (lines, 0)
     assert bare_loop_bodies(src) == (bare, 0)
+
+
+# ---- names KubeJS hides or renames on real Minecraft classes (v0.3 probe, 2026-11-06) ----
+# kubejs-neoforge-2101.7.2-build.377.jar core/mixin/{EntityMixin,LevelMixin,PlayerMixin,ServerPlayerMixin,MinecraftServerMixin},
+# javap -v: each name here is @HideFromJS or has a @RemapForJS name. Measured under Rhino on a live ServerPlayer and ServerLevel:
+# level() and dimension() fall to a KubeJS bean, an object ("It is not a function"); getUUID and getStringUUID are undefined.
+# That is how the v0.3 gate failed on every click and trip while node, the boot and every other check passed
+# (research/phase7-v0.3-probe-evidence/rhino-names.md). The other names are from the annotations, not measured; the lint is
+# stricter than Rhino for an overloaded one (moveTo, teleportTo: only some overloads are hidden). Left out: Entity.push, because
+# arrays have push, and Entity.getType, which has a @RemapForJS but was measured callable (String(e.getType()), stand-in helpers).
+HIDDEN_OR_RENAMED = {
+    # EntityMixin, hidden
+    "level": "getLevel", "getPassengers": None, "hurt": None, "teleportTo": None, "spawnAtLocation": None,
+    # EntityMixin, renamed
+    "getPersistentData": "getForgePersistentData", "getUUID": "getUuid", "getStringUUID": "getStringUuid",
+    "isCurrentlyGlowing": "isGlowing", "setGlowingTag": "setGlowing", "getYRot": "getYaw", "setYRot": "setYaw",
+    "getXRot": "getPitch", "setXRot": "setPitch", "setYBodyRot": "setBodyYaw", "getVisualRotationYInDegrees": "getBodyYaw",
+    "setDeltaMovement": "setMotion", "moveTo": "setPositionAndRotation", "isAlliedTo": "isOnSameTeam",
+    "getDirection": "getHorizontalFacing", "extinguishFire": "extinguish",
+    "distanceToSqr": "distanceToEntitySqr", "distanceTo": "distanceToEntity",
+    # LevelMixin
+    "dimension": "getDimension", "getGameTime": "getTime",
+    # PlayerMixin, ServerPlayerMixin, MinecraftServerMixin
+    "closeContainer": "closeMenu", "getStats": "getStatsCounter", "isDedicatedServer": "isDedicated", "stopServer": "stop",
+}
+
+
+def hidden_or_renamed_calls(src):
+    """(line, name) of each `.name(` call whose name KubeJS hides or renames. Comments and strings are not code."""
+    toks = tokens(src)
+    return [(toks[i + 1].line, toks[i + 1].text) for i in range(len(toks) - 2)
+            if toks[i].text == "." and toks[i + 1].text in HIDDEN_OR_RENAMED and toks[i + 2].text == "("]
+
+
+def test_no_call_to_a_name_kubejs_hides_or_renames():
+    found = []
+    for d in SCRIPT_DIRS:
+        for js in sorted((ROOT / d).rglob("*.js")):
+            found += [f"{js.relative_to(ROOT)}:{line}: .{name}() (use {HIDDEN_OR_RENAMED[name]})"
+                      for line, name in hidden_or_renamed_calls(js.read_text(encoding="utf-8"))]
+    assert found == [], "not callable under Rhino, though node accepts them:\n" + "\n".join(found)
+    # Red cases: the four calls that broke the gate, in code; the same words in a comment or a string, and a bare name, are not.
+    src = ("p.level().dimension()\nplayer.getUUID()\np.getStringUUID()\n// p.level()\nconst s = 'p.level()'\nconst level = 1\n"
+           "f(level)\n")
+    assert hidden_or_renamed_calls(src) == [(1, "level"), (1, "dimension"), (2, "getUUID"), (3, "getStringUUID")]

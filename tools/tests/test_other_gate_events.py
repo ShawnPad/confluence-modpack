@@ -8,9 +8,15 @@ command. Each case loads the real lib/ids.js, lib/other_gate.js and events.js in
 server scripts one scope), fires one captured listener, and returns every recorded call in order. The stand-ins model only
 the members the section calls (its header comment cites each one), and each is as strict as the Java member it stands for:
 getTeamForPlayer takes only the event's player (ftb-teams-neoforge-2101.1.11.jar TeamManager has no other overload), an
-empty Optional's get() throws, getUUID() returns an object and PlayerList.getPlayer takes only that object, and the player
+empty Optional's get() throws, getUuid() returns an object and PlayerList.getPlayer takes only that object, and the player
 getPlayer returns is a distinct object with the same UUID (server-1.21.1-20240808.144430-srg.jar PlayerList.respawn builds a
-new ServerPlayer), which alone moves when a tp works. Rhino itself is exercised by the boot and the Task 12 probe.
+new ServerPlayer), which alone moves when a tp works. Rhino itself is exercised by the boot and tools/gate_probe.sh.
+
+The stand-ins also model the names KubeJS changes under Rhino, as measured on 2026-11-06 and read in
+kubejs-neoforge-2101.7.2-build.377.jar (research/phase7-v0.3-probe-evidence/rhino-names.md). Entity.level() is @HideFromJS,
+so `player.level` is KubeJS's bean, a Level object, and calling it is a TypeError. getUUID() and getStringUUID() are renamed
+getUuid() and getStringUuid(), so the old names are undefined. Level.dimension() is renamed getDimensionKey(), so
+`level.dimension` is KubeJS's bean, a ResourceLocation object, and calling it is a TypeError.
 
 node runs V8, NOT the pack's Rhino (rhino-2101.2.7-build.85.jar under KubeJS 2101.7.2): a section that runs here can still
 fail in KubeJS (tools/tests/test_rhino_hazards.py lints the one known case, a const directly inside a try). The load proof is
@@ -49,6 +55,14 @@ const rec = s => { log.push(s) }
 const boom = at => { if (c.throwAt === at) throw new Error('boom at ' + at) }
 const EXIT = new Error('EventExit')
 const key = id => ({ location: () => ({ toString: () => id }) })
+const location = id => ({ toString: () => id })   // a ResourceLocation: String() gives "ns:path"
+// A Level as Rhino shows it: `dimension` is a ResourceLocation bean, not a function (LevelMixin renames dimension()).
+const levelAt = at => ({
+  isClientSide: () => c.clientSide === true,
+  dimension: location(at()),
+  getDimension: () => { boom('dimension'); return location(at()) },
+  getDimensionKey: () => { boom('dimension'); return key(at()) },
+})
 const team = {
   getExtraData: () => ({
     getBoolean: k => { rec('getBoolean ' + k); boom('getBoolean'); return c.team.unlocked === true },
@@ -82,10 +96,13 @@ const makePlayer = () => {
     isSpectator: () => c.mode === 'spectator',
     displayClientMessage: (text, actionBar) => rec('say ' + text.literal + ' ' + actionBar),
     getScoreboardName: () => 'Alex',
-    getUUID: () => UUID,
-    getStringUUID: () => 'uuid-1-str',
+    // EntityMixin: @RemapForJS("getUuid"), @RemapForJS("getStringUuid"). getUUID and getStringUUID are undefined under Rhino.
+    getUuid: () => UUID,
+    getStringUuid: () => 'uuid-1-str',
     getServer: () => server,
-    level: () => ({ isClientSide: () => c.clientSide === true, dimension: () => key(self.at) }),
+    // EntityMixin: level() is @HideFromJS, so `level` is the kjs$getLevel bean: an object, not a function.
+    get level() { return levelAt(() => self.at) },
+    getLevel: () => levelAt(() => self.at),
     isServerPlayer: () => c.serverPlayer !== false,
   }
   return self
@@ -105,7 +122,7 @@ const server = {
     rec('command ' + cmd)
     boom('command')
     const m = /^execute in (\S+) run tp (\S+) /.exec(cmd)
-    if (m && m[2] === online.getStringUUID() && !c.tpFails) online.at = m[1]
+    if (m && m[2] === online.getStringUuid() && !c.tpFails) online.at = m[1]
   },
 }
 const player = makePlayer()
@@ -126,9 +143,10 @@ try {
   if (c.fn === 'pad') {
     // Both forms of the hand and dimension reads are modelled, so the task's in-game fallbacks (String(event.getHand())
     // through Enum.toString(), and event.getBlock().getDimensionKey()) pass or fail these tests the same way.
+    // BlockRightClickedKubeEvent.getLevel() is a method on the event itself, and returns a Level as Rhino shows it.
     listeners.pad({
       getPlayer: () => { boom('getPlayer'); return player },
-      getLevel: () => ({ dimension: () => { boom('dimension'); return key(c.dim) } }),
+      getLevel: () => levelAt(() => c.dim),
       getBlock: () => ({ getDimensionKey: () => { boom('dimension'); return key(c.dim) } }),
       getHand: () => ({ name: () => c.hand, toString: () => c.hand }),
       cancel: () => { rec('cancel'); throw EXIT },

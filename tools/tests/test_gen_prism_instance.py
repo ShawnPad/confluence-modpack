@@ -5,6 +5,7 @@ Expected values come from research/phase6-prism-instance.md (§1 keys, §2 uids,
 """
 import json
 import sys
+import pytest
 import zipfile
 from pathlib import Path
 
@@ -75,3 +76,28 @@ def test_build_zip_writes_into_a_fresh_directory(tmp_path):
     out = g.build_zip(tmp_path / "nested" / "dir" / "out.zip", jar)
     assert out.is_file()
     assert set(zipfile.ZipFile(out).namelist()) == EXPECTED_ENTRIES
+
+
+def test_help_prints_usage_and_writes_nothing(tmp_path, monkeypatch, capsys):
+    """`--help` once wrote a zip named "--help" into the pack folder, and packwiz serve indexed it."""
+    def no_download(_):
+        raise AssertionError("--help must not download")
+    monkeypatch.setattr(g, "download_bootstrap", no_download)
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(SystemExit) as e:
+        g.main(["--help"])
+    assert e.value.code == 0 and "usage:" in capsys.readouterr().out and list(tmp_path.iterdir()) == []
+
+
+def test_an_unknown_flag_is_refused_and_writes_nothing(tmp_path, monkeypatch):
+    monkeypatch.setattr(g, "download_bootstrap", _stub_download)
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(SystemExit) as e:
+        g.main(["--out=x"])
+    assert e.value.code == 2 and list(tmp_path.iterdir()) == []
+
+
+def test_no_argument_writes_the_default_path(tmp_path, monkeypatch):
+    monkeypatch.setattr(g, "download_bootstrap", _stub_download)
+    monkeypatch.setattr(g, "DEFAULT_OUT", tmp_path / "dist" / "confluence-prism.zip")
+    assert g.main([]) == 0 and g.DEFAULT_OUT.is_file()

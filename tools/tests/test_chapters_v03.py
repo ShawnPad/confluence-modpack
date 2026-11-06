@@ -40,7 +40,7 @@ MUSTS = [
     ("the_other", "OTHER5.1", ["in either hand", "sneak and right-click the pad with both hands empty"]),  # two-click pad
     ("the_other", "OTHER5.1", ["whole FTB team", "cannot follow you in"]),                               # team scope, no follow-in
     ("the_other", "OTHER5.1", ["The Beyond", "is closed"]),                                               # Beyond closed
-    ("the_other", "D5.3", ["1024 health", "up to one Witch per hit you land"]),  # Piglich (BP §1; attacks only once Task 12's probe confirms them)
+    ("the_other", "D5.3", ["1024 health", "up to one Witch each time it takes damage"]),  # Piglich (BP §1; attacks only once Task 12's probe confirms them)
     # Heart count: spec §14's erratum to §5 (9 hearts gate the end of tier 6; 10 with quest S5.2's ME Controller, D117).
     ("the_other", "D5.3", ["nine to reach the end of Space", "ten with the ME Controller"]),
     ("the_other", "OTHER5.3", ["Ancient Basalt Deltas", "4 by 3 pool"]),                                  # both soul-lava sources

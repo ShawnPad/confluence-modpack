@@ -347,14 +347,14 @@ def stub_boot(tmp_path, stub_kit):
                              start_new_session=True)
         started.append(p)
         if signal_on:
-            deadline = time.time() + 5
+            deadline = time.time() + 15   # at load 40-50 a stub took more than 3 s to start
             while not (state / f"{signal_on}.pid").exists() and time.time() < deadline:
                 time.sleep(0.01)
             assert (state / f"{signal_on}.pid").exists(), f"the {signal_on} stub never started"
             os.killpg(p.pid, sig)
         out, _ = p.communicate(timeout=30)
         pids = {n: int((state / f"{n}.pid").read_text()) for n in STUB_NAMES if (state / f"{n}.pid").exists()}
-        deadline = time.time() + 3
+        deadline = time.time() + 15
         while [n for n, pid in pids.items() if running(pid)] and time.time() < deadline:
             time.sleep(0.02)
         assert not (state / "canary").exists(), (state / "canary").read_text()
@@ -495,7 +495,7 @@ def test_a_thread_dump_that_hangs_is_abandoned_and_the_server_still_killed(stub_
     assert (set(pids), alive) == (set(STUB_NAMES), {})
     assert (code, labels(out)) == (1, ["SERVER DID NOT STOP", "BOOT CHECKS FAILED"]), out
     jcmd_pid = int((stub_boot.state / "jcmd.pid").read_text())
-    deadline = time.time() + 3
+    deadline = time.time() + 15
     while running(jcmd_pid) and time.time() < deadline:
         time.sleep(0.02)
     assert not running(jcmd_pid), "the hung jcmd was left running"
@@ -645,11 +645,13 @@ def test_an_interrupt_during_the_thread_dump_leaves_no_java_and_no_jcmd(stub_boo
     code, out, pids, alive = stub_boot({"STUB_JAVA_IGNORES_TERM": "1", "STUB_JCMD_HANGS": "1"}, signal_on="jcmd",
                                        sig=signal.SIGINT)
     jcmd = int((stub_boot.state / "jcmd.pid").read_text())
-    deadline = time.time() + 3
+    deadline = time.time() + 15
     while running(jcmd) and time.time() < deadline:
         time.sleep(0.02)
     assert (alive, running(jcmd)) == ({}, False), out
-    assert code == -signal.SIGINT and "BOOT OK" not in out, (code, out)   # ended by the ^C, not by a later check
+    # -SIGINT is the usual end. Under load (4 of 25 at load 40-50) the ^C lands around a short foreground child, so bash
+    # survives it and exits 1 by its own check; either way nothing leaks and no boot is claimed.
+    assert code in (-signal.SIGINT, 1) and "BOOT OK" not in out, (code, out)
 
 
 def test_a_jcmd_that_ignores_sigterm_is_sigkilled_before_its_note(stub_boot):

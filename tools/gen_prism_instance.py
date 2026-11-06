@@ -10,6 +10,7 @@ Zip layout (prism §3, §6): instance.cfg, mmc-pack.json and minecraft/ sit at t
 zip root with no wrapper folder, exactly what Prism's own Export Instance writes
 (ExportToZipTask with destinationPrefix ""). Stdlib only.
 """
+import argparse
 import json
 import sys
 import tempfile
@@ -97,8 +98,9 @@ def build_zip(out_path: Path, bootstrap_jar: Path) -> Path:
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = sys.argv[1:] if argv is None else argv
-    out = Path(args[0]) if args else DEFAULT_OUT
+    parser = argparse.ArgumentParser(description="Build the Prism Launcher instance zip for the pack.")
+    parser.add_argument("out", nargs="?", type=Path, help=f"zip to write (default: {DEFAULT_OUT})")
+    out = parser.parse_args(argv).out or DEFAULT_OUT
     with tempfile.TemporaryDirectory() as tmp:
         jar = download_bootstrap(Path(tmp))
         build_zip(out, jar)

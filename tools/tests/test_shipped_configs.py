@@ -448,6 +448,9 @@ def test_checker_fails_when_any_thread_line_is_not_the_shipped_count(tmp_path):
      "config/fml.toml: NeoForge corrected it on load"),
     (FML_WARN + "Incorrect key maxThreads was corrected from x to 11",
      "config/fml.toml: FML corrected key maxThreads on load"),
+    # The marker in the logger's name is not part of FML's message: FML_BANNER and FML_LOADED take any, and so must this.
+    (FML_WARN.replace("/CORE]", "/LOADING]") + "Incorrect key maxThreads was corrected from x to 11",
+     "config/fml.toml: FML corrected key maxThreads on load"),
 ])
 def test_checker_fails_when_fml_corrects_the_file(tmp_path, line, problem):
     pack = fml_pack(tmp_path)

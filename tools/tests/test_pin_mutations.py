@@ -326,7 +326,7 @@ CASES = [
           "      exempt: () => player.isCreative(),\n      team: () => OTHER_GATE_MC.lookup(player),"),
          {f"{GATE}::test_arrival_listener[spectator-exempt]"}),
     Case("t9 p1 lookup passes a UUID", EVENTS,
-         ("api.getManager().getTeamForPlayer(player)", "api.getManager().getTeamForPlayer(player.getUUID())"),
+         ("api.getManager().getTeamForPlayer(player)", "api.getManager().getTeamForPlayer(player.getUuid())"),
          {f"{GATE}::test_arrival_listener[tp-did-nothing-logged-no-message]"}),
     Case("t9 p2 pad lookup passes the event", EVENTS,
          ("        found = OTHER_GATE_MC.lookup(player)\n", "        found = OTHER_GATE_MC.lookup(event)\n"),
@@ -341,7 +341,7 @@ CASES = [
          ("    if (!opt.isPresent()) return { found: false, unlocked: false, team: null }\n", ""),
          {f"{GATE}::test_travel_listener[other-no-team]"}),
     Case("t9 m3 still-there check reads the stale player", EVENTS,
-         ("OTHER_GATE_MC.dimId(p.level().dimension()) !== dest", "OTHER_GATE_MC.dimId(player.level().dimension()) !== dest"),
+         ("String(p.getLevel().getDimension()) !== dest", "String(player.getLevel().getDimension()) !== dest"),
          {f"{GATE}::test_arrival_listener[already-left-not-moved]"}),
 ]
 def must_fail(case):

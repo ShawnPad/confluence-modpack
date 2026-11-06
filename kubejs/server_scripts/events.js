@@ -76,10 +76,15 @@ ServerEvents.tags('block', event => {
 //     KubeJSContext.loadJavaClass (class filter; KJS kubejs.classfilter.txt allows net.neoforged, FTBT's allows
 //     dev.ftb.mods.ftbteams) and returns a NativeJavaClass; NativeEvents.onEvent(Class, Consumer<Event>) accepts it because
 //     KubeJSContext.classOf unwraps a NativeJavaClass with getClassObject() (RH Context.jsToJava -> classOf for a Class).
-//   Rhino skips a bean property whose name is already a method (RH JavaMembers.reflect offsets 1002-1033), so Level's
-//     `dimension` is the method dimension(), never KubeJS's getDimension(): every read below calls
-//     level.dimension().location().toString() (MC Level.dimension() -> ResourceKey, ResourceKey.location() ->
-//     ResourceLocation, whose toString() is "ns:path"). PAD §2.2's String(event.level.dimension) is wrong for this reason.
+//   Names under Rhino are KubeJS's, not Minecraft's. KJS core/mixin/EntityMixin marks Entity.level() @HideFromJS and renames
+//     getUUID() and getStringUUID() to getUuid() and getStringUuid(); KJS core/mixin/LevelMixin renames Level.dimension() to
+//     getDimensionKey(). Measured under Rhino on 2026-11-06 on a live ServerPlayer and ServerLevel: player.level() and
+//     level.dimension() throw "Cannot call property ... It is not a function, it is "object"", because those names are
+//     KubeJS's beans (KJS EntityKJS.kjs$getLevel, LevelKJS.kjs$getDimension), and typeof player.getUUID and
+//     player.getStringUUID are "undefined". So every read below calls entity.getLevel() and
+//     String(level.getDimension()) (kjs$getDimension -> ResourceLocation, whose toString() is "ns:path"). A ResourceKey
+//     from a NeoForge event still goes through dimId. Node cannot see any of this: tools/gate_probe.sh runs these paths
+//     under Rhino (research/phase7-v0.3-probe-evidence/rhino-names.md).
 //   BlockRightClickedKubeEvent (KJS): getPlayer() and getLevel() from KubeEntityEvent (getLevel = getEntity().level()),
 //     getHand() -> InteractionHand (MC enum MAIN_HAND / OFF_HAND). Rhino wraps the enum as a NativeJavaObject (RH
 //     Context.wrapAsJavaObject) and exposes the inherited Enum.name() (RH CachedClassInfo.getAccessibleMethods walks the
@@ -91,8 +96,8 @@ ServerEvents.tags('block', event => {
 //     the handler catches its own errors and cancels itself, because an uncaught error would let the click through
 //     (spec §4.2, PAD §2.3).
 //   Player (MC): getMainHandItem(), getOffhandItem(), isCreative(), isSpectator(), displayClientMessage(Component, true) =
-//     the action bar (KJS PlayerKJS.kjs$setStatusMessage does the same call), getScoreboardName(), getUUID(),
-//     getStringUUID(), getServer(), level(); Level.isClientSide(). ItemStack.shrink(int) (MC); ItemStack getId() is
+//     the action bar (KJS PlayerKJS.kjs$setStatusMessage does the same call), getScoreboardName(), getUuid(),
+//     getStringUuid(), getServer(), getLevel(); Level.isClientSide(). ItemStack.shrink(int) (MC); ItemStack getId() is
 //     KJS ItemStackKJS.kjs$getId() = the item's registry id (RemapPrefixForJS "kjs$"). Text.literal(String) (KJS TextWrapper).
 //   Entity.isServerPlayer() is KJS EntityKJS.kjs$isServerPlayer() (false), overridden true by ServerPlayerKJS.
 //   FTB Teams (FTBT, PAD §3a): FTBTeamsAPI.api() -> API; isManagerLoaded(); getManager() -> TeamManager;
@@ -160,22 +165,22 @@ const OTHER_GATE_MC = {
   // error instead of the message.
   toSpawn: function (player, dest, message) {
     const server = player.getServer()
-    const uuid = player.getUUID()
+    const uuid = player.getUuid()
     server.scheduleInTicks(1, scheduled => {
       // Declared before the try (Rhino note above).
       let p = null
       let spawn = null
       try {
         p = server.getPlayerList().getPlayer(uuid)
-        if (p === null || OTHER_GATE_MC.dimId(p.level().dimension()) !== dest) return
+        if (p === null || String(p.getLevel().getDimension()) !== dest) return
         spawn = server.overworld().getSharedSpawnPos()
-        server.runCommandSilent('execute in ' + IDS.vanilla.overworld + ' run tp ' + p.getStringUUID() + ' ' +
+        server.runCommandSilent('execute in ' + IDS.vanilla.overworld + ' run tp ' + p.getStringUuid() + ' ' +
           (spawn.getX() + 0.5) + ' ' + spawn.getY() + ' ' + (spawn.getZ() + 0.5))
         // runCommandSilent returns void (KJS MinecraftServerKJS.kjs$runCommandSilent) and a failed tp is silent (MC
         // Commands.performCommand catches Exception, exception table 37-55 -> 70, and the source's output is suppressed). The
         // tp runs before the call returns (MC Commands.executeCommandInContext runs the command queue at once when no context
         // is open, offsets 15-94; ServerPlayer.teleportTo -> changeDimension, offset 67), so where p is now tells.
-        if (OTHER_GATE_MC.dimId(p.level().dimension()) === dest) {
+        if (String(p.getLevel().getDimension()) === dest) {
           console.error('confluence other-gate: arrival move did not leave ' + dest + ' for ' + p.getScoreboardName())
           return
         }
@@ -201,7 +206,7 @@ BlockEvents.rightClicked(IDS.allthemodium.teleportPad, event => {
   try {
     player = event.getPlayer()
     act = OTHER_GATE.pad({
-      dim: OTHER_GATE_MC.dimId(event.getLevel().dimension()),
+      dim: String(event.getLevel().getDimension()),
       hand: String(event.getHand().name()),
       team: () => {
         found = OTHER_GATE_MC.lookup(player)
@@ -242,7 +247,7 @@ NativeEvents.onEvent(OTHER_GATE_MC.travelEvent, event => {
     dest = OTHER_GATE_MC.dimId(event.getDimension())
     if (!OTHER_GATE.gated(dest)) return
     entity = event.getEntity()
-    if (entity.level().isClientSide() || !entity.isServerPlayer()) return
+    if (entity.getLevel().isClientSide() || !entity.isServerPlayer()) return
     act = OTHER_GATE.travel({
       dest: dest,
       exempt: () => OTHER_GATE_MC.exempt(entity),
@@ -272,7 +277,7 @@ NativeEvents.onEvent(OTHER_GATE_MC.changedEvent, event => {
     dest = OTHER_GATE_MC.dimId(event.getTo())
     if (!OTHER_GATE.gated(dest)) return
     player = event.getEntity()
-    if (player.level().isClientSide()) return
+    if (player.getLevel().isClientSide()) return
     act = OTHER_GATE.arrival({
       dest: dest,
       exempt: () => OTHER_GATE_MC.exempt(player),
