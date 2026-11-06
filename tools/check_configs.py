@@ -2,7 +2,7 @@
 
 The pack ships whole generated config files under config/, each with a value it pins on purpose:
 config/tombstone-common.toml (lost_tablet_search_outside_world = false; D110), config/twilightforest-common.toml
-(disableUncraftingTable = true; D69 (5)) and config/fml.toml (maxThreads = 1 and a dependencyOverrides chain; D134, below).
+(disableUncraftingTable = true; D69 (5)) and config/fml.toml (maxThreads = 1 and dependencyOverrides; D134 and D137, below).
 NeoForge can undo such a value with nothing worse than a WARN. Its ConfigTracker.loadConfig
 (loader-4.0.44.jar!net/neoforged/fml/config/ConfigTracker.class) handles two cases:
   - A file its spec calls incorrect is logged "Configuration file {} is not correct. Correcting" (offsets 18-28, with the
@@ -27,8 +27,9 @@ So, after a boot, for every config/**/*.toml the pack ships:
   - logs/latest.log names it in neither WARN message;
   - the server's copy under RUN_DIR/config/ is byte-identical to the pack's.
 config/fml.toml is FML's own config, not a mod's (v0.3 Task 10b, D134: maxThreads = 1, and dependencyOverrides ordering
-Supplementaries after Moonlight and Amendments after Supplementaries). FMLConfig (same loader jar) reads it at launch, outside
-ConfigTracker, so no mod tracks it and no "Loaded TOML config file" line names it. For it, instead:
+Supplementaries after Moonlight and Amendments after Supplementaries; v0.3 Task 11d, D137: Twilight Forest after KubeJS).
+FMLConfig (same loader jar) reads it at launch, outside ConfigTracker, so no mod tracks it and no "Loaded TOML config file"
+line names it. For it, instead:
   - debug.log has FMLConfig's TRACE line "Loaded FML config from <path>" (FMLConfig.load offsets 28-42) with that same
     RUN_DIR/config/fml.toml path;
   - when the shipped maxThreads is above 0, every debug.log "Using {} threads for parallel mod-loading" line (ModWorkManager

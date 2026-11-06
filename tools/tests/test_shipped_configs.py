@@ -4,6 +4,7 @@ Each file is the server's generated copy with one value the pack pins on purpose
 server kept the file on load is tools/check_configs.py's job (tools/server_boot.sh runs it after every boot). The tests
 below drive that checker against a scratch server directory: a synthetic log line or a doctored copy must fail it.
 """
+import graphlib
 import importlib.util
 import io
 import re
@@ -44,8 +45,12 @@ def test_tombstone_lost_tablets_stay_in_their_dimension():
     assert d["general"]["teleport_dim"] is True
 
 
-# D134's dependency-override chain: FML constructs Supplementaries after Moonlight and Amendments after Supplementaries.
-CHAIN = {"supplementaries": ["+moonlight"], "amendments": ["+supplementaries"]}
+# The shipped dependencyOverrides, in the order FML's banner lists them (a HashMap's order; the D137 boots' latest.log lines
+# 4-8). D134's chain: FML constructs Supplementaries after Moonlight and Amendments after Supplementaries. D137's edge: FML
+# constructs Twilight Forest after KubeJS, so kubejs/startup_scripts/tf_gamerules_guard.js (which runs inside KubeJS's
+# constructor) registers Twilight Forest's three game rules before TwilightForestMod.<init> hands them to Worker-Main threads.
+# The file still carries no comment (FMLConfig.loadFrom rewrites it; see the test below), so the reasons live here.
+CHAIN = {"twilightforest": ["+kubejs"], "supplementaries": ["+moonlight"], "amendments": ["+supplementaries"]}
 
 
 def test_fml_toml_pins_the_moonlight_chain_and_one_thread():
@@ -59,7 +64,8 @@ def test_fml_toml_pins_the_moonlight_chain_and_one_thread():
     other key is the default FML 4.0.44 writes (loader-4.0.44.jar FMLConfig$ConfigValue.<clinit>, javap -c). The file is
     FML's own canonical rewrite (an FMLConfig.load harness leaves it byte-identical; research/phase7-d134-evidence/) and carries
     no D134 comment: FMLConfig.loadFrom rewrites the file on every launch with its spec's comments (offsets 179-193), so any
-    other comment or layout would make the server's copy differ (tools/check_configs.py)."""
+    other comment or layout would make the server's copy differ (tools/check_configs.py). D137 adds one edge with the same
+    mechanism, twilightforest = ["+kubejs"], for Twilight Forest's game-rule race (CHAIN's comment)."""
     assert load("fml.toml") == {
         "disableConfigWatcher": False, "earlyWindowControl": True, "maxThreads": 1, "versionCheck": True,
         "defaultConfigPath": "defaultconfigs", "disableOptimizedDFU": True, "earlyWindowProvider": "fmlearlywindow",
@@ -121,7 +127,8 @@ def test_every_moonlight_dependent_is_in_the_chain():
 
 
 # The .pw.toml that ships each chain mod, and the jar-name prefix its `filename` starts with.
-CHAIN_FILES = {"moonlight": "moonlight.pw.toml", "supplementaries": "supplementaries.pw.toml", "amendments": "amendments.pw.toml"}
+CHAIN_FILES = {"moonlight": "moonlight.pw.toml", "supplementaries": "supplementaries.pw.toml", "amendments": "amendments.pw.toml",
+               "twilightforest": "the-twilight-forest.pw.toml", "kubejs": "kubejs.pw.toml"}
 
 
 def test_every_chain_mod_is_in_the_pack():
@@ -339,10 +346,12 @@ FML_THREADS = "[02Oct2026 00:05:37.120] [main/DEBUG] [net.neoforged.fml.ModWorkM
 FML_WARN = "[02Oct2026 00:05:21.488] [main/WARN] [net.neoforged.fml.loading.FMLConfig/CORE]: "
 # FML's dependency-override banner (FMLConfig.load, offsets 188-248; lambda$load$5 logs "Dependency overrides for mod '{}': {}"
 # with each override's getMessage() joined by ","), verbatim from the first fix-round boot's latest.log (the shipped chain; the
-# 2026-10-02 04:22 boot, lines 4-7, and again at 10-13 from FML's second FMLConfig.load).
+# 2026-10-02 04:22 boot, lines 4-7, and again at 10-13 from FML's second FMLConfig.load). D137's line, and the order of the
+# three, verbatim from the D137 verification boot (C2, 2026-10-02 18:18, lines 4-8; research/phase7-d137-evidence/).
 BANNER_LOGGER = "[02Oct2026 04:22:11.666] [main/WARN] [net.neoforged.fml.loading.FMLConfig/]: "
 BANNER = "".join(BANNER_LOGGER + m + "\n" for m in (
     "*" * 30 + " Found dependency overrides " + "*" * 30,
+    "Dependency overrides for mod 'twilightforest': adding explicit AFTER ordering against 'kubejs'",
     "Dependency overrides for mod 'supplementaries': adding explicit AFTER ordering against 'moonlight'",
     "Dependency overrides for mod 'amendments': adding explicit AFTER ordering against 'supplementaries'",
     "*" * 88))
@@ -495,13 +504,12 @@ def test_checker_passes_the_shipped_file_with_its_banner(tmp_path):
     assert run_checker(server(tmp_path)) == (0, f"check_configs: {len(SHIPPED)} shipped config(s) checked, 0 problem(s)\n")
 
 
-@pytest.mark.parametrize("drop", ["supplementaries", "amendments"])
+@pytest.mark.parametrize("drop", ["supplementaries", "amendments", "twilightforest"])
 def test_checker_fails_without_an_override_banner_line(tmp_path, drop):
     pack = fml_pack(tmp_path, overrides=CHAIN)
     latest = "".join(line + "\n" for line in banner(CHAIN).splitlines() if f"mod '{drop}'" not in line)
     files, problems = _checker_module().check(fml_server(tmp_path, pack, latest=latest), root=pack)
-    want = "adding explicit AFTER ordering against 'moonlight'" if drop == "supplementaries" else (
-        "adding explicit AFTER ordering against 'supplementaries'")
+    want = f"adding explicit AFTER ordering against '{CHAIN[drop][0][1:]}'"
     assert problems == [f"config/fml.toml: latest.log has no FML banner line \"Dependency overrides for mod '{drop}': {want}\", "
                         f"so FML never applied that override; {FML_HINT}"], problems
 
@@ -548,10 +556,11 @@ def test_checker_fails_on_an_override_problem_line(tmp_path, line):
 
 
 def test_checker_fails_the_typo_boot(tmp_path):
-    """The typo boot's own lines: its banner names moonlite, and ServerModLoader warns about it. With the shipped chain in
-    the pack, the checker names all three (the byte comparison adds a fourth on the real boot)."""
+    """The typo boot's own lines: its banner names moonlite, and ServerModLoader warns about it. With D134's chain in the
+    pack (the pack of that boot, before D137's edge), the checker names all three (the byte comparison adds a fourth on the
+    real boot)."""
     typo = {"supplementaries": ["+moonlite"], "amendments": ["+supplementaries"]}
-    pack = fml_pack(tmp_path, overrides=CHAIN)
+    pack = fml_pack(tmp_path, overrides={t: o for t, o in CHAIN.items() if t != "twilightforest"})
     files, problems = _checker_module().check(fml_server(tmp_path, pack, latest=banner(typo) * 2 + TYPO_LINE + "\n"), root=pack)
     assert problems == [
         "config/fml.toml: latest.log has no FML banner line \"Dependency overrides for mod 'supplementaries': adding explicit "
@@ -559,3 +568,108 @@ def test_checker_fails_the_typo_boot(tmp_path):
         "config/fml.toml: latest.log has an FML banner line \"Dependency overrides for mod 'supplementaries': adding explicit "
         "AFTER ordering against 'moonlite'\" for an override the pack does not ship",
         f"config/fml.toml: FML reported a dependency-override problem (latest.log: {TYPO_LINE})"], problems
+
+
+# ---- D137: the shipped overrides leave FML's mod-ordering graph without a cycle ------------------------------------------
+#
+# FML 4.0.44's ModSorter (loader-4.0.44.jar, javap -c) builds one graph of every loaded mod. addDependency adds, for each
+# dependency a mod declares on another loaded mod, an edge owner -> target for ordering BEFORE and target -> owner for
+# AFTER (offsets 56-118; NONE adds nothing, and no side filter applies). Each "+dep" override adds dep -> target (sort's
+# override loop, offsets 131-149). A cycle fails the launch ("Mod Sorting failed", fml.modloadingissue.cycle). So an
+# override is safe only if no declared ordering already puts its target before its dependency. These tests rebuild the
+# graph from the jars' META-INF/neoforge.mods.toml (jar-in-jar included) plus the shipped overrides, for the server's mods
+# and for a client's (the same minus the server-only jars, plus the client-only ones tools/check_client_mixins.py downloads
+# into .run/client-jars).
+
+CLIENT_JARS = ROOT / ".run" / "client-jars"
+
+
+def declared_mods(jars):
+    """[(jar label, parsed neoforge.mods.toml)] for each jar and each jar nested in it (META-INF/jarjar/). A jar with only a
+    Forge-era META-INF/mods.toml is not a mod to FML 4.0.44 (the loader jar names that file only in IncompatibleModReason;
+    a boot logs Supplementaries' nested mixinsquared-forge as 'Found gamelibrary file'), so it is not in the graph."""
+    out = []
+
+    def scan(label, z):
+        try:
+            out.append((label, mods_toml(z.read("META-INF/neoforge.mods.toml"))))
+        except KeyError:
+            pass
+        for n in z.namelist():
+            if n.startswith("META-INF/jarjar/") and n.endswith(".jar"):
+                scan(f"{label}!{n}", zipfile.ZipFile(io.BytesIO(z.read(n))))
+
+    for jar in jars:
+        with zipfile.ZipFile(jar) as z:
+            scan(jar.name, z)
+    return out
+
+
+def ordering_graph(declared, overrides):
+    """(mod ids, {(before, after): why}) as ModSorter builds them from `declared` and the "+dep" overrides."""
+    mods = {m["modId"] for _, t in declared for m in t.get("mods", [])} | {"minecraft", "neoforge"}
+    edges = {}
+    for label, t in declared:
+        for owner, deps in (t.get("dependencies") or {}).items():
+            for d in deps if isinstance(deps, list) else []:
+                target, order = d.get("modId"), str(d.get("ordering", "NONE")).upper()
+                if owner in mods and target in mods and target != owner and order in ("BEFORE", "AFTER"):
+                    edge = (owner, target) if order == "BEFORE" else (target, owner)
+                    edges.setdefault(edge, f"{owner} {order} {target} ({label})")
+    for target, entries in overrides.items():
+        for o in entries:
+            if o.startswith("+") and target in mods and o[1:] in mods:
+                edges[(o[1:], target)] = f"override {target} = {o}"
+    return mods, edges
+
+
+def ordering_cycle(mods, edges):
+    """A cycle in the graph as a list of mod ids, or None."""
+    ts = graphlib.TopologicalSorter({m: () for m in mods})
+    for before, after_ in edges:
+        ts.add(after_, before)
+    try:
+        list(ts.static_order())
+    except graphlib.CycleError as e:
+        return e.args[1]
+    return None
+
+
+def test_the_cycle_check_finds_a_cycle():
+    declared = [("a.jar", {"mods": [{"modId": "a"}], "dependencies": {"a": [{"modId": "b", "ordering": "BEFORE"}]}}),
+                ("b.jar", {"mods": [{"modId": "b"}]})]
+    mods, edges = ordering_graph(declared, {})
+    assert edges == {("a", "b"): "a BEFORE b (a.jar)"} and ordering_cycle(mods, edges) is None
+    mods, edges = ordering_graph(declared, {"a": ["+b"]})
+    assert sorted(ordering_cycle(mods, edges)) in (["a", "a", "b"], ["a", "b", "b"])
+    # A "-dep" override, an override naming a mod that is not loaded, and NONE ordering add nothing.
+    declared[1][1]["dependencies"] = {"b": [{"modId": "a", "ordering": "NONE"}, {"modId": "zz", "ordering": "AFTER"}]}
+    mods, edges = ordering_graph(declared, {"a": ["-b"], "zz": ["+a"]})
+    assert edges == {("a", "b"): "a BEFORE b (a.jar)"}
+
+
+def side_jars(side):
+    """The jars a dedicated server ('server') or a client ('client') of the pack loads."""
+    if not MODS.is_dir():
+        pytest.skip(f"{MODS} {JAR_SKIP}")
+    jars = sorted(MODS.glob("*.jar"))
+    if side == "client":
+        sides = {}
+        for pw in PW_MODS.glob("*.pw.toml"):
+            with open(pw, "rb") as f:
+                t = tomllib.load(f)
+            sides[t["filename"]] = t.get("side", "both")
+        if not CLIENT_JARS.is_dir():
+            pytest.skip(f"{CLIENT_JARS} does not exist (tools/check_client_mixins.py downloads the client-only jars there)")
+        jars = [j for j in jars if sides.get(j.name, "both") != "server"] + sorted(CLIENT_JARS.glob("*.jar"))
+    return jars
+
+
+@pytest.mark.parametrize("side", ["server", "client"])
+def test_the_shipped_overrides_leave_no_ordering_cycle(side):
+    mods, edges = ordering_graph(declared_mods(side_jars(side)), load("fml.toml")["dependencyOverrides"])
+    assert ordering_cycle(mods, edges) is None
+    # Each shipped edge is in the graph, so the check above covered it: both of its mods are loaded on this side.
+    for target, entries in load("fml.toml")["dependencyOverrides"].items():
+        assert {(o[1:], target) for o in entries if o.startswith("+")} <= set(edges), (side, target)
+    assert edges[("kubejs", "twilightforest")] == "override twilightforest = +kubejs"

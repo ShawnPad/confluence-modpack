@@ -1,8 +1,11 @@
 """tools/check_boot_log.py: every ERROR or FATAL record in logs/latest.log must match a documented tools/boot_allowlist.txt entry
-(v0.3 Task 8c); Minecraft's missing-tag WARN fails a boot whatever the allowlist says, and Moonlight's generated data packs must
-be the pinned set (Task 10b, D134). Synthetic logs only; the real boot is tools/server_boot.sh's job."""
+(v0.3 Task 8c); Minecraft's missing-tag WARN fails a boot whatever the allowlist says, Moonlight's generated data packs must
+be the pinned set (Task 10b, D134), and the game rules must be the pinned set with the Twilight Forest guard's OK line (Task
+11d, D137). Synthetic logs plus two verbatim detector lines (tools/tests/golden/gamerules-shipped-*.txt); the real boot is
+tools/server_boot.sh's job."""
 import re
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -47,6 +50,15 @@ ITEM_WARN = ("[29Sep2026 22:27:00.448] [main/WARN] [net.minecraft.core.MappedReg
 BLOCK_WARN = ("[29Sep2026 22:27:00.552] [main/WARN] [net.minecraft.core.MappedRegistry/]: Not all defined tags for registry "
               "ResourceKey[minecraft:root / minecraft:block] are present in data pack: cataclysm:needs_black_steel_tool, "
               "cataclysm:needs_monstrosity_tool\n")
+# Task 11d (D137): the game-rule detector's line, verbatim from two clone boots of the shipped pack (scratchpad boots shipped-09,
+# latest.log:747, all 55 rules; shipped-10, latest.log:745, which lost Twilight Forest's playersTfPortalDefaultDelay), and the
+# Twilight Forest guard's OK line, verbatim from a clone boot of the fix (scratchpad boot soak-01, latest.log:430).
+GOLDEN = Path(__file__).resolve().parent / "golden"
+RULES_09 = (GOLDEN / "gamerules-shipped-09.txt").read_text()
+RULES_10 = (GOLDEN / "gamerules-shipped-10.txt").read_text()
+GUARD_OK = ("[02Oct2026 18:59:31.625] [modloading-worker-0/INFO] [KubeJS Startup/]: startup_scripts:tf_gamerules_guard.js#112: "
+            "confluence tf-gamerules guard OK: registered tfEnforcedProgression, playersTfPortalDefaultDelay, "
+            "playersTfPortalCreativeDelay before Twilight Forest construction (rules 51 -> 54)\n")
 SUMMARY = "boot log: {} failing records (ERROR, FATAL, missing-tag WARN) in logs/latest.log, {} allowlisted, {} unknown"
 NEVER = "(missing-tag WARN: never allowlisted) "
 ALLOW = """\
@@ -57,10 +69,12 @@ ALLOW = """\
 """
 
 
-def run_dir(tmp_path, log, allow=ALLOW, done=True, gen=True):
-    """A scratch RUN_DIR whose logs/latest.log is `log`, then a good boot's Moonlight line (`gen`) and the Done line (`done`)."""
+def run_dir(tmp_path, log, allow=ALLOW, done=True, gen=True, guard=True, rules=True):
+    """A scratch RUN_DIR whose logs/latest.log is `log`, then a good boot's Moonlight line (`gen`), the Twilight Forest guard's
+    OK line (`guard`), a good boot's game-rule detector line (`rules`) and the Done line (`done`)."""
     (tmp_path / "logs").mkdir()
-    (tmp_path / "logs" / "latest.log").write_text(log + (GEN if gen else "") + (DONE if done else ""))
+    (tmp_path / "logs" / "latest.log").write_text(log + (GEN if gen else "") + (GUARD_OK if guard else "")
+                                                  + (RULES_09 if rules else "") + (DONE if done else ""))
     (tmp_path / "allow.txt").write_text(allow)
     return tmp_path
 
@@ -472,3 +486,331 @@ def test_the_shipped_allowlist_never_covers_a_missing_tag_warning():
     entries = load_allowlist(ALLOWLIST)
     assert not [e.pattern for e in entries for r in recs if e.fullmatch(r)]
     assert not [e for e in entries if "MappedRegistry" in e.pattern or "defined tags" in e.pattern]
+
+
+# ---- Task 11d (D137): the game rules must be the pinned set, and the Twilight Forest guard must have run ------------------
+#
+# Twilight Forest 4.8.3345 registers its three game rules from three Worker-Main tasks at once, into vanilla's unsynchronised
+# TreeMap GameRules.GAME_RULE_TYPES, which can lose any key (shipped-10 lost playersTfPortalDefaultDelay and this check's
+# predecessor passed it). kubejs/startup_scripts/tf_gamerules_guard.js registers them first, on one thread, and logs one OK
+# line; kubejs/server_scripts/gamerules.js logs the rule names of the server's GameRules and of a fresh GameRules() once per
+# server start. tools/gamerules.toml pins the names (51 vanilla + 3 Twilight Forest + 1 Accessories).
+
+RULES_SUMMARY = "game rules: 55 expected, server {}, registry {}, guard {}"
+NO_GUARD = ("NO GUARD LINE latest.log: no INFO line '[KubeJS Startup/]: startup_scripts:tf_gamerules_guard.js#<n>: confluence "
+            "tf-gamerules guard OK: ...'; the Twilight Forest game-rule guard did not run (D137)")
+NO_RULES = ("NO GAMERULES LINE latest.log: no INFO line '[KubeJS Server/]: confluence gamerules: ...'; the detector "
+            "(kubejs/server_scripts/gamerules.js) never logged, or the server never reached ServerStartingEvent (D137)")
+
+
+def names_of(line, which):
+    """The names listed in a detector line's `which` part ('server' or 'registry')."""
+    part = line.split(f"{which} ", 1)[1]
+    return part[part.index("[") + 1:part.index("]")].split(",")
+
+
+def rules_line(server, registry, level="INFO", ts="[02Oct2026 10:18:48.908]"):
+    return (f"{ts} [Server thread/{level}] [KubeJS Server/]: confluence gamerules: server {len(server)} "
+            f"[{','.join(sorted(server))}]; registry {len(registry)} [{','.join(sorted(registry))}]\n")
+
+
+ALL = names_of(RULES_09, "server")
+
+
+def rules_out(out):
+    """The game-rule section of main()'s output: its summary line and the problem lines under it."""
+    i = next(i for i, line in enumerate(out) if line.startswith("game rules: "))
+    j = next((k for k in range(i + 1, len(out)) if not out[k].startswith("  ")), len(out))
+    return out[i:j]
+
+
+def test_the_pinned_game_rules_are_51_vanilla_and_4_modded():
+    pin = check_boot_log.load_gamerules()
+    assert len(pin.vanilla) == 51 and len(set(pin.vanilla)) == 51
+    assert {m["id"]: m["mod"] for m in pin.modded} == {
+        "tfEnforcedProgression": "twilightforest", "playersTfPortalDefaultDelay": "twilightforest",
+        "playersTfPortalCreativeDelay": "twilightforest", "accessories.keepAccessoryInventory": "accessories"}
+    assert check_boot_log.expected_gamerules(pin) == frozenset(pin.vanilla) | {m["id"] for m in pin.modded}
+    assert len(check_boot_log.expected_gamerules(pin)) == 55
+    assert "playersSleepingPercentage" in pin.vanilla   # the rule the 2026-09-12 and 2026-10-02 crashes found null
+
+
+def test_the_good_fixture_lists_exactly_the_pinned_rules():
+    assert sorted(ALL) == sorted(check_boot_log.expected_gamerules(check_boot_log.load_gamerules()))
+    assert names_of(RULES_09, "registry") == ALL
+
+
+@pytest.mark.parametrize("text,msg", [
+    ('[vanilla]\nnames = ["a", "a"]\n', "vanilla name 'a' is listed twice"),
+    ('[vanilla]\nnames = ["a"]\n[[modded]]\nid = "a"\nmod = "m"\n', "modded id 'a' is also a vanilla name"),
+    ('[vanilla]\nnames = ["a"]\n[[modded]]\nid = "b"\n', "modded entry 'b' has no mod"),
+    ('[vanilla]\nnames = []\n', "no vanilla names"),
+    ('names = ["a"]\n', "no vanilla names"),
+    ('[vanilla]\nnames = ["a"]\n[[modded]]\nmod = "m"\n', "a modded entry has no id"),
+    ('[vanilla]\nnames = ["a"]\n[[modded]]\nid = ""\nmod = "m"\n', "a modded entry has no id"),
+    ('[vanilla]\nnames = ["a"]\n[[modded]]\nid = 7\nmod = "m"\n', "a modded entry has no id"),
+    ('vanilla = 3\n', "no vanilla names"),
+    ('[vanilla]\nnames = "abc"\n', "no vanilla names"),
+    ('[vanilla]\nnames = [1]\n', "no vanilla names"),
+    ('modded = 3\n[vanilla]\nnames = ["a"]\n', "modded is not a list of tables"),
+    ('modded = [3]\n[vanilla]\nnames = ["a"]\n', "modded is not a list of tables"),
+    ('register_call = 5\n[vanilla]\nnames = ["a"]\n', "register_call is not a list of tables"),
+    ('register_call = true\n[vanilla]\nnames = ["a"]\n', "register_call is not a list of tables"),
+    ('register_call = "x"\n[vanilla]\nnames = ["a"]\n', "register_call is not a list of tables"),
+    ('register_call = [1]\n[vanilla]\nnames = ["a"]\n', "register_call is not a list of tables"),
+])
+def test_a_bad_game_rule_pin_is_rejected(tmp_path, text, msg):
+    f = tmp_path / "gamerules.toml"
+    f.write_text(text)
+    with pytest.raises(ValueError, match=msg):
+        check_boot_log.load_gamerules(f)
+
+
+def standalone_checker(tmp_path, pin=None):
+    """A copy of the checker under tmp_path/tools, so its ROOT is tmp_path: an empty allowlist, and tools/gamerules.toml only
+    when `pin` is given. A callable pin makes the file itself."""
+    tools = tmp_path / "tools"
+    tools.mkdir()
+    shutil.copy(ROOT / "tools" / "check_boot_log.py", tools)
+    (tools / "boot_allowlist.txt").write_text("")
+    if callable(pin):
+        pin(tools / "gamerules.toml")
+    elif pin is not None:
+        (tools / "gamerules.toml").write_text(pin)
+    return tools / "check_boot_log.py"
+
+
+def run_checker(script, *args):
+    res = subprocess.run([sys.executable, "-I", str(script), *map(str, args)], capture_output=True, text=True, timeout=60)
+    return res.returncode, res.stdout, res.stderr
+
+
+BAD_PINS = {
+    "missing": None,
+    "a directory": lambda p: p.mkdir(),
+    "not TOML": "[vanilla\n",
+    "not UTF-8": lambda p: p.write_bytes(b"\xff\xfe"),
+    "a repeated name": '[vanilla]\nnames = ["a", "a"]\n',
+    "a modded entry with no id": '[vanilla]\nnames = ["a"]\n[[modded]]\nmod = "m"\n',
+    "the wrong shape": "vanilla = 3\n",
+}
+
+
+@pytest.mark.parametrize("pin", BAD_PINS.values(), ids=BAD_PINS.keys())
+def test_help_works_with_a_bad_pin(tmp_path, pin):
+    rc, out, err = run_checker(standalone_checker(tmp_path, pin), "--help")
+    assert rc == 0 and "usage: check_boot_log.py" in out and err == "", (out, err)
+
+
+@pytest.mark.parametrize("pin", BAD_PINS.values(), ids=BAD_PINS.keys())
+def test_a_usage_error_is_a_usage_error_with_a_bad_pin(tmp_path, pin):
+    rc, _, err = run_checker(standalone_checker(tmp_path, pin))
+    assert rc == 2 and "usage: check_boot_log.py" in err and "Traceback" not in err, err
+
+
+@pytest.mark.parametrize("pin", BAD_PINS.values(), ids=BAD_PINS.keys())
+def test_a_bad_pin_exits_4_and_still_prints_the_other_sections(tmp_path, pin):
+    script = standalone_checker(tmp_path, pin)
+    run = run_dir(tmp_path, UNKNOWN)
+    rc, out, err = run_checker(script, run)
+    lines = out.splitlines()
+    assert rc == 4, (out, err)
+    assert "Traceback" not in err, err
+    assert lines[0].startswith(f"BAD GAMERULES PIN {script.parent / 'gamerules.toml'}: "), lines
+    assert "boot log: 1 failing records (ERROR, FATAL, missing-tag WARN) in logs/latest.log, 0 allowlisted, 1 unknown" in lines
+    assert "  UNKNOWN latest.log:1: [SomeMod/]: Exception loading thing" in lines
+    assert "game rules: not checked (bad pin)" in lines
+    assert "dynamic packs: 1 Moonlight generation line(s), 0 bad" in lines
+
+
+def test_a_bad_pin_still_names_a_missing_log(tmp_path):
+    rc, out, _ = run_checker(standalone_checker(tmp_path), tmp_path / "no-run-dir")
+    assert rc == 1
+    assert [line.split(" ")[0] for line in out.splitlines()] == ["BAD", "MISSING"]
+
+
+def test_a_good_pin_is_read_from_tools_when_the_checker_runs(tmp_path):
+    """The standalone copy passes with a pin it can read, so the bad-pin tests above fail because of the pin."""
+    script = standalone_checker(tmp_path, (ROOT / "tools" / "gamerules.toml").read_text())
+    rc, out, err = run_checker(script, run_dir(tmp_path, INFO))
+    assert rc == 0, (out, err)
+
+
+def test_gamerule_problems_requires_the_expected_set():
+    with pytest.raises(TypeError):
+        check_boot_log.gamerule_problems(GUARD_OK + RULES_09)
+
+
+def test_a_good_boot_passes_with_one_summary_line(tmp_path, capsys):
+    rc, out = check(tmp_path, INFO, capsys)
+    assert rc == 0, out
+    assert rules_out(out) == [RULES_SUMMARY.format(55, 55, "OK")]
+
+
+def test_shipped_10_fails_naming_the_lost_rule(tmp_path, capsys):
+    """The real line of the boot that lost Twilight Forest's playersTfPortalDefaultDelay (the old check passed it)."""
+    rc, out = check(tmp_path, INFO + RULES_10, capsys, rules=False)
+    assert rc == 1, out
+    assert rules_out(out) == [
+        RULES_SUMMARY.format(54, 54, "OK") + ", 2 bad",
+        "  GAMERULES latest.log:2: server missing [playersTfPortalDefaultDelay], unexpected []",
+        "  GAMERULES latest.log:2: registry missing [playersTfPortalDefaultDelay], unexpected []"]
+
+
+def test_a_lost_vanilla_rule_is_named(tmp_path, capsys):
+    """The crash's rule: a server instance without playersSleepingPercentage."""
+    short = [n for n in ALL if n != "playersSleepingPercentage"]
+    rc, out = check(tmp_path, rules_line(short, short), capsys, rules=False)
+    assert rc == 1, out
+    assert rules_out(out)[1:] == [
+        "  GAMERULES latest.log:1: server missing [playersSleepingPercentage], unexpected []",
+        "  GAMERULES latest.log:1: registry missing [playersSleepingPercentage], unexpected []"]
+
+
+@pytest.mark.parametrize("level", ["WARN", "ERROR"])
+def test_a_detector_line_at_another_level_fails(tmp_path, capsys, level):
+    """Only an INFO line is the detector's: the same text at WARN or ERROR is reported, and does not count as the line."""
+    rc, out = check(tmp_path, RULES_09.replace("/INFO]", f"/{level}]"), capsys, rules=False)
+    assert rc == 1, out
+    assert rules_out(out) == [RULES_SUMMARY.format("none", "none", "OK") + ", 2 bad",
+                              f"  GAMERULES latest.log:1: the detector line is logged at {level}, not INFO",
+                              f"  {NO_RULES}"]
+
+
+def test_a_missing_guard_line_fails(tmp_path, capsys):
+    rc, out = check(tmp_path, INFO, capsys, guard=False)
+    assert rc == 1, out
+    assert rules_out(out) == [RULES_SUMMARY.format(55, 55, "missing") + ", 1 bad", f"  {NO_GUARD}"]
+
+
+@pytest.mark.parametrize("line", [
+    GUARD_OK.replace("/INFO]", "/WARN]"),                                              # not INFO
+    GUARD_OK.replace("[KubeJS Startup/]", "[KubeJS Server/]"),                          # another script type
+    GUARD_OK.replace("tf_gamerules_guard.js", "zz_tf_gamerules_guard_v2.js"),          # another script
+    GUARD_OK.replace("startup_scripts:tf_gamerules_guard.js#112: ", ""),               # no script prefix
+    GUARD_OK.replace("guard OK: ", "guard: "),                                         # not the OK line
+    GUARD_OK.replace(" guard OK: registered", " guard: startup scripts reloaded;"),    # the reload line
+    GUARD_OK[len("[02Oct2026 18:59:31.625] "):],                                       # not a log4j header line
+])
+def test_only_the_guard_ok_line_counts(tmp_path, capsys, line):
+    rc, out = check(tmp_path, line, capsys, guard=False)
+    assert rc == 1, out
+    assert rules_out(out)[-1] == f"  {NO_GUARD}"
+
+
+def test_the_guard_line_number_is_not_pinned(tmp_path, capsys):
+    rc, out = check(tmp_path, GUARD_OK.replace("#112:", "#7:"), capsys, guard=False)
+    assert rc == 0, out
+
+
+def test_two_guard_lines_fail(tmp_path, capsys):
+    rc, out = check(tmp_path, GUARD_OK, capsys)
+    assert rc == 1, out
+    assert rules_out(out) == [RULES_SUMMARY.format(55, 55, "2 lines") + ", 1 bad",
+                              "  GUARD latest.log: 2 guard OK lines (lines 1, 3); expected exactly one per boot"]
+
+
+def test_server_and_registry_diverging_fails(tmp_path, capsys):
+    short = [n for n in ALL if n != "randomTickSpeed"]
+    rc, out = check(tmp_path, rules_line(ALL, short), capsys, rules=False)
+    assert rc == 1, out
+    assert rules_out(out) == [
+        RULES_SUMMARY.format(55, 54, "OK") + ", 2 bad",
+        "  GAMERULES latest.log:1: registry missing [randomTickSpeed], unexpected []",
+        "  GAMERULES latest.log:1: server and registry differ: only in server [randomTickSpeed], only in registry []"]
+
+
+def test_an_unexpected_extra_rule_fails(tmp_path, capsys):
+    """A new rule fails too, so the pin follows the mod list (tools/gamerules.toml)."""
+    more = ALL + ["bogus.newRule"]
+    rc, out = check(tmp_path, rules_line(more, more), capsys, rules=False)
+    assert rc == 1, out
+    assert rules_out(out)[1:] == ["  GAMERULES latest.log:1: server missing [], unexpected [bogus.newRule]",
+                                  "  GAMERULES latest.log:1: registry missing [], unexpected [bogus.newRule]"]
+
+
+def test_two_detector_lines_fail(tmp_path, capsys):
+    """One line per server start: a second one is reported even when both are good."""
+    rc, out = check(tmp_path, RULES_09, capsys)
+    assert rc == 1, out
+    assert rules_out(out) == [RULES_SUMMARY.format("55/55", "55/55", "OK") + ", 1 bad",
+                              "  GAMERULES latest.log: 2 detector lines (lines 1, 4); expected exactly one per boot"]
+
+
+def test_each_of_two_detector_lines_is_checked(tmp_path, capsys):
+    rc, out = check(tmp_path, RULES_10, capsys)
+    assert rc == 1, out
+    assert rules_out(out)[1:] == [
+        "  GAMERULES latest.log: 2 detector lines (lines 1, 4); expected exactly one per boot",
+        "  GAMERULES latest.log:1: server missing [playersTfPortalDefaultDelay], unexpected []",
+        "  GAMERULES latest.log:1: registry missing [playersTfPortalDefaultDelay], unexpected []"]
+
+
+def test_no_detector_line_on_a_boot_that_reached_done_fails(tmp_path, capsys):
+    rc, out = check(tmp_path, INFO, capsys, rules=False)
+    assert rc == 1, out
+    assert out[0] == SUMMARY.format(0, 0, 0)            # nothing else is wrong: the Done line is there
+    assert rules_out(out) == [RULES_SUMMARY.format("none", "none", "OK") + ", 1 bad", f"  {NO_RULES}"]
+
+
+def test_no_detector_line_on_an_incomplete_log_is_reported_too(tmp_path, capsys):
+    rc, out = check(tmp_path, INFO, capsys, rules=False, guard=False, done=False)
+    assert rc == 1, out
+    assert out[0].startswith("INCOMPLETE LOG")
+    assert rules_out(out)[1:] == [f"  {NO_GUARD}", f"  {NO_RULES}"]
+
+
+def test_a_count_that_disagrees_with_its_names_fails(tmp_path, capsys):
+    rc, out = check(tmp_path, RULES_09.replace("server 55 [", "server 54 ["), capsys, rules=False)
+    assert rc == 1, out
+    assert rules_out(out)[1:] == ["  GAMERULES latest.log:1: server count 54 but 55 names listed"]
+
+
+def test_a_repeated_name_fails(tmp_path, capsys):
+    twice = ALL[:-1] + [ALL[0]]
+    rc, out = check(tmp_path, rules_line(twice, ALL), capsys, rules=False)
+    assert rc == 1, out
+    assert f"  GAMERULES latest.log:1: server lists {ALL[0]} twice" in rules_out(out)
+
+
+def test_a_script_prefixed_detector_line_is_read(tmp_path, capsys):
+    """KubeJS prefixes a console line with its script and line when it has them (worldgen.js's line does); either form is
+    the detector's line."""
+    line = RULES_09.replace("[KubeJS Server/]: ", "[KubeJS Server/]: server_scripts:gamerules.js#30: ")
+    rc, out = check(tmp_path, line, capsys, rules=False)
+    assert rc == 0, out
+
+
+def test_a_detector_line_inside_another_record_is_not_read(tmp_path, capsys):
+    rc, out = check(tmp_path, CURIOS.rstrip("\n") + " " + RULES_09[len("[02Oct2026 10:18:48.908] "):], capsys, rules=False)
+    assert rc == 1, out
+    assert rules_out(out)[-1] == f"  {NO_RULES}"
+
+
+def test_detector_text_inside_another_info_line_is_not_read(tmp_path, capsys):
+    """The whole text after the header must be the detector's: a mod's INFO line quoting it proves nothing about this boot."""
+    quoted = RULES_09[RULES_09.index("[KubeJS Server/]: "):]
+    rc, out = check(tmp_path, f"{T} [main/INFO] [SomeMod/]: saw {quoted}", capsys, rules=False)
+    assert rc == 1, out
+    assert rules_out(out) == ["game rules: 55 expected, server none, registry none, guard OK, 1 bad", f"  {NO_RULES}"]
+
+
+def test_gamerule_problems_takes_the_expected_set():
+    summary, problems = check_boot_log.gamerule_problems(GUARD_OK + RULES_09, expected=frozenset(ALL) - {"doFireTick"})
+    assert summary == "game rules: 54 expected, server 55, registry 55, guard OK, 2 bad"
+    assert problems == ["GAMERULES latest.log:2: server missing [], unexpected [doFireTick]",
+                        "GAMERULES latest.log:2: registry missing [], unexpected [doFireTick]"]
+
+
+def test_the_game_rule_problem_is_reported_beside_the_others(tmp_path, capsys):
+    rc, out = check(tmp_path, UNKNOWN + BOOT1_GEN + RULES_10, capsys, gen=False, rules=False)
+    assert rc == 1, out
+    assert out[0] == SUMMARY.format(1, 0, 1)
+    assert rules_out(out)[0] == RULES_SUMMARY.format(54, 54, "OK") + ", 2 bad"
+    assert out[-1] == "  DYNAMIC PACKS latest.log:4: SERVER_DATA missing [supplementaries:generated_pack], unexpected []"
+
+
+def test_the_help_text_names_the_game_rules(capsys):
+    with pytest.raises(SystemExit):
+        check_boot_log.main(["--help"])
+    assert "game rules" in " ".join(capsys.readouterr().out.split())

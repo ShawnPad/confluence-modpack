@@ -3,8 +3,9 @@ directory with stand-in checker scripts; the real boot is the script's own job.
 
   - post_boot_checks runs every check, prints each failing check's label, and exits with the combined status: one failing
     check no longer hides the ones after it;
-  - tools/check_boot_log.py's exit codes get distinct labels: 1 BOOT LOG ERRORS (an unknown record or an incomplete log),
-    2 a usage error, 3 BAD ALLOWLIST; none of them reads as an unknown log error it is not;
+  - tools/check_boot_log.py's exit codes get distinct labels: 1 BOOT LOG ERRORS (an unknown record, a game-rule or
+    dynamic-pack problem, or an incomplete log), 2 a usage error, 3 BAD ALLOWLIST, 4 BAD GAMERULES PIN; none of them reads as an
+    unknown log error it is not;
   - the background processes the boot starts (packwiz serve, run.sh and its java child) are killed by an EXIT trap, so a boot
     that dies under `set -e` leaves nothing running;
   - a boot whose checks fail keeps its evidence (v0.3 Task 10b, D134): post_boot_checks copies logs/latest.log,
@@ -84,12 +85,26 @@ def test_all_checks_pass(fake):
     assert code == 0 and out[-1] == "BOOT OK", out
 
 
-@pytest.mark.parametrize("rc, label", [("1", "BOOT LOG ERRORS"), ("2", "BOOT LOG CHECK USAGE ERROR"), ("3", "BAD ALLOWLIST")])
+@pytest.mark.parametrize("rc, label", [("1", "BOOT LOG ERRORS"), ("2", "BOOT LOG CHECK USAGE ERROR"), ("3", "BAD ALLOWLIST"),
+                                       ("4", "BAD GAMERULES PIN")])
 def test_each_boot_log_exit_code_has_its_own_label(fake, rc, label):
     code, out = checks(fake, STUB_BOOT_LOG=rc)
     assert code == 1 and "BOOT OK" not in out, out
     assert [line for line in out if line.isupper() or line.startswith(("BOOT", "BAD"))] == [label, "BOOT CHECKS FAILED"]
     assert "UNKNOWN LOG ERRORS" not in out
+
+
+def test_the_real_checker_with_no_pin_gets_the_pin_label(fake):
+    """The real tools/check_boot_log.py, no stub, under a root with no tools/gamerules.toml: not an unknown log error, and the
+    boot still fails (v0.3 Task 11d, D137)."""
+    root, _ = fake
+    (root / "tools" / "check_boot_log.py").unlink()
+    shutil.copy(SCRIPT.parent / "check_boot_log.py", root / "tools")
+    (root / "tools" / "boot_allowlist.txt").write_text("")
+    code, out = checks(fake)
+    assert code == 1 and "BOOT OK" not in out, out
+    assert "BAD GAMERULES PIN" in out and "BOOT CHECKS FAILED" in out and "BOOT LOG ERRORS" not in out, out
+    assert "Traceback" not in "\n".join(out), out
 
 
 def test_every_check_runs_and_the_status_is_combined(fake):

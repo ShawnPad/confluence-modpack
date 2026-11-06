@@ -6,8 +6,10 @@
 # cleared before the checks. Exit 0 iff the server reached "Done" with no KubeJS errors, no recipe parse errors
 # (logs/latest.log must exist), every shipped config/ file loaded unchanged (tools/check_configs.py), no FTB Quests errors,
 # no ERROR or FATAL line in logs/latest.log that tools/boot_allowlist.txt does not explain, no missing-tag WARN at all,
-# Moonlight's pinned generated-pack set (tools/check_boot_log.py; D134), and nothing left keeping chunks loaded in the run
-# world (tools/count_forced_chunks.py, read after the stop: `forced chunks: 0 (mod tickets: 0; ...)`; v0.3 Task 11c, D136).
+# Moonlight's pinned generated-pack set (tools/check_boot_log.py; D134), the pinned game-rule set and exactly one Twilight
+# Forest guard OK line (also tools/check_boot_log.py, against tools/gamerules.toml: `game rules: 55 expected, server 55,
+# registry 55, guard OK`; v0.3 Task 11d, D137), and nothing left keeping chunks loaded in the run world
+# (tools/count_forced_chunks.py, read after the stop: `forced chunks: 0 (mod tickets: 0; ...)`; v0.3 Task 11c, D136).
 # When a check fails, the boot's logs and recipe dump are copied to .run/failed-boots/<UTC timestamp>/ and the path is
 # printed (or "NOT CREATED (<path>)" when it cannot be made).
 # tools/server_boot.sh --check [RUN_DIR] runs only those post-boot checks, on the logs a boot already left in RUN_DIR
@@ -50,15 +52,18 @@ post_boot_checks() {
   grep '\[FTB Quests/\]: Loaded' console.log || echo "WARN: no FTB Quests 'Loaded' line within the grace period"
   if grep -E '/(ERROR|WARN)\] \[FTB Quests/\]' console.log | grep -v -i 'translation'; then echo "FTBQUESTS ERRORS"; status=1; fi
   # Every ERROR/FATAL record in logs/latest.log must match a documented tools/boot_allowlist.txt entry, and Minecraft's
-  # missing-tag WARN fails whatever the allowlist says; the log must reach the server's Done line (v0.3 Task 8c); and
-  # Moonlight's generated data packs must be the pinned set (v0.3 Task 10b, D134). Other WARN lines are not checked: the
-  # config WARNs are check_configs.py's, and the allowlist header lists the known WARN noise. Its exit codes (its docstring):
-  # 1 an unknown record, a dynamic-pack problem or an incomplete log, 2 a usage error, 3 a missing or bad allowlist.
+  # missing-tag WARN fails whatever the allowlist says; the log must reach the server's Done line (v0.3 Task 8c); Moonlight's
+  # generated data packs must be the pinned set (v0.3 Task 10b, D134); and the game rules must be the pinned set, with the
+  # Twilight Forest guard's OK line (v0.3 Task 11d, D137). Other WARN lines are not checked: the config WARNs are
+  # check_configs.py's, and the allowlist header lists the known WARN noise. Its exit codes (its docstring): 1 an unknown
+  # record, a game-rule or dynamic-pack problem or an incomplete log, 2 a usage error, 3 a missing or bad allowlist, 4 a
+  # missing or bad tools/gamerules.toml.
   python3 "$ROOT/tools/check_boot_log.py" "$1" || rc=$?
   case "$rc" in
     0) ;;
     2) echo "BOOT LOG CHECK USAGE ERROR"; status=1 ;;
     3) echo "BAD ALLOWLIST"; status=1 ;;
+    4) echo "BAD GAMERULES PIN"; status=1 ;;
     *) echo "BOOT LOG ERRORS"; status=1 ;;
   esac
   # Forced chunks and mod tickets (v0.3 Task 11c, D136). A forceload or a chunk loader left in the world is re-added at every

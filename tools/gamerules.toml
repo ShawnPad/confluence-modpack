@@ -1,0 +1,92 @@
+# The game rules every boot of this pack must register (v0.3 Task 11d, D137). tools/check_boot_log.py compares the line
+# kubejs/server_scripts/gamerules.js logs at server start (the server's GameRules instance and a fresh GameRules()) with
+# [vanilla].names plus every [[modded]].id; tools/tests/test_gamerules_jars.py re-derives each name from the jars below when
+# they are installed (.run/server), and fails when a jar in .run/server/mods gains or loses a GameRules.register call site.
+#
+# Why: Twilight Forest 4.8.3345 registers its three rules from three Util.backgroundExecutor() (Worker-Main) tasks at once,
+# into vanilla's unsynchronised TreeMap GameRules.GAME_RULE_TYPES, which can lose any key, vanilla's included (D137). A lost
+# key is a rule missing from every GameRules instance; ServerLevel.tick's getRule then returns null on the first tick.
+#
+# Changing this file: only from the jars. A mod added, removed or updated that registers a game rule fails the drift test
+# first; re-run `python3 tools/scan_gamerules.py` to list the call sites, read each id with javap -c, and update both the
+# [[modded]] entry and its [[register_call]].
+
+[vanilla]
+# server-1.21.1-20240808.144430-srg.jar (pack/.run/server/libraries/net/minecraft/server/1.21.1-20240808.144430/), class
+# net/minecraft/world/level/GameRules, method <clinit>: `javap -c` shows 51 `invokestatic register(String, Category, Type)`
+# calls, each fed by the ldc/ldc_w String just before it (offsets 20-863). NeoForge 21.1.250 does not patch the class:
+# neoforge-21.1.250-server.jar, which holds every patched class (ServerLevel among them), has no GameRules.class. Listed in
+# <clinit> order.
+jar = "server-1.21.1-20240808.144430-srg.jar"
+class = "net/minecraft/world/level/GameRules"
+method = "<clinit>"
+names = [
+  "doFireTick", "mobGriefing", "keepInventory", "doMobSpawning", "doMobLoot", "projectilesCanBreakBlocks", "doTileDrops",
+  "doEntityDrops", "commandBlockOutput", "naturalRegeneration", "doDaylightCycle", "logAdminCommands", "showDeathMessages",
+  "randomTickSpeed", "sendCommandFeedback", "reducedDebugInfo", "spectatorsGenerateChunks", "spawnRadius",
+  "disableElytraMovementCheck", "maxEntityCramming", "doWeatherCycle", "doLimitedCrafting", "maxCommandChainLength",
+  "maxCommandForkCount", "commandModificationBlockLimit", "announceAdvancements", "disableRaids", "doInsomnia",
+  "doImmediateRespawn", "playersNetherPortalDefaultDelay", "playersNetherPortalCreativeDelay", "drowningDamage", "fallDamage",
+  "fireDamage", "freezeDamage", "doPatrolSpawning", "doTraderSpawning", "doWardenSpawning", "forgiveDeadPlayers",
+  "universalAnger", "playersSleepingPercentage", "blockExplosionDropDecay", "mobExplosionDropDecay", "tntExplosionDropDecay",
+  "snowAccumulationHeight", "waterSourceConversion", "lavaSourceConversion", "globalSoundEvents", "doVinesSpread",
+  "enderPearlsVanishOnDeath", "spawnChunkRadius",
+]
+
+# Each modded rule: the jar, class and method whose bytecode holds its id, and the offset of the ldc that loads it (javap -c).
+
+# Twilight Forest 4.8.3345: TFGameRules.<clinit> passes each id to its private register(String, Category, Type), which wraps
+# GameRules.register in Suppliers.memoize; the public static Supplier fields named here hold the three memoized suppliers.
+# kubejs/startup_scripts/tf_gamerules_guard.js resolves them (D137).
+[[modded]]
+id = "tfEnforcedProgression"
+mod = "twilightforest"
+jar = "twilightforest-1.21.1-4.8.3345-universal.jar"
+class = "twilightforest/init/TFGameRules"
+method = "<clinit>"
+ldc = 10
+field = "ENFORCED_PROGRESSION_RULE"
+
+[[modded]]
+id = "playersTfPortalDefaultDelay"
+mod = "twilightforest"
+jar = "twilightforest-1.21.1-4.8.3345-universal.jar"
+class = "twilightforest/init/TFGameRules"
+method = "<clinit>"
+ldc = 30
+field = "RULE_PLAYERS_TF_PORTAL_DEFAULT_DELAY"
+
+[[modded]]
+id = "playersTfPortalCreativeDelay"
+mod = "twilightforest"
+jar = "twilightforest-1.21.1-4.8.3345-universal.jar"
+class = "twilightforest/init/TFGameRules"
+method = "<clinit>"
+ldc = 46
+field = "RULE_PLAYERS_TF_PORTAL_CREATIVE_DELAY"
+
+# Accessories 1.1.0-beta.48, nested in The Aether's jar (META-INF/jarjar/): AccessoriesForge.commonInit, an
+# FMLCommonSetupEvent listener, registers it directly (offsets 14-24).
+[[modded]]
+id = "accessories.keepAccessoryInventory"
+mod = "accessories"
+jar = "aether-1.21.1-1.5.10-neoforge.jar!META-INF/jarjar/accessories-neoforge-1.1.0-beta.48+1.21.1.jar"
+class = "io/wispforest/accessories/neoforge/AccessoriesForge"
+method = "commonInit"
+ldc = 14
+
+# Every invokestatic of net/minecraft/world/level/GameRules.register in a jar under .run/server/mods (jar-in-jar included):
+# the jar (outer!nested), class, method and offset. tools/tests/test_gamerules_jars.py fails when the scan finds any other.
+[[register_call]]
+jar = "twilightforest-1.21.1-4.8.3345-universal.jar"
+class = "twilightforest/init/TFGameRules"
+method = "lambda$register$1"
+offset = 3
+ids = ["tfEnforcedProgression", "playersTfPortalDefaultDelay", "playersTfPortalCreativeDelay"]
+
+[[register_call]]
+jar = "aether-1.21.1-1.5.10-neoforge.jar!META-INF/jarjar/accessories-neoforge-1.1.0-beta.48+1.21.1.jar"
+class = "io/wispforest/accessories/neoforge/AccessoriesForge"
+method = "commonInit"
+offset = 24
+ids = ["accessories.keepAccessoryInventory"]

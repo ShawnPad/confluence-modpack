@@ -33,3 +33,4 @@ earlyWindowSquir = false
 [dependencyOverrides]
 	amendments = ["+supplementaries"]
 	supplementaries = ["+moonlight"]
+	twilightforest = ["+kubejs"]
