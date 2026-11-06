@@ -2,7 +2,7 @@ hash-format = "sha256"
 
 [[files]]
 file = "config/fml.toml"
-hash = "32450fb2a776b1f3e0be286391ab427880eaa436d39355748d94c1d544b60ff8"
+hash = "b1bb40abeaf0c8854999eb54c964926b27abbb7e1b217af6cdc595ee93c05520"
 
 [[files]]
 file = "config/ftbquests/quests/chapter_groups.snbt"
@@ -229,6 +229,10 @@ file = "kubejs/server_scripts/events.js"
 hash = "ca846b14d4d474eeaaf93f77f3a46006308feca30c71506513a68f90d312bde5"
 
 [[files]]
+file = "kubejs/server_scripts/gamerules.js"
+hash = "0406810f1dd74b63473eb5bd80171a1afb6e0c935e8e12967c7b493d6f9e0dfe"
+
+[[files]]
 file = "kubejs/server_scripts/lib/gates.js"
 hash = "513125401cee98784accfb0f317786d06cc67c3c46c093dc24b1715413c1781e"
 
@@ -287,6 +291,10 @@ hash = "51c94b2e32db3f5dd0fef9367168c3da94e782a320547d72b9370f67ed89704b"
 [[files]]
 file = "kubejs/startup_scripts/items.js"
 hash = "ab15a1b8804bb4ed0f06fdee3284e8aaf2905515c233f11f8368d66a57435919"
+
+[[files]]
+file = "kubejs/startup_scripts/tf_gamerules_guard.js"
+hash = "ef8603c01f732edad0121e7e5397f311f641d293efcb03bf1a751864af76fa3a"
 
 [[files]]
 file = "mods/ad-astra.pw.toml"
