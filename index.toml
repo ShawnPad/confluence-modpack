@@ -1,6 +1,10 @@
 hash-format = "sha256"
 
 [[files]]
+file = "config/confluence/adastra-stations.json"
+hash = "a3477527827036765981224c534223710cc153fa3fcaeb1af1d8e6dae9afa8e5"
+
+[[files]]
 file = "config/fml.toml"
 hash = "b1bb40abeaf0c8854999eb54c964926b27abbb7e1b217af6cdc595ee93c05520"
 
@@ -70,27 +74,27 @@ hash = "daed85b108619d4dd9044df7c0e38984dd6aa44b53e776cb493f453399776b3f"
 
 [[files]]
 file = "config/ftbquests/quests/lang/en_us.snbt"
-hash = "84b5b84a13eaecc34c4887127802d466cfed0bcb4fb358383ad10d4bb6c3861d"
+hash = "3854b493c02b2f32c865dd9d9c0faa01635c751fdb44e5fc62eba2fb18f1f868"
 
 [[files]]
 file = "config/ftbquests/quests/reward_tables/common_bag.snbt"
-hash = "b6e34fe221dacf1cc5c38711976e7e1a00288a87a55e9cc47e2af5addf59ed0e"
+hash = "190993c52053142363f052a9bc881396c63ee26663ae052658bac6688b8954e5"
 
 [[files]]
 file = "config/ftbquests/quests/reward_tables/epic_bag.snbt"
-hash = "3e29ab24cd0b2ab9e508b40b15ccb07f0684eea38cf8acb80d84b688a5ac610e"
+hash = "2432ada7a8d022081dd26ac9d41d387a868d421eef044134913e4833a9a1e92c"
 
 [[files]]
 file = "config/ftbquests/quests/reward_tables/legendary_bag.snbt"
-hash = "351eb2196ffa7fc3cfbd6ed0d33ca07f96e9bb9ee3d5f5f65ae3cbec7009f778"
+hash = "8297af8d8283642a58af32aedff5cc1cee49cfabf3dd8f9f3afb04202dcdf56d"
 
 [[files]]
 file = "config/ftbquests/quests/reward_tables/rare_bag.snbt"
-hash = "b0e9b674ea2543bf541ad0018016af3fec11d31e8bf134f1af7fc1abf67fa0d2"
+hash = "fac0be089d91d6adfa3b07b30fb48bdeb2898ade95898f8f2b963a46d919b95b"
 
 [[files]]
 file = "config/ftbquests/quests/reward_tables/uncommon_bag.snbt"
-hash = "86339e09c0a2bea970b03ac6c09f780b20fc915c4061313bd940c2cee0ee43b1"
+hash = "b2b4c23b54087ac82b6960be62d99ec233f50e7df94fcff6768544a319f37599"
 
 [[files]]
 file = "config/tombstone-common.toml"
