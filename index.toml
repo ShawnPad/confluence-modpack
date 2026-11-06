@@ -226,7 +226,7 @@ hash = "faf61916cd8117e807b0c8601eb2b38f1226a673da4fbbc5ee1894164ea07379"
 
 [[files]]
 file = "kubejs/server_scripts/events.js"
-hash = "ed9228807703f2f105f2b7a946d0811ce95bf4f4677403cd1632e0ba445b26bf"
+hash = "cf9807325c43fd14155ff25d92d95ad250a354fc075260242394849e503b6dab"
 
 [[files]]
 file = "kubejs/server_scripts/gamerules.js"
