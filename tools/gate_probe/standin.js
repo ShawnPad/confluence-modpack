@@ -146,6 +146,7 @@ H.heal = function (n, hp) {
   return n + ' health=' + p.getHealth()
 }
 H.killWitches = function () { var es = H.around(), i, c = 0; for (i = 0; i < es.size(); i++) { if (String(es.get(i).getType()) === 'minecraft:witch') { es.get(i).discard(); c++ } } return c }
+H.piglichs = function () { var es = H.around(), i, c = 0; for (i = 0; i < es.size(); i++) { if (String(es.get(i).getType()) === 'allthemodium:piglich' && es.get(i).isAlive()) { c++ } } return c }
 H.hearts = function () {
   var es = H.around(), i, c = 0
   for (i = 0; i < es.size(); i++) { if (String(es.get(i).getType()) === 'minecraft:item' && String(es.get(i).getItem().getId()) === 'allthemodium:piglich_heart') c += es.get(i).getItem().getCount() }

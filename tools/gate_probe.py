@@ -452,11 +452,19 @@ def piglich_rows(r):
     def p65():
         cp("H.killWitches()")
         con(f"{ot}data merge entity {pg} {{Health:1.0f}}")
-        cp(f"H.near('{P1}',1.5)")
-        cp(f"H.hit('{P1}')")
-        time.sleep(1)
-        n = int(float(cp("H.hearts()")))
-        return n == 1, f"{n} Piglich Heart item(s) dropped"
+        heart = "allthemodium:piglich_heart"
+        before = int(float(cp(f"H.count('{P1}','{heart}')")))
+        hits, alive = 0, 1
+        while alive and hits < 5:   # a hit inside the Piglich's damage cooldown does nothing
+            cp(f"H.near('{P1}',1.5)")
+            cp(f"H.hit('{P1}')")
+            hits += 1
+            time.sleep(1)
+            alive = int(float(cp("H.piglichs()")))
+        ground = int(float(cp("H.hearts()")))
+        picked = int(float(cp(f"H.count('{P1}','{heart}')"))) - before   # the stand-in stands close enough to pick the drop up
+        n = ground + picked
+        return (not alive) and n == 1, f"{n} Piglich Heart item(s) dropped ({ground} on the ground, {picked} picked up) after {hits} hit(s); Piglichs alive {alive}"
     r.row("P6.5", "P1", "set Piglich health to 1, kill it with Player.attack", "exactly one Piglich Heart", p65)
 
     def p60():
