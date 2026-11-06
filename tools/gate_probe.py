@@ -441,12 +441,13 @@ def piglich_rows(r):
             cp(f"H.hit('{P1}')")
         time.sleep(12)
         out = cp("H.monRead()")
-        witches = int(re.search(r"witches=(\d+)", out).group(1))
+        # No witches> 0 here: spawnSupport makes 5 random placement tries at a distance, so 6 damage events can place none
+        # (witches=0 on 2026-11-06 at 1ff3efb; 1 to 3 in four other runs). D5.3 says "up to one", and the count stays in the row.
         two = int(re.search(r"twoInOneTick=(\d+)", out).group(1))
         nodrop = int(re.search(r"witchNoDrop=(\d+)", out).group(1))
-        return witches > 0 and two == 0 and nodrop == 0, out
+        return two == 0 and nodrop == 0, out
     r.row("P6.4", "P1", "10 Player.attack sword hits, then 12 s; per-tick monitor of Piglich health and new Witches",
-          "Witches come, never two in a tick, never in a tick without damage to the Piglich (D5.3's clause)", p64)
+          "Never two Witches in a tick, never one in a tick without damage to the Piglich (D5.3's clause); the count varies", p64)
 
     def p65():
         cp("H.killWitches()")
