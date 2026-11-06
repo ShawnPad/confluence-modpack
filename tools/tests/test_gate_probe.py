@@ -201,3 +201,10 @@ def test_a_pad_that_stayed_only_because_travel_was_stopped_fails(tmp_path, monke
     assert ok is False and "travel check" in observed
     monkeypatch.setattr(gp, "click", lambda n, pad: None)
     assert gp.pad_stays("ProbeP2", gp.NETHER_PAD, gp.NETHER)[0] is True
+
+
+def test_only_the_air_message_of_invalid_items_is_tolerated():
+    air = "[12:00:00] [Worker-Main-9/ERROR] [net.minecraft.world.item.ItemStack/]: Tried to load invalid item: 'Item must not be minecraft:air'"
+    assert any(t.search(air) for t in gp.TOLERATED)
+    other = "[12:00:00] [Worker-Main-9/ERROR] [net.minecraft.world.item.ItemStack/]: Tried to load invalid item: 'Unknown item id: foo:bar'"
+    assert not any(t.search(other) for t in gp.TOLERATED)

@@ -47,7 +47,9 @@ KEY = "kubejs:other_key"
 NETHER_PAD, END_PAD, OVER_PAD = (102, 101, 102), (2, 71, 602), (8, 201, 0)
 # ERROR lines the stand-in itself causes, named one by one; anything else logged during the rows fails the run.
 # The borrowed memory channel (H.conn): a server packet to a connection with no client encoder.
-TOLERATED = [re.compile(r"\[Netty Local Client IO #\d+/ERROR\] \[net\.minecraft\.network\.PacketEncoder/\]: .*custom_payload")]
+TOLERATED = [re.compile(r"\[Netty Local Client IO #\d+/ERROR\] \[net\.minecraft\.network\.PacketEncoder/\]: .*custom_payload"),
+             # Old empty slots in mod structures (D141), as in tools/boot_allowlist.txt. This wording only.
+             re.compile(r"\[[^/]+/ERROR\] \[net\.minecraft\.world\.item\.ItemStack/\]: Tried to load invalid item: 'Item must not be minecraft:air'")]
 
 
 def session(*args, timeout=200):

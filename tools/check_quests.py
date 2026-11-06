@@ -205,6 +205,7 @@ TABLE_HEAD = [
     ("loot_crate color", r"\t\tcolor: [0-9]+"),
     ("loot_crate drops", r"\t\tdrops: \{ boss: [0-9]+ monster: [0-9]+ passive: [0-9]+ \}"),
     ("loot_crate glow", r"\t\tglow: [01]b"),
+    ("loot_crate item_name", r'\t\titem_name: "[A-Z][a-z]+ Bag"'),  # plain text; Component.translatable shows it as is
     ("loot_crate string_id", r'\t\tstring_id: "[a-z0-9_]+"'),
     ("end of loot_crate", r"\t\}"),
     ("loot_size", r"\tloot_size: [1-9][0-9]*"),

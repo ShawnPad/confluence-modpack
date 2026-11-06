@@ -4,6 +4,7 @@
 		color: 5636095
 		drops: { boss: 0 monster: 0 passive: 0 }
 		glow: 0b
+		item_name: "Uncommon Bag"
 		string_id: "uncommon_bag"
 	}
 	loot_size: 3

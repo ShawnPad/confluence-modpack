@@ -141,6 +141,8 @@ if [ ! -f run.sh ]; then
   printf 'eula=true\n' > eula.txt
   printf -- '-Xms4G\n-Xmx6G\n' > user_jvm_args.txt
 fi
+# The same pinned Ad Astra station list as production's start.sh (D141): no HTTP GET while mods construct.
+grep -q 'adastra.stations' user_jvm_args.txt || printf -- '-Dadastra.stations=config/confluence/adastra-stations.json\n' >> user_jvm_args.txt
 curl -fsSL -o packwiz-installer-bootstrap.jar https://github.com/packwiz/packwiz-installer-bootstrap/releases/download/v0.0.3/packwiz-installer-bootstrap.jar
 "$JAVA" -jar packwiz-installer-bootstrap.jar -g -s server http://localhost:8087/pack.toml
 kill "$SERVE_PID" || true

@@ -7,6 +7,7 @@ below drive that checker against a scratch server directory: a synthetic log lin
 import graphlib
 import importlib.util
 import io
+import json
 import re
 import shutil
 import subprocess
@@ -676,3 +677,11 @@ def test_the_shipped_overrides_leave_no_ordering_cycle(side):
     for target, entries in load("fml.toml")["dependencyOverrides"].items():
         assert {(o[1:], target) for o in entries if o.startswith("+")} <= set(edges), (side, target)
     assert edges[("kubejs", "twilightforest")] == "override twilightforest = +kubejs"
+
+
+def test_the_pinned_ad_astra_station_list_and_the_local_flag():
+    """D141: production's start.sh and the local boot name this file with -Dadastra.stations, which replaces Ad Astra's GET."""
+    root = Path(__file__).resolve().parents[2]
+    stations = json.loads((root / "config/confluence/adastra-stations.json").read_text())["stations"]
+    assert stations and all(s["url"].startswith("http") for s in stations)
+    assert "-Dadastra.stations=config/confluence/adastra-stations.json" in (root / "tools/server_boot.sh").read_text()

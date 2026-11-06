@@ -4,6 +4,7 @@
 		color: 11184810
 		drops: { boss: 0 monster: 15 passive: 0 }
 		glow: 0b
+		item_name: "Common Bag"
 		string_id: "common_bag"
 	}
 	loot_size: 3

@@ -148,7 +148,7 @@ def test_the_shipped_allowlist_loads():
 
 
 def test_the_shipped_allowlist_never_covers_an_invalid_item_record():
-    """Never allowlist "Tried to load invalid item" (Task 8c brief). Real record shapes, matched as the check matches them
+    """Never allowlist "Tried to load invalid item" (Task 8c brief), but for the air message (D141). Real record shapes, matched as the check matches them
     (fullmatch, every entry): vanilla's, from server-1.21.1-20240808.144430-srg.jar net/minecraft/world/item/ItemStack
     (lambda$parse$15 logs LOGGER.error("Tried to load invalid item: '{}'", ...), and LOGGER is LogUtils.getLogger() in
     <clinit>, so the logger is the class name), and the same text logged through KubeJS."""
@@ -159,7 +159,11 @@ def test_the_shipped_allowlist_never_covers_an_invalid_item_record():
     assert len(recs) == 2
     entries = load_allowlist(ALLOWLIST)
     assert not [(e.pattern, r) for e in entries for r in recs if e.fullmatch(r)]
-    assert not [e for e in entries if "invalid item" in e.pattern], "never allowlist 'Tried to load invalid item'"
+    # The owner's one exception (D141): old empty slots in mod structures, this wording and logger only.
+    invalid = [e for e in entries if "invalid item" in e.pattern]
+    assert len(invalid) == 1, "only the air message may be allowlisted"
+    assert invalid[0].fullmatch("[net.minecraft.world.item.ItemStack/]: Tried to load invalid item: 'Item must not be minecraft:air'")
+    assert not invalid[0].fullmatch("[KubeJS/]: Tried to load invalid item: 'Item must not be minecraft:air'")
 
 
 def test_the_shipped_allowlist_never_covers_a_tag_load_error():

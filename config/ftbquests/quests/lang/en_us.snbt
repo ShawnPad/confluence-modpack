@@ -240,4 +240,9 @@
 	quest.7E28C2FF2CEBAE0A.title: "Nether Star"
 	quest.7FF7CB41A6949C6F.quest_desc: ["The Starlight Golem guards the Golem Forge; hold redstone in your other hand and a Seeking Eye leads to the Forge. The Alloy Furnace has no recipe, and the Golem always drops one, oxidized - scrape it with an axe to clean it. It also drops 8 to 10 oxidized golem steel ingots that smelt into golem steel."]
 	quest.7FF7CB41A6949C6F.title: "Starlight Golem"
+	reward_table.0C0F1B0000000001.title: "Common Bag"
+	reward_table.0C0F1B0000000002.title: "Uncommon Bag"
+	reward_table.0C0F1B0000000003.title: "Rare Bag"
+	reward_table.0C0F1B0000000004.title: "Epic Bag"
+	reward_table.0C0F1B0000000005.title: "Legendary Bag"
 }

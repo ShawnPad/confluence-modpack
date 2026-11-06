@@ -130,6 +130,7 @@ def test_committed_reward_tables():
     for name, (table_id, prefix, order, rows) in BAGS.items():
         text = tables[name]
         for line in (f'\tid: "{table_id}"', f'\t\tstring_id: "{name}"', "\t\tglow: 1b",
+                     f'\t\titem_name: "{name.split("_")[0].capitalize()} Bag"',
                      "\t\tdrops: { boss: 0 monster: 0 passive: 0 }", "\tloot_size: 3", f"\torder_index: {order}",
                      "\tuse_title: true"):
             assert re.search("^" + re.escape(line) + "$", text, re.M), (name, line)

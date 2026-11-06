@@ -6,7 +6,7 @@
 # Seeded from the boot of 2026-10-01 (v0.3 Task 8c, pack branch v0.3 at a88d9e4): 26 ERROR records, 0 FATAL.
 #
 # Never allowlisted: "Couldn't load tag" (that boot's 20 were allthemodium's unregistered ids, fixed at the source in
-# kubejs/server_scripts/events.js, D132) and "Tried to load invalid item" (0 at that boot).
+# kubejs/server_scripts/events.js, D132) and "Tried to load invalid item", except the one air message at the end of this file (D141).
 #
 # One WARN also fails a boot (v0.3 Task 10b, D134): vanilla MappedRegistry's "[net.minecraft.core.MappedRegistry/]:
 # Not all defined tags for registry ...", logged when a data pack names a tag that no loaded pack defines. 0 per boot since
@@ -44,3 +44,8 @@
 
 # When Dungeons Arise (DungeonsArise-1.21.1-2.1.68-release.jar): six Sculk Sensors in its templates, mechanical_nest/mechanical_nest_deco_library_19.nbt (1), mechanical_nest_crossing_10.nbt (4) and keep_kayra/keep_kayra_main_0.nbt (1), store an old listener tag with no "selector"; every other stored sensor listener in the pack's jars has one. SculkSensorBlockEntity.loadAdditional logs the codec error and keeps the freshly built vibration data, so the sensor works. Logged during chunk generation, so it depends on the seed. Added with the owner's approval (D139). Seen in .run/failed-boots/20261106T072823Z, block -404,-59,-499. The regex names the one stale shape (event_delay 0, range 8, block source), with the position and distance left open.
 \[net\.minecraft\.world\.level\.block\.entity\.SculkSensorBlockEntity/\]: Failed to parse vibration listener for Sculk Sensor: 'No key selector in MapLike\[\{event_delay:0,event_distance:[0-9.]+f,range:8,source:\{pos:\[I;-?[0-9]+,-?[0-9]+,-?[0-9]+\],type:"minecraft:block"\}\}\]'
+
+# Ars Additions (nexus_tower/{purple,green,blue,red}, arcane_library) and Iron's Spellbooks (catacombs/hallway/hallway_stairway): empty slots stored
+# as {Count:0b,id:"minecraft:air"} in block-entity fields the data fixers do not reach. ItemStack.parseOptional logs this and returns EMPTY, so no item is
+# lost: all 34 tags captured were air (research/phase7-v0.3-probe-evidence/chunk-findings/README.md, D141). This wording only; other invalid items still fail.
+\[net\.minecraft\.world\.item\.ItemStack/\]: Tried to load invalid item: 'Item must not be minecraft:air'

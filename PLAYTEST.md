@@ -30,7 +30,7 @@ Two kinds of probe. **Server** = play normally on the server. **Creative** = mak
 |---|---|---|---|
 | B1 | Server | Look up flint and steel in JEI, then craft it. | The vanilla recipe is gone. The new one needs an osmium ingot (Mekanism), a source gem (Ars Nouveau) and flint. |
 | B2 | Server | Look up fire charge in JEI. | No crafting recipe at all (vanilla and Ars Nouveau's are both removed). Tell us if that feels wrong, see F1. |
-| B3 | Server | Complete the Nether key quest and claim it. | 10 coins and a Common bag. Right-click the bag: three items. |
+| B3 | Server | Complete the Nether key quest and claim it. | 10 coins and a Common bag; the item is named "Common Bag". Right-click the bag: three items. |
 | B4 | Server | In the Coin Shop chapter, hand in 16 coins, then 48. | 16 → a Common bag, 48 → an Uncommon bag. Both quests can be repeated. |
 
 ## C. Tier 2: the Twilight Forest
@@ -71,6 +71,7 @@ Two kinds of probe. **Server** = play normally on the server. **Creative** = mak
 | E1 | `/give @s ftbquests:lootcrate[ftbquests:loot_crate="common_bag"]`, then use it. | A crate that rolls three items. |
 | E2 | `/ftbquests reload` | No errors in chat or the log; the fourteen chapters are still there. |
 | E3 | `/give @s ftbquests:lootcrate[ftbquests:loot_crate="epic_bag"]` and `/give @s ftbquests:lootcrate[ftbquests:loot_crate="legendary_bag"]`, then use each. | Each rolls three items. None is a key, a tier ore or ingot, a planet metal, a Piglich Heart or a boss drop. |
+| E4 | `/give @s ad_astra:radio`, place it and right-click it. | A list of radio stations appears, and one plays when you pick it. The list now comes from a copy in the pack (D141). |
 
 ## G. Tier 3: the Undergarden
 

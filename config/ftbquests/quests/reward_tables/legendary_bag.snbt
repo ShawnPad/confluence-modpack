@@ -4,6 +4,7 @@
 		color: 16777045
 		drops: { boss: 0 monster: 0 passive: 0 }
 		glow: 1b
+		item_name: "Legendary Bag"
 		string_id: "legendary_bag"
 	}
 	loot_size: 3
