@@ -4,13 +4,16 @@
     python3 tools/gate_probe.py [--events FILE] [--rows FILE]
 
 It starts tools/server_session.sh on a throwaway world, installs tools/gate_probe/standin.js in the run folder only, drives rows
-P2.1-P2.12 and P3.1 (the Other gate) and P6.0-P6.5 (the Piglich), prints one row per check in the test log's format, then removes
-the stand-in and the world and stops. Exit 0 only if every row passes and no unnamed ERROR line was logged during the rows.
+P2.1-P2.12, P3.1 and P3.4 (the Other gate) and P6.0-P6.5 (the Piglich), prints one row per check in the test log's format, then
+removes the stand-in and the world and stops. Exit 0 only if every row passes, no unnamed ERROR line was logged during the rows and
+the stop worked. It refuses to run beside another session: that session's world and server are left alone. If the stop fails, the
+stand-in still goes and --events is still put back, the exit is non-zero, and a world a server may still have open stays on disk.
 --events FILE  load this file as the run folder's events.js for the session (to prove the check fails on old code; it is put back).
 --rows FILE    also append the rows to FILE.
 
 What it does not prove (research/phase7-v0.3-probe-evidence/README.md): the stand-in has no client, so no action-bar text, no chat
-click, no client hand sequencing, no packet reach check, no quest screen and no landing x, z after a change of dimension. Pack
+click, no client hand sequencing, no packet reach check, no quest screen, no landing x, z after a change of dimension and no real
+rejoin (P3.4 posts the login event for a stand-in already in The Other). Pack
 rows P3.2, P4.x and P5.x are not driven here. Measured damage is for server.properties' difficulty only.
 P6.2 and P6.3 depend on the route: they fired with P1 brought in by the pad (the full run) and stayed quiet with P1 brought in by a
 cross-level tp (--piglich-only, and --events old code, where the pad cannot unlock), cause [UNVERIFIED]. So under those two modes their
@@ -105,6 +108,23 @@ def build_sites():
     fill(ei(OTHER) + "fill 300 150 300 340 160 340 minecraft:stone hollow")
 
 
+def status():
+    try:
+        return session("status", timeout=30)
+    except (subprocess.TimeoutExpired, OSError) as e:
+        return f"status failed: {e}"
+
+
+def own_session(reply, proc):
+    """`wait` answers for whatever session is up, so only this reply from a start process still running makes it ours."""
+    return f"session: up (world {WORLD})" in reply and proc.poll() is None
+
+
+def melee_seen(out):
+    """P6.3: a `mob` damage source or 7.0 damage on the stand-in. Other damage in the window can be its fireballs and the fire."""
+    return bool(re.search(r"playerSources=\[(?:[^\]]* )?mobx\d", out) or re.search(r"playerDamage=\[(?:[^\]]* )?7\.0x\d", out))
+
+
 def lines(path):
     return path.read_text(encoding="utf-8", errors="replace").splitlines() if path.exists() else []
 
@@ -152,6 +172,17 @@ def key_count(n):
     return int(float(cp(f"H.count('{n}','{KEY}')")))
 
 
+def pad_stays(n, pad, want):
+    """Sneak-click and read the dimension. A `travel check stopped` line fails it: the pad is meant to refuse before any travel,
+    so without this a pad that stopped refusing would be masked by the travel check behind it."""
+    mark = len(lines(KJ_LOG))
+    click(n, pad)
+    got = dim(n)
+    time.sleep(1)
+    stopped = [ln for ln in gate_since(mark) if "travel check stopped" in ln]
+    return got == want and not stopped, f"{n} in {got}; travel check lines {len(stopped)}"
+
+
 def gate_rows(r):
     def to_nether(n):
         cp(f"H.tp('{n}','{NETHER}',98.5,101,98.5)")
@@ -173,25 +204,19 @@ def gate_rows(r):
     r.row("P2.7", "L", "tp into the_other and the_beyond as creative; sneak-click Nether and End pads",
           "both tps arrive; pads stop them; no gate error", p27)
 
-    def stays(n, pad, want):
-        def run():
-            click(n, pad)
-            got = dim(n)
-            return got == want, f"{n} in {got}"
-        return run
     def p21():
         to_nether(P2)
-        return stays(P2, NETHER_PAD, NETHER)()
-    r.row("P2.1", "L", "sneak-click Nether pad, hands empty, no key used yet", "stays in the Nether; no gate error", p21)
+        return pad_stays(P2, NETHER_PAD, NETHER)
+    r.row("P2.1", "L", "sneak-click Nether pad, hands empty, no key used yet", "stays in the Nether, refused by the pad; no gate error", p21)
 
     def p28():
         cp(f"H.tp('{P2}','{END}',-1.5,71,598.5)")
-        return stays(P2, END_PAD, END)()
-    r.row("P2.8", "L", "sneak-click End pad, hands empty", "stays in the End; no gate error", p28)
+        return pad_stays(P2, END_PAD, END)
+    r.row("P2.8", "L", "sneak-click End pad, hands empty", "stays in the End, refused by the pad; no gate error", p28)
 
     def p29():
         cp(f"H.tp('{P2}','{OVER}',6.5,201,0.5)")
-        out = stays(P2, OVER_PAD, MINING)()
+        out = pad_stays(P2, OVER_PAD, MINING)
         cp(f"H.tp('{P2}','{OVER}',0.5,201,0.5)")
         return out
     r.row("P2.9", "L", "sneak-click Overworld pad, hands empty", "arrives in allthemodium:mining; no gate error", p29)
@@ -222,8 +247,8 @@ def gate_rows(r):
 
     def p24():
         to_nether(P2)
-        return stays(P2, NETHER_PAD, NETHER)()
-    r.row("P2.4", "P2", "P2 (own team) sneak-clicks Nether pad after P1 unlocked", "stays in the Nether; no gate error", p24)
+        return pad_stays(P2, NETHER_PAD, NETHER)
+    r.row("P2.4", "P2", "P2 (own team) sneak-clicks Nether pad after P1 unlocked", "stays in the Nether, refused by the pad; no gate error", p24)
 
     def p25():
         mark = len(lines(KJ_LOG))
@@ -279,6 +304,19 @@ def gate_rows(r):
     r.row("P3.1", "P1, P3", "locked P3 held a Tablet of Assistance engraved with P1 (80 ticks); P1 ran /tbacceptteleport <uuid>",
           "back in the Overworld one tick after arriving; arrival check line", p31)
 
+    def p34():
+        con(f"gamemode creative {P3}", 5)
+        cp(f"H.tp('{P3}','{OTHER}',200.5,200,200.5)")
+        there = dim(P3)
+        con(f"gamemode survival {P3}", 5)
+        mark = len(lines(KJ_LOG))
+        cp(f"H.login('{P3}')")
+        time.sleep(2)
+        got = dim(P3)
+        sent = [ln for ln in gate_since(mark) if f"arrival check sent {P3} from {OTHER} to the Overworld spawn" in ln]
+        return there == OTHER and got == OVER and bool(sent), f"before the login {there}; after it {got}; arrival check lines {len(sent)}"
+    r.row("P3.4", "P3", "locked P3 in The Other (tp as creative, then survival); login event posted", "back in the Overworld; arrival check line", p34)
+
     def p210():
         cp(f"H.alive('{P1}')")
         said = [cp(f"H.raw('ftbteams party create probe_party','{P1}')")]
@@ -299,19 +337,21 @@ def gate_rows(r):
 
     def p211():
         pad = cp(f"H.findBlock('{P2}','allthemodium:teleport_pad',12,60,250)")
-        back = "no arrival pad within 12 blocks; tp to the Nether"
+        back = "no arrival pad within 12 blocks"
+        returned = None
         if pad != "none" and dim(P2) == OTHER:
             x, y, z = (int(v) for v in pad.split(","))
             click(P2, (x, y, z))
             time.sleep(1)
-            back = f"pad {pad} returned to {dim(P2)}"
+            returned = dim(P2)
+            back = f"pad {pad} returned to {returned}"
         cp(f"H.raw('ftbteams party leave','{P2}')")
         to_nether(P2)
         click(P2, NETHER_PAD)
         got = dim(P2)
-        return got == NETHER, f"{back}; left the party, team {cp(f'H.team({chr(39)}{P2}{chr(39)})')}; {P2} in {got}"
+        return returned == NETHER and got == NETHER, f"{back}; left the party, team {cp(f'H.team({chr(39)}{P2}{chr(39)})')}; {P2} in {got}"
     r.row("P2.11", "P2", "P2 sneak-clicks the arrival pad in The Other, leaves the party, sneak-clicks Nether pad",
-          "stays in the Nether (the unlock stays with the party)", p211)
+          "the arrival pad returns to the Nether; then stays in the Nether (the unlock stays with the party)", p211)
 
     def p212():
         con(f"clear {P2}", 5)
@@ -381,7 +421,7 @@ def piglich_rows(r):
     def p63():
         cp(f"H.alive('{P1}')")
         cp(f"H.heal('{P1}',400)")
-        return provoked(hold_at(1.5, 10), lambda o: "playerDamage=[]" not in o, 1.5, 10)
+        return provoked(hold_at(1.5, 10), melee_seen, 1.5, 10)
     r.row("P6.3", "P1", "stand-in held within 2 blocks, no hits, per-tick monitor", "melee lands (figure recorded)", p63)
 
     def p64():
@@ -422,25 +462,60 @@ def piglich_rows(r):
     r.row("P6.0", "-", "console: locate structure allthemodium:ancient_pyramid in The Other", "a pyramid exists in this new world", p60)
 
 
-def teardown(proc, run_events_was_replaced):
+def stop_session(proc):
+    """True only if the stop says it worked and the start process has ended."""
     try:
-        cp("H.despawnAll()")
-    except Exception as e:
-        print(f"teardown: {e}")
-    for d in DIMS:
-        try:
-            con(f"execute in {d} run forceload remove all", 5)
-        except Exception as e:
-            print(f"teardown: {e}")
-    print(session("stop", timeout=240).strip()[-400:])
+        r = subprocess.run([str(SESSION), "stop"], capture_output=True, text=True, timeout=240, cwd=ROOT)
+    except (subprocess.TimeoutExpired, OSError) as e:
+        print(f"teardown: the stop did not finish: {e}")
+        return False
+    print((r.stdout + r.stderr).strip()[-400:])
+    ok = r.returncode == 0
+    if not ok:
+        print(f"teardown: the stop exited {r.returncode}")
     try:
         proc.wait(timeout=120)
     except subprocess.TimeoutExpired:
         print("teardown: the session process did not end")
-    INSTALLED.unlink(missing_ok=True)
-    if run_events_was_replaced:
-        shutil.copyfile(EVENTS, RUN_EVENTS)
-    shutil.rmtree(RUN / WORLD, ignore_errors=True)
+        ok = False
+    return ok
+
+
+def teardown(proc, run_events_was_replaced, mine):
+    """Returns True if the session this run started is gone. The stand-in and --events are put right whichever way that went."""
+    clean = True
+    try:
+        if not mine:
+            # Refused or still booting. A boot of ours gets stopped (status said down before the start); anything else is not ours.
+            st = status()
+            mine = proc.poll() is None and (f"world {WORLD}" in st or "session: starting" in st)
+        if mine:
+            try:
+                cp("H.despawnAll()")
+            except Exception as e:
+                print(f"teardown: {e}")
+            for d in DIMS:
+                try:
+                    con(f"execute in {d} run forceload remove all", 5)
+                except Exception as e:
+                    print(f"teardown: {e}")
+            clean = stop_session(proc)
+        else:
+            try:
+                proc.wait(timeout=30)
+            except subprocess.TimeoutExpired:
+                print("teardown: the refused start process did not end")
+                clean = False
+    finally:
+        INSTALLED.unlink(missing_ok=True)
+        if run_events_was_replaced:
+            shutil.copyfile(EVENTS, RUN_EVENTS)
+    st = status()
+    if "session: down" in st:
+        shutil.rmtree(RUN / WORLD, ignore_errors=True)
+    else:
+        print(f"teardown: {RUN / WORLD} kept, because the session is not down: {st.strip()[-200:]}")
+    return clean
 
 
 def main(argv=None):
@@ -454,50 +529,71 @@ def main(argv=None):
         return 2
     if WORLD != "gate_probe_throwaway" or (RUN / WORLD).resolve().parent != RUN.resolve():
         raise AssertionError("refusing a world outside the run folder")
+    # Before anything is touched: `start` would refuse too, but only after this run had put a stand-in beside a live server.
+    st = status()
+    if "session: down" not in st:
+        print(f"refusing: another session is up or starting, and this run would alter its world: {st.strip()[-200:]}")
+        return 2
     shutil.rmtree(RUN / WORLD, ignore_errors=True)
     shutil.copyfile(STANDIN, INSTALLED)
     os.environ["PATH"] = f"{Path.home()}/go/bin:" + os.environ["PATH"]
     log = open(ROOT / ".run" / "gate-probe-session.log", "w")
     proc = subprocess.Popen([str(SESSION), "start", "--world", WORLD], stdout=log, stderr=subprocess.STDOUT, cwd=ROOT)
-    replaced = False
+    state = {"mine": False, "replaced": False}
     rows = Rows("old events.js" if args.events else "working-tree events.js", args.rows)
+    code, clean = None, False
     try:
-        for _ in range(60):   # `wait` says "not running" until the start process has written its pid file
-            if (RUN / "session.pids").exists():
-                break
-            time.sleep(1)
-        out = session("wait", timeout=700)
-        if "session: up" not in out:
-            print("the session did not start (a failed start is a finding, D134; do not retry it away):", out[-300:])
-            print((ROOT / ".run" / "gate-probe-session.log").read_text(errors="replace")[-800:])
-            return 2
-        same = EVENTS.read_bytes() == RUN_EVENTS.read_bytes()
-        if args.events:
-            shutil.copyfile(args.events, RUN_EVENTS)
-            replaced = True
-            print(con("reload", 180)[-200:])
-        elif not same:
-            print("the run folder's events.js differs from the working tree's: the sync did not take")
-            return 2
-        latest_mark = len(lines(LATEST))
-        build_sites()
-        for n in (P1, P2, P3):
-            cp(f"H.spawn('{n}')")
-            con(f"clear {n}", 5)
-            # As plan Task 12 Step 9: they wait for minutes in The Other, where nothing else protects them.
-            con(f"effect give {n} minecraft:resistance 3600 4 true")
-            con(f"effect give {n} minecraft:fire_resistance 3600 0 true")
-        if not args.piglich_only:
-            gate_rows(rows)
-        piglich_rows(rows)
-        new_errors = [ln for ln in lines(LATEST)[latest_mark:] if "/ERROR]" in ln and not any(t.search(ln) for t in TOLERATED)]
-        rows.row("LOG", "-", "ERROR lines in latest.log during the rows, except the named stand-in ones", "none",
-                 lambda: (not new_errors, f"{len(new_errors)} line(s): " + " ; ".join(ln[:220] for ln in new_errors[:6])))
+        code = drive(args, proc, rows, state)
     finally:
-        teardown(proc, replaced)
+        clean = teardown(proc, state["replaced"], state["mine"])
         log.close()
-    print(f"gate_probe: {rows.count} rows, {rows.failed} failed ({rows.label})")
-    return 1 if rows.failed else 0
+    if code is not None:
+        return code
+    last = f"gate_probe: {rows.count} rows, {rows.failed} failed ({rows.label})"
+    if args.piglich_only:
+        last += "; GATE ROWS DID NOT RUN (--piglich-only)"
+    if not clean:
+        last += "; THE STOP FAILED (see above)"
+    print(last)
+    return 1 if rows.failed or not clean else 0
+
+
+def drive(args, proc, rows, state):
+    """Everything between start and teardown. None when the rows ran, or the exit code when they could not."""
+    for _ in range(60):   # `wait` says "not running" until the start process has written its pid file
+        if (RUN / "session.pids").exists():
+            break
+        time.sleep(1)
+    out = session("wait", timeout=700)
+    state["mine"] = own_session(out, proc)
+    if not state["mine"]:
+        print(f"the session is not this run's (expected world {WORLD} and a live start process; "
+              "a failed start is a finding, D134; do not retry it away):", out[-300:])
+        print((ROOT / ".run" / "gate-probe-session.log").read_text(errors="replace")[-800:])
+        return 2
+    same = EVENTS.read_bytes() == RUN_EVENTS.read_bytes()
+    if args.events:
+        shutil.copyfile(args.events, RUN_EVENTS)
+        state["replaced"] = True
+        print(con("reload", 180)[-200:])
+    elif not same:
+        print("the run folder's events.js differs from the working tree's: the sync did not take")
+        return 2
+    latest_mark = len(lines(LATEST))
+    build_sites()
+    for n in (P1, P2, P3):
+        cp(f"H.spawn('{n}')")
+        con(f"clear {n}", 5)
+        # As plan Task 12 Step 9: they wait for minutes in The Other, where nothing else protects them.
+        con(f"effect give {n} minecraft:resistance 3600 4 true")
+        con(f"effect give {n} minecraft:fire_resistance 3600 0 true")
+    if not args.piglich_only:
+        gate_rows(rows)
+    piglich_rows(rows)
+    new_errors = [ln for ln in lines(LATEST)[latest_mark:] if "/ERROR]" in ln and not any(t.search(ln) for t in TOLERATED)]
+    rows.row("LOG", "-", "ERROR lines in latest.log during the rows, except the named stand-in ones", "none",
+             lambda: (not new_errors, f"{len(new_errors)} line(s): " + " ; ".join(ln[:220] for ln in new_errors[:6])))
+    return None
 
 
 if __name__ == "__main__":

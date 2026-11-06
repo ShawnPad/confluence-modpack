@@ -471,8 +471,17 @@ def test_const_in_loop_cases(name):
 # level() and dimension() fall to a KubeJS bean, an object ("It is not a function"); getUUID and getStringUUID are undefined.
 # That is how the v0.3 gate failed on every click and trip while node, the boot and every other check passed
 # (research/phase7-v0.3-probe-evidence/rhino-names.md). The other names are from the annotations, not measured; the lint is
-# stricter than Rhino for an overloaded one (moveTo, teleportTo: only some overloads are hidden). Left out: Entity.push, because
-# arrays have push, and Entity.getType, which has a @RemapForJS but was measured callable (String(e.getType()), stand-in helpers).
+# stricter than Rhino for an overloaded one (moveTo, teleportTo, put*Array: only some overloads are hidden).
+#
+# This is a list, not a proof: the lexer has no receiver types, so it covers only names that do not mean something else on an
+# unrelated receiver. Annotated but left out, so grep or review for these:
+#   Entity.getType: has a @RemapForJS but was measured callable (String(e.getType()), stand-in helpers).
+#   Entity.push: JS arrays have push.
+#   DamageSource.getEntity (getActual): every native event has a legal getEntity(); ServerLevel.getEntity(UUID) is hidden too.
+#   ItemStack.getTags: Registry.getTags() is legal, tagcheck.js:77 calls it.
+#   ItemStack.enchant, ItemStack.getEnchantments: KubeJS's own kjs$enchant and kjs$getEnchantments answer to the same names.
+#   Ingredient.getItems: containers and other classes have getItems.
+#   Holder.is, MutableComponent.append(String): is and append exist on many classes, and append(Component) is legal.
 HIDDEN_OR_RENAMED = {
     # EntityMixin, hidden
     "level": "getLevel", "getPassengers": None, "hurt": None, "teleportTo": None, "spawnAtLocation": None,
@@ -483,8 +492,14 @@ HIDDEN_OR_RENAMED = {
     "setDeltaMovement": "setMotion", "moveTo": "setPositionAndRotation", "isAlliedTo": "isOnSameTeam",
     "getDirection": "getHorizontalFacing", "extinguishFire": "extinguish",
     "distanceToSqr": "distanceToEntitySqr", "distanceTo": "distanceToEntity",
-    # LevelMixin
-    "dimension": "getDimension", "getGameTime": "getTime",
+    # LevelMixin, EntityGetterMixin, ServerLevelMixin
+    "dimension": "getDimension", "getGameTime": "getTime", "players": None,
+    # DamageSourceMixin
+    "getMsgId": "getType", "getDirectEntity": "getImmediate",
+    # DirectionMixin
+    "getStepX": "getX", "getStepY": "getY", "getStepZ": "getZ",
+    # CompoundTagMixin (the List overloads)
+    "putByteArray": None, "putIntArray": None, "putLongArray": None,
     # PlayerMixin, ServerPlayerMixin, MinecraftServerMixin
     "closeContainer": "closeMenu", "getStats": "getStatsCounter", "isDedicatedServer": "isDedicated", "stopServer": "stop",
 }
@@ -497,7 +512,7 @@ def hidden_or_renamed_calls(src):
             if toks[i].text == "." and toks[i + 1].text in HIDDEN_OR_RENAMED and toks[i + 2].text == "("]
 
 
-def test_no_call_to_a_name_kubejs_hides_or_renames():
+def test_no_call_to_a_listed_name_kubejs_hides_or_renames():
     found = []
     for d in SCRIPT_DIRS:
         for js in sorted((ROOT / d).rglob("*.js")):
@@ -508,3 +523,7 @@ def test_no_call_to_a_name_kubejs_hides_or_renames():
     src = ("p.level().dimension()\nplayer.getUUID()\np.getStringUUID()\n// p.level()\nconst s = 'p.level()'\nconst level = 1\n"
            "f(level)\n")
     assert hidden_or_renamed_calls(src) == [(1, "level"), (1, "dimension"), (2, "getUUID"), (3, "getStringUUID")]
+    assert hidden_or_renamed_calls("lv.players()\ns.getMsgId()\nd.getStepX()\ntag.putIntArray('a', x)\n") == [
+        (1, "players"), (2, "getMsgId"), (3, "getStepX"), (4, "putIntArray")]
+    # Names that have a legal meaning on another receiver stay out of the list (the comment above says where they went).
+    assert hidden_or_renamed_calls("event.getEntity()\nreg.getTags()\nbox.getItems()\nx.is(y)\nb.append(c)\ns.enchant(e)\n") == []

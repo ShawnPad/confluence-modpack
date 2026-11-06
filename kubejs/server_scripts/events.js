@@ -83,7 +83,7 @@ ServerEvents.tags('block', event => {
 //     KubeJS's beans (KJS EntityKJS.kjs$getLevel, LevelKJS.kjs$getDimension), and typeof player.getUUID and
 //     player.getStringUUID are "undefined". So every read below calls entity.getLevel() and
 //     String(level.getDimension()) (kjs$getDimension -> ResourceLocation, whose toString() is "ns:path"). A ResourceKey
-//     from a NeoForge event still goes through dimId. Node cannot see any of this: tools/gate_probe.sh runs these paths
+//     from a NeoForge event still goes through dimId. Node cannot see any of this: tools/gate_probe.py runs these paths
 //     under Rhino (research/phase7-v0.3-probe-evidence/rhino-names.md).
 //   BlockRightClickedKubeEvent (KJS): getPlayer() and getLevel() from KubeEntityEvent (getLevel = getEntity().level()),
 //     getHand() -> InteractionHand (MC enum MAIN_HAND / OFF_HAND). Rhino wraps the enum as a NativeJavaObject (RH
@@ -137,6 +137,7 @@ const OTHER_GATE_MC = {
   teamsApi: Java.loadClass('dev.ftb.mods.ftbteams.api.FTBTeamsAPI'),
   travelEvent: Java.loadClass('net.neoforged.neoforge.event.entity.EntityTravelToDimensionEvent'),
   changedEvent: Java.loadClass('net.neoforged.neoforge.event.entity.player.PlayerEvent$PlayerChangedDimensionEvent'),
+  loggedInEvent: Java.loadClass('net.neoforged.neoforge.event.entity.player.PlayerEvent$PlayerLoggedInEvent'),
 
   dimId: function (key) {
     return String(key.location().toString())
@@ -162,14 +163,18 @@ const OTHER_GATE_MC = {
 
   // §4.4: at the next end of a server tick (so after Tombstone's own teleport has returned), if the player is still online
   // and still in dest, move them to the Overworld world spawn and show the message. If the tp left them in dest, log an
-  // error instead of the message.
+  // error instead of the message. A callback that throws or a tp that does nothing gets one retry on the next tick, never more;
+  // after that the player stays where they are until the login check below.
   toSpawn: function (player, dest, message) {
-    const server = player.getServer()
-    const uuid = player.getUuid()
+    OTHER_GATE_MC.moveNextTick(player.getServer(), player.getUuid(), dest, message, 1)
+  },
+
+  moveNextTick: function (server, uuid, dest, message, retries) {
     server.scheduleInTicks(1, scheduled => {
       // Declared before the try (Rhino note above).
       let p = null
       let spawn = null
+      let moved = false
       try {
         p = server.getPlayerList().getPlayer(uuid)
         if (p === null || String(p.getLevel().getDimension()) !== dest) return
@@ -182,14 +187,59 @@ const OTHER_GATE_MC = {
         // is open, offsets 15-94; ServerPlayer.teleportTo -> changeDimension, offset 67), so where p is now tells.
         if (String(p.getLevel().getDimension()) === dest) {
           console.error('confluence other-gate: arrival move did not leave ' + dest + ' for ' + p.getScoreboardName())
-          return
+        } else {
+          moved = true
+          OTHER_GATE_MC.say(p, message)
+          console.info('confluence other-gate: arrival check sent ' + p.getScoreboardName() + ' from ' + dest + ' to the Overworld spawn')
         }
-        OTHER_GATE_MC.say(p, message)
-        console.info('confluence other-gate: arrival check sent ' + p.getScoreboardName() + ' from ' + dest + ' to the Overworld spawn')
       } catch (e) {
         console.error('confluence other-gate: arrival move failed for ' + dest + ': ' + e)
       }
+      if (moved) return
+      if (retries < 1) {
+        console.error('confluence other-gate: arrival move gave up for ' + dest + ' after one retry; the login check is next')
+        return
+      }
+      try {
+        OTHER_GATE_MC.moveNextTick(server, uuid, dest, message, retries - 1)
+      } catch (e2) {
+        console.error('confluence other-gate: arrival move retry could not be scheduled: ' + e2)
+      }
     })
+  },
+
+  // §4.4 arrival check, for both listeners below. destOf reads the dimension to check from the event.
+  arrivalCheck: function (event, destOf) {
+    // Declared before the try (Rhino note above).
+    let dest = null
+    let player = null
+    let act = null
+    let move = null
+    try {
+      dest = destOf(event)
+      if (!OTHER_GATE.gated(dest)) return
+      player = event.getEntity()
+      if (player.getLevel().isClientSide()) return
+      act = OTHER_GATE.arrival({
+        dest: dest,
+        exempt: () => OTHER_GATE_MC.exempt(player),
+        team: () => OTHER_GATE_MC.lookup(player),
+      })
+      if (act.error !== null) console.error('confluence other-gate: arrival check failed, treating the team as locked: ' + act.error)
+      if (act.sendToSpawn) OTHER_GATE_MC.toSpawn(player, dest, act.message)
+    } catch (e) {
+      act = OTHER_GATE.arrivalError(dest, e)
+      // Without the player (getEntity itself failed) there is nobody to move, and the log says so.
+      move = act.sendToSpawn && player !== null
+      console.error('confluence other-gate: arrival check error (destination ' + dest + ', moving: ' + move + '): ' + e)
+      if (move) {
+        try {
+          OTHER_GATE_MC.toSpawn(player, dest, act.message)
+        } catch (e2) {
+          console.error('confluence other-gate: arrival move could not be scheduled: ' + e2)
+        }
+      }
+    }
   },
 }
 
@@ -268,34 +318,13 @@ NativeEvents.onEvent(OTHER_GATE_MC.travelEvent, event => {
 
 // §4.4 arrival check: Tombstone's Helper.teleport skips the travel event but fires this one after the move (PAD §4.3, GAP §5).
 NativeEvents.onEvent(OTHER_GATE_MC.changedEvent, event => {
-  // Declared before the try (Rhino note above).
-  let dest = null
-  let player = null
-  let act = null
-  let move = null
-  try {
-    dest = OTHER_GATE_MC.dimId(event.getTo())
-    if (!OTHER_GATE.gated(dest)) return
-    player = event.getEntity()
-    if (player.getLevel().isClientSide()) return
-    act = OTHER_GATE.arrival({
-      dest: dest,
-      exempt: () => OTHER_GATE_MC.exempt(player),
-      team: () => OTHER_GATE_MC.lookup(player),
-    })
-    if (act.error !== null) console.error('confluence other-gate: arrival check failed, treating the team as locked: ' + act.error)
-    if (act.sendToSpawn) OTHER_GATE_MC.toSpawn(player, dest, act.message)
-  } catch (e) {
-    act = OTHER_GATE.arrivalError(dest, e)
-    // Without the player (getEntity itself failed) there is nobody to move, and the log says so.
-    move = act.sendToSpawn && player !== null
-    console.error('confluence other-gate: arrival check error (destination ' + dest + ', moving: ' + move + '): ' + e)
-    if (move) {
-      try {
-        OTHER_GATE_MC.toSpawn(player, dest, act.message)
-      } catch (e2) {
-        console.error('confluence other-gate: arrival move could not be scheduled: ' + e2)
-      }
-    }
-  }
+  OTHER_GATE_MC.arrivalCheck(event, e => OTHER_GATE_MC.dimId(e.getTo()))
+})
+
+// The same check for a player who logs in inside a gated dimension: the one-shot move above found them gone (p === null), or gave
+// up. A returning player's team resolves from the manager's own map (ftb-teams TeamManagerImpl.getTeamForPlayerID offsets 5-28), so
+// the order of the login listeners does not matter for them. tools/gate_probe.py row P3.4 posts this event under Rhino; a real
+// client rejoin has not been measured, and where NeoForge's PlayerList patch posts it was not read (no patched class on disk).
+NativeEvents.onEvent(OTHER_GATE_MC.loggedInEvent, event => {
+  OTHER_GATE_MC.arrivalCheck(event, e => String(e.getEntity().getLevel().getDimension()))
 })

@@ -10,7 +10,7 @@ the members the section calls (its header comment cites each one), and each is a
 getTeamForPlayer takes only the event's player (ftb-teams-neoforge-2101.1.11.jar TeamManager has no other overload), an
 empty Optional's get() throws, getUuid() returns an object and PlayerList.getPlayer takes only that object, and the player
 getPlayer returns is a distinct object with the same UUID (server-1.21.1-20240808.144430-srg.jar PlayerList.respawn builds a
-new ServerPlayer), which alone moves when a tp works. Rhino itself is exercised by the boot and tools/gate_probe.sh.
+new ServerPlayer), which alone moves when a tp works. Rhino itself is exercised by the boot and tools/gate_probe.py.
 
 The stand-ins also model the names KubeJS changes under Rhino, as measured on 2026-11-06 and read in
 kubejs-neoforge-2101.7.2-build.377.jar (research/phase7-v0.3-probe-evidence/rhino-names.md). Entity.level() is @HideFromJS,
@@ -52,7 +52,11 @@ const c = JSON.parse(fs.readFileSync(0, 'utf8'))
 c.team = c.team || {}
 const log = []
 const rec = s => { log.push(s) }
-const boom = at => { if (c.throwAt === at) throw new Error('boom at ' + at) }
+let once = false
+const boom = at => {
+  if (c.throwAt === at) throw new Error('boom at ' + at)
+  if (c.throwOnce === at && !once) { once = true; throw new Error('boom once at ' + at) }
+}
 const EXIT = new Error('EventExit')
 const key = id => ({ location: () => ({ toString: () => id }) })
 const location = id => ({ toString: () => id })   // a ResourceLocation: String() gives "ns:path"
@@ -87,7 +91,7 @@ const UUID = { toString: () => 'uuid-1' }   // a java.util.UUID object, not a st
 // Two player objects with the same UUID and the same starting dimension: `player` is the one the event carries, `online` the
 // one PlayerList.getPlayer(UUID) returns. They are distinct, as after a respawn (PlayerList.respawn builds a new ServerPlayer),
 // so only `online` moves (movedAway, a successful tp) and a read from the event's stale object shows.
-const makePlayer = () => {
+const makePlayer = isEvent => {
   const self = {
     at: c.dest,
     getMainHandItem: () => stack('MAIN_HAND', c.main || 'minecraft:air'),
@@ -102,14 +106,20 @@ const makePlayer = () => {
     getServer: () => server,
     // EntityMixin: level() is @HideFromJS, so `level` is the kjs$getLevel bean: an object, not a function.
     get level() { return levelAt(() => self.at) },
-    getLevel: () => levelAt(() => self.at),
+    getLevel: () => { if (isEvent) boom('eventLevel'); return levelAt(() => self.at) },
     isServerPlayer: () => c.serverPlayer !== false,
   }
   return self
 }
 const scheduled = []
+let schedules = 0
 const server = {
-  scheduleInTicks: (n, fn) => { rec('schedule ' + n); boom('schedule'); scheduled.push(fn) },
+  scheduleInTicks: (n, fn) => {
+    rec('schedule ' + n)
+    boom('schedule')
+    if (++schedules === c.scheduleFailsAt) throw new Error('boom at schedule ' + schedules)
+    scheduled.push(fn)
+  },
   // PlayerList.getPlayer(UUID): a string or any other object is refused.
   getPlayerList: () => ({ getPlayer: u => {
     rec('getPlayer ' + u)
@@ -122,11 +132,14 @@ const server = {
     rec('command ' + cmd)
     boom('command')
     const m = /^execute in (\S+) run tp (\S+) /.exec(cmd)
-    if (m && m[2] === online.getStringUuid() && !c.tpFails) online.at = m[1]
+    if (m && m[2] === online.getStringUuid() && !c.tpFails) {
+      if (c.tpFailsOnce && !once) { once = true; return }
+      online.at = m[1]
+    }
   },
 }
-const player = makePlayer()
-const online = makePlayer()
+const player = makePlayer(true)
+const online = makePlayer(false)
 const listeners = { pad: null, padId: null, native: {} }
 const ctx = vm.createContext({
   console: { info: m => rec('info ' + m), warn: m => rec('warn ' + m), error: m => rec('error ' + m), log: m => rec('log ' + m) },
@@ -137,6 +150,15 @@ const ctx = vm.createContext({
   NativeEvents: { onEvent: (cls, fn) => { listeners.native[cls.name] = fn } },
 })
 for (const f of process.argv.slice(1)) vm.runInContext(fs.readFileSync(f, 'utf8'), ctx, { filename: f })
+// One scheduled callback per tick, including those a callback schedules. A retry that never stops fails here, not by hanging.
+const runTicks = () => {
+  rec('tick end')
+  if (c.movedAway) online.at = 'minecraft:the_nether'
+  for (let ticks = 0; scheduled.length > 0; ticks++) {
+    if (ticks > 20) throw new Error('endless retry')
+    scheduled.shift()({})
+  }
+}
 const out = { load: log.splice(0), padId: listeners.padId, native: Object.keys(listeners.native), log: log,
   cancelled: false, uncaught: null }
 try {
@@ -162,9 +184,12 @@ try {
       getTo: () => { boom('getTo'); return key(c.dest) },
       getEntity: () => { rec('getEntity'); boom('getEntity'); return player },
     })
-    rec('tick end')
-    if (c.movedAway) online.at = 'minecraft:the_nether'
-    scheduled.forEach(fn => fn({}))
+    runTicks()
+  } else if (c.fn === 'login') {
+    listeners.native['net.neoforged.neoforge.event.entity.player.PlayerEvent$PlayerLoggedInEvent']({
+      getEntity: () => { rec('getEntity'); boom('getEntity'); return player },
+    })
+    runTicks()
   }
 } catch (e) {
   if (e === EXIT) out.cancelled = true
@@ -182,6 +207,7 @@ KEY, DIRT = "kubejs:other_key", "minecraft:dirt"
 FLAG = "confluence_other_unlocked"
 TRAVEL_EVENT = "net.neoforged.neoforge.event.entity.EntityTravelToDimensionEvent"
 CHANGED_EVENT = "net.neoforged.neoforge.event.entity.player.PlayerEvent$PlayerChangedDimensionEvent"
+LOGIN_EVENT = "net.neoforged.neoforge.event.entity.player.PlayerEvent$PlayerLoggedInEvent"
 UNLOCKED = {"found": True, "unlocked": True}
 LOCKED = {"found": True, "unlocked": False}
 NO_TEAM = {"found": False}
@@ -202,6 +228,21 @@ def pad_error(at):
 
 def stopped(dest):
     return "info confluence other-gate: travel check stopped Alex going to " + dest
+
+
+DID_NOT_LEAVE = "error confluence other-gate: arrival move did not leave allthemodium:the_other for Alex"
+
+
+def GAVE_UP(dest):
+    return "error confluence other-gate: arrival move gave up for " + dest + " after one retry; the login check is next"
+
+
+def MOVE_FAILED(dest, what):
+    return "error confluence other-gate: arrival move failed for " + dest + ": Error: " + what
+
+
+def SENT(dest):
+    return "info confluence other-gate: arrival check sent Alex from " + dest + " to the Overworld spawn"
 
 
 def moved(dest, say):
@@ -225,9 +266,9 @@ def fire(fn, **case):
 def test_section_registers_its_listeners_and_logs_nothing_while_loading():
     out = fire("load")
     assert out["load"] == ["loadClass dev.ftb.mods.ftbteams.api.FTBTeamsAPI", "loadClass " + TRAVEL_EVENT,
-                           "loadClass " + CHANGED_EVENT]
+                           "loadClass " + CHANGED_EVENT, "loadClass " + LOGIN_EVENT]
     assert out["padId"] == "allthemodium:teleport_pad"
-    assert out["native"] == [TRAVEL_EVENT, CHANGED_EVENT]
+    assert out["native"] == [TRAVEL_EVENT, CHANGED_EVENT, LOGIN_EVENT]
     assert out["log"] == [] and out["cancelled"] is False
 
 
@@ -332,9 +373,22 @@ def test_travel_listener(case, log):
     pytest.param(dict(dest=BEYOND, loggedOut=True), ["getEntity", "schedule 1", "tick end", "getPlayer uuid-1"],
                  id="logged-out-not-moved"),
     pytest.param(dict(dest=OTHER, team=LOCKED, tpFails=True),
-                 ["getEntity"] + LOOKUP + ["schedule 1", "tick end", "getPlayer uuid-1", TP,
-                                           "error confluence other-gate: arrival move did not leave allthemodium:the_other for Alex"],
-                 id="tp-did-nothing-logged-no-message"),
+                 ["getEntity"] + LOOKUP + ["schedule 1", "tick end", "getPlayer uuid-1", TP, DID_NOT_LEAVE,
+                                           "schedule 1", "getPlayer uuid-1", TP, DID_NOT_LEAVE, GAVE_UP(OTHER)],
+                 id="tp-did-nothing-retried-once-then-gives-up"),
+    pytest.param(dict(dest=OTHER, team=LOCKED, tpFailsOnce=True),
+                 ["getEntity"] + LOOKUP + ["schedule 1", "tick end", "getPlayer uuid-1", TP, DID_NOT_LEAVE,
+                                           "schedule 1", "getPlayer uuid-1", TP, SAY_TEAM, SENT(OTHER)],
+                 id="tp-did-nothing-once-then-the-retry-moves"),
+    pytest.param(dict(dest=OTHER, team=LOCKED, tpFails=True, scheduleFailsAt=2),
+                 ["getEntity"] + LOOKUP + ["schedule 1", "tick end", "getPlayer uuid-1", TP, DID_NOT_LEAVE, "schedule 1",
+                                           "error confluence other-gate: arrival move retry could not be scheduled: "
+                                           "Error: boom at schedule 2"],
+                 id="retry-schedule-error-contained"),
+    # The old bug's shape: the listener throws after the destination is known, and the callback it still schedules works.
+    pytest.param(dict(dest=OTHER, team=LOCKED, throwAt="eventLevel"),
+                 ["getEntity", "error confluence other-gate: arrival check error (destination allthemodium:the_other, "
+                  "moving: true): Error: boom at eventLevel"] + moved(OTHER, SAY_TEAM), id="listener-throw-then-callback-moves"),
     pytest.param(dict(dest=OTHER, throwAt="getTo"),
                  ["error confluence other-gate: arrival check error (destination null, moving: false): Error: boom at getTo",
                   "tick end"], id="destination-read-error-not-moved"),
@@ -350,10 +404,35 @@ def test_travel_listener(case, log):
                   "error confluence other-gate: arrival move could not be scheduled: Error: boom at schedule", "tick end"],
                  id="schedule-error-contained"),
     pytest.param(dict(dest=BEYOND, throwAt="command"),
-                 ["getEntity", "schedule 1", "tick end", "getPlayer uuid-1", TP,
-                  "error confluence other-gate: arrival move failed for allthemodium:the_beyond: Error: boom at command"],
-                 id="command-error-contained"),
+                 ["getEntity", "schedule 1", "tick end", "getPlayer uuid-1", TP, MOVE_FAILED(BEYOND, "boom at command"),
+                  "schedule 1", "getPlayer uuid-1", TP, MOVE_FAILED(BEYOND, "boom at command"), GAVE_UP(BEYOND)],
+                 id="command-error-retried-once-then-gives-up"),
+    pytest.param(dict(dest=BEYOND, throwOnce="command"),
+                 ["getEntity", "schedule 1", "tick end", "getPlayer uuid-1", TP, MOVE_FAILED(BEYOND, "boom once at command"),
+                  "schedule 1", "getPlayer uuid-1", TP, SAY_BEYOND, SENT(BEYOND)],
+                 id="callback-throw-once-then-the-retry-moves"),
 ])
 def test_arrival_listener(case, log):
     out = fire("arrival", **case)
     assert out["log"] == log
+    assert out["uncaught"] is None
+
+
+# A rejoin after the one-shot move found the player gone (p === null), or after it gave up: the same check at login.
+@pytest.mark.parametrize("case,log", [
+    pytest.param(dict(dest=OTHER, team=LOCKED), ["getEntity", "getEntity"] + LOOKUP + moved(OTHER, SAY_TEAM), id="locked-in-other-moved"),
+    pytest.param(dict(dest=BEYOND), ["getEntity", "getEntity"] + moved(BEYOND, SAY_BEYOND), id="in-beyond-moved"),
+    pytest.param(dict(dest=OTHER, team=UNLOCKED), ["getEntity", "getEntity"] + LOOKUP + ["tick end"], id="unlocked-stays"),
+    pytest.param(dict(dest=OTHER, team=LOCKED, mode="creative"), ["getEntity", "getEntity", "tick end"], id="creative-stays"),
+    pytest.param(dict(dest=OVERWORLD), ["getEntity", "tick end"], id="elsewhere-no-check"),
+    pytest.param(dict(dest=NETHER, team=LOCKED), ["getEntity", "tick end"], id="nether-no-check"),
+    pytest.param(dict(dest=OTHER, team=LOCKED, loggedOut=True),
+                 ["getEntity", "getEntity"] + LOOKUP + ["schedule 1", "tick end", "getPlayer uuid-1"], id="gone-again-no-retry"),
+    pytest.param(dict(dest=OTHER, throwAt="getEntity"),
+                 ["getEntity", "error confluence other-gate: arrival check error (destination null, moving: false): "
+                  "Error: boom at getEntity", "tick end"], id="read-error-contained"),
+])
+def test_login_listener(case, log):
+    out = fire("login", **case)
+    assert out["log"] == log
+    assert out["uncaught"] is None

@@ -49,6 +49,8 @@ H.spawn = function (n) {
   CP.list[n] = true
   return n + ' dim=' + H.dim(n) + ' mode=' + p.gameMode.getGameModeForPlayer()
 }
+// The same post again, for a stand-in already in a dimension: row P3.4's rejoin. No real client rejoin happens.
+H.login = function (n) { CP.NeoForge.EVENT_BUS.post(new CP.LoggedIn(H.p(n))); return n + ' login posted in ' + H.dim(n) }
 // A dead stand-in stays in the PlayerList but leaves the level: nothing targets it and it stops ticking, so its rows would read as
 // a Piglich that does not attack. The first run lost P1 this way, so the rows check first.
 H.alive = function (n) { var p = H.p(n); if (p.isRemoved() || p.isDeadOrDying()) throw n + ' is dead: removed=' + p.getRemovalReason() + ' health=' + p.getHealth() + ' ' + H.lastDeath; return n + ' alive, health ' + p.getHealth() }
@@ -153,7 +155,7 @@ H.hearts = function () {
 // that appears in a tick with no health drop, or two in one tick, contradicts "up to one Witch each time it takes damage".
 H.monStart = function (n, secs) {
   var t = H.piglich()
-  CP.mon = { n: n, left: secs * 20, fb: {}, fbn: 0, dmg: {}, last: H.p(n).getHealth(), pl: t === null ? 0 : t.getHealth(), witch: {}, wn: 0, drops: 0, src: {}, twoInOneTick: 0, withoutDrop: 0 }
+  CP.mon = { n: n, left: secs * 20, fb: {}, fbn: 0, dmg: {}, last: H.p(n).getHealth(), pl: t === null ? 0 : t.getHealth(), witch: {}, wn: 0, drops: 0, src: {}, psrc: {}, twoInOneTick: 0, withoutDrop: 0 }
   var es = H.around(), i
   for (i = 0; i < es.size(); i++) { if (String(es.get(i).getType()) === 'minecraft:witch') CP.mon.witch[es.get(i).getId()] = true }
   return 'monitor ' + secs + ' s'
@@ -163,7 +165,11 @@ H.monTick = function () {
   m.left--
   var p = H.p(m.n), h = p.getHealth(), k
   m.minHealth = Math.min(m.minHealth === undefined ? h : m.minHealth, h)
-  if (h < m.last - 0.001) { k = (m.last - h).toFixed(1); m.dmg[k] = (m.dmg[k] || 0) + 1 }
+  if (h < m.last - 0.001) {
+    k = (m.last - h).toFixed(1); m.dmg[k] = (m.dmg[k] || 0) + 1
+    try { k = String(p.getLastDamageSource().type().msgId()) } catch (x2) { k = 'unknown' }
+    m.psrc[k] = (m.psrc[k] || 0) + 1
+  }
   m.last = h
   var es = H.around(), i, e, id, t = null, fresh = 0
   for (i = 0; i < es.size(); i++) {
@@ -185,10 +191,11 @@ H.monTick = function () {
   if (fresh > 0 && !drop) m.withoutDrop++
 }
 H.monRead = function () {
-  var m = CP.mon, k, d = '', s = ''
+  var m = CP.mon, k, d = '', s = '', ps = ''
   for (k in m.dmg) d += k + 'x' + m.dmg[k] + ' '
+  for (k in m.psrc) ps += k + 'x' + m.psrc[k] + ' '
   for (k in m.src) s += k + 'x' + m.src[k] + ' '
-  return 'left=' + m.left + ' fireballs=' + m.fbn + ' playerDamage=[' + d.trim() + '] witches=' + m.wn + ' piglichDrops=' + m.drops + ' sources=[' + s.trim() + '] twoInOneTick=' + m.twoInOneTick + ' witchNoDrop=' + m.withoutDrop + ' piglichHealth=' + m.pl + ' playerHealth=' + m.last + ' min=' + m.minHealth
+  return 'left=' + m.left + ' fireballs=' + m.fbn + ' playerDamage=[' + d.trim() + '] playerSources=[' + ps.trim() + '] witches=' + m.wn + ' piglichDrops=' + m.drops + ' sources=[' + s.trim() + '] twoInOneTick=' + m.twoInOneTick + ' witchNoDrop=' + m.withoutDrop + ' piglichHealth=' + m.pl + ' playerHealth=' + m.last + ' min=' + m.minHealth
 }
 H.lastDeath = ''
 EntityEvents.death(event => {
