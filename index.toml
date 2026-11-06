@@ -70,7 +70,7 @@ hash = "daed85b108619d4dd9044df7c0e38984dd6aa44b53e776cb493f453399776b3f"
 
 [[files]]
 file = "config/ftbquests/quests/lang/en_us.snbt"
-hash = "7627401c4bbac39ed48f181d63883d21d5e17163549f976f5c94651bd4706f5f"
+hash = "84b5b84a13eaecc34c4887127802d466cfed0bcb4fb358383ad10d4bb6c3861d"
 
 [[files]]
 file = "config/ftbquests/quests/reward_tables/common_bag.snbt"
@@ -226,7 +226,7 @@ hash = "faf61916cd8117e807b0c8601eb2b38f1226a673da4fbbc5ee1894164ea07379"
 
 [[files]]
 file = "kubejs/server_scripts/events.js"
-hash = "ca846b14d4d474eeaaf93f77f3a46006308feca30c71506513a68f90d312bde5"
+hash = "ed9228807703f2f105f2b7a946d0811ce95bf4f4677403cd1632e0ba445b26bf"
 
 [[files]]
 file = "kubejs/server_scripts/gamerules.js"
