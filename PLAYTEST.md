@@ -1,6 +1,6 @@
 # Confluence v0.3 playtest
 
-Tiers 0–6 are playable: Overworld → Nether → Twilight Forest → Undergarden → The End → The Other → Space, plus the Eternal Starlight spur. **0.3.0 changes worldgen:** Unobtainium ore in The Other and Mercury and Glacio ore on those planets appear only in chunks generated on 0.3.0 or later; explore fresh chunks. New in 0.3: sections **I** (tier 5, The Other) and **J** (tier 6, Space and Eternal Starlight). This page is the checklist; **report in [issue #1](https://github.com/ShawnPad/confluence-modpack/issues/1)** (one comment per session: probe id, PASS or FAIL, what you did, what happened, screenshots). Anything not listed here that feels wrong is worth reporting too.
+Tiers 0–6 are playable: Overworld → Nether → Twilight Forest → Undergarden → The End → The Other → Space, plus the Eternal Starlight spur. **0.3.0 changes worldgen:** Unobtainium ore in The Other and Mercury and Glacio ore on those planets appear only in chunks generated on 0.3.0 or later; explore fresh chunks. New in 0.3: sections **I** (tier 5, The Other) and **J** (tier 6, Space and Eternal Starlight). This page is the checklist; **report in [issue #3](https://github.com/ShawnPad/confluence-modpack/issues/3)** (one comment per session: probe id, PASS or FAIL, what you did, what happened, screenshots). Anything not listed here that feels wrong is worth reporting too.
 
 ## Setup
 
