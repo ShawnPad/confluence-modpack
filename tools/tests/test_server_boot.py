@@ -392,6 +392,25 @@ def test_a_clean_stub_boot_passes_and_clears_the_trap_before_the_checks(stub_boo
     assert [line for line in trace[first:] if re.match(r"^\++ (kill|pgrep)\b", line)] == []
 
 
+def test_a_probe_session_not_cleaned_up_refuses_the_boot(stub_boot):
+    """After a crash, level-name can still be the session's: the boot would then check, and pass, the wrong world (Task 12)."""
+    (stub_boot.root / ".run/server/server.properties.session-backup").write_text("level-name=world\n")
+    code, out, pids, alive = stub_boot()
+    assert (code, pids, alive) == (2, {}, {}), out
+    assert "tools/server_session.sh stop" in out and "BOOT OK" not in out, out
+    assert "no one is playing" in out, out      # the session may be live: stop would end someone's game
+
+
+def test_check_mode_ignores_a_session_backup(fake):
+    """--check starts nothing, and its folder may be an archive: the guard is for a boot only."""
+    root, run = fake
+    (run / "server.properties.session-backup").write_text("level-name=world\n")
+    shutil.copy(SCRIPT, root / "tools" / "server_boot.sh")
+    res = subprocess.run(["bash", str(root / "tools" / "server_boot.sh"), "--check", str(run)], capture_output=True, text=True,
+                         timeout=60)
+    assert res.returncode == 0 and "BOOT OK" in res.stdout, res.stdout
+
+
 def test_a_failure_before_the_server_starts_leaves_nothing_running(stub_boot):
     code, out, pids, alive = stub_boot({"STUB_CURL_FAIL": "1"})
     assert (set(pids), alive) == ({"packwiz"}, {})

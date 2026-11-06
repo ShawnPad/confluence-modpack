@@ -185,6 +185,21 @@ def test_the_hint_puts_deleting_the_files_first_and_names_the_decision(tmp_path)
     assert "server stopped" in text and "D136" in text and "probe" in text
 
 
+@pytest.mark.parametrize("forced", [2, 0])
+def test_a_probe_sessions_backup_says_this_is_not_the_test_world(tmp_path, forced):
+    """A session that never cleaned up leaves level-name on its own world (tools/server_session.sh). The count is that world's,
+    so the way out is the session's `stop`: not deleting the probe's forceloads, and not trusting a 0."""
+    (tmp_path / "server.properties").write_text("level-name=probe_v03\n")
+    (tmp_path / "server.properties.session-backup").write_text("level-name=world\n")
+    place(tmp_path, "probe_v03/data/chunks.dat", chunks_dat(forced))
+    code, out, _ = count(tmp_path)
+    text = "\n".join(out)
+    assert code == (1 if forced else 0), text
+    assert "tools/server_session.sh stop" in text, text
+    assert "delete" not in text, text
+    assert "no one is playing" in text, text    # the session may be live: stop would end someone's game
+
+
 def test_mod_tickets_are_counted_per_dimension_and_fail(tmp_path):
     """NeoForge reinstates ModForced tickets at boot (ForcedChunkManager.reinstatePersistentChunks, called from
     MinecraftServer.prepareLevels): a chunk loader left in the world slows the stop like a forceload. Every Blocks,

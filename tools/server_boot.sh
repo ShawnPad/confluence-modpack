@@ -11,7 +11,8 @@
 # registry 55, guard OK`; v0.3 Task 11d, D137), and nothing left keeping chunks loaded in the run world
 # (tools/count_forced_chunks.py, read after the stop: `forced chunks: 0 (mod tickets: 0; ...)`; v0.3 Task 11c, D136).
 # When a check fails, the boot's logs and recipe dump are copied to .run/failed-boots/<UTC timestamp>/ and the path is
-# printed (or "NOT CREATED (<path>)" when it cannot be made).
+# printed (or "NOT CREATED (<path>)" when it cannot be made). A boot refuses to start, exit 2, while a probe session has not
+# cleaned up (.run/server/server.properties.session-backup; v0.3 Task 12).
 # tools/server_boot.sh --check [RUN_DIR] runs only those post-boot checks, on the logs a boot already left in RUN_DIR
 # (default .run/server), without booting. When the checks pass it only reads the logs; each failing --check is archived too,
 # as a new copy under this pack's .run/failed-boots/ whatever RUN_DIR is (about 11 MB each; its SOURCE file names RUN_DIR).
@@ -120,6 +121,12 @@ if [ "${1:-}" = "--check" ]; then
   post_boot_checks "$(cd "$CHECK_DIR" && pwd)"   # it exits with the checks' status
 fi
 [ $# -eq 0 ] || { echo "usage: $0 [--check [RUN_DIR]]"; exit 2; }
+# A probe session has not cleaned up (v0.3 Task 12): level-name may still be its world, and this boot would check and pass that
+# world. The backup exists exactly while tools/server_session.sh has server.properties changed. Not for --check, above.
+if [ -f "$RUN/server.properties.session-backup" ]; then
+  echo "a probe session has not cleaned up ($RUN/server.properties.session-backup exists): if no one is playing on it, run tools/server_session.sh stop first"
+  exit 2
+fi
 JAVA="${JAVA_HOME:-$(/usr/libexec/java_home -v 21)}/bin/java"
 mkdir -p "$RUN"
 cd "$ROOT"

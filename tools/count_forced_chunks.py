@@ -29,6 +29,9 @@ Exit 0 when nothing is forced. It prints
 Exit 1 when F forced chunks or M mod tickets are found (F + M > 0). It prints `forced chunks: F (mod tickets: M; ...)`, one
 line per dimension that holds any, with absolute paths, and how to clear them.
 
+While RUN_DIR/server.properties.session-backup exists, a probe session has server.properties changed (tools/server_session.sh), so
+the count is the session's world and not the test world. The output then says to run that script's `stop`, in place of the hint.
+
 Exit 2 for anything it could not read, named on stderr. That covers a file that is not gzip, a corrupt deflate body, NBT
 nested deeper than NbtAccounter's MAX_STACK_DEPTH of 512, and an unexpected shape: no `data` compound, no `Forced` long
 array, or a malformed `ModForced`. It also covers a directory it cannot list, a usage error, and no world folder at all,
@@ -48,6 +51,9 @@ import stat
 import struct
 import sys
 from pathlib import Path
+
+SESSION_NOTE = ("  server.properties.session-backup exists, so this is a probe session's world, not the test world. If no one is playing "
+                "on it, run tools/server_session.sh stop first, then read the count again.")
 
 VANILLA = {(): "minecraft:overworld", ("DIM-1",): "minecraft:the_nether", ("DIM1",): "minecraft:the_end"}
 FIXED_SIZE = {1: ">b", 2: ">h", 3: ">i", 4: ">q", 5: ">f", 6: ">d"}
@@ -267,6 +273,7 @@ def main(argv):
             print(f"forced chunks: no such directory: {run}", file=sys.stderr)
             return 2
         server_ran = kind(props) is not None
+        in_session = kind(run / "server.properties.session-backup") is not None
         world = (run / (level_name(props) if server_ran else "world")).resolve()
         world_kind = kind(world)
     except Exception as e:                    # a run folder or server.properties it cannot read is unreadable too
@@ -297,12 +304,16 @@ def main(argv):
         return 2
     forced, mod = sum(r[1] for r in rows), sum(r[2] for r in rows)
     print(f"forced chunks: {forced} (mod tickets: {mod}; {len(files)} chunks.dat files read in {world})")
+    if in_session:
+        print(SESSION_NOTE)
     if forced + mod == 0:
         return 0
     for dim, f, m, owners, path in rows:
         parts = ([f"{f} forced chunk(s)"] if f else []) + ([f"{m} mod ticket(s) from {', '.join(sorted(owners))}"] if m else [])
         if parts:
             print(f"  {dim}: {', '.join(parts)} ({path})")
+    if in_session:
+        return 1
     print("  A probe or a chunk loader left these in the world (D136). Every boot re-adds them, and a stop that arrives while")
     print("  they load waits for all of them (25-199 s, SERVER DID NOT STOP). Clear them:")
     print("    1. with the server stopped, delete the data/chunks.dat files above. Do this first: the console route needs a")
