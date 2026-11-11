@@ -226,7 +226,7 @@ hash = "aa0fe0abe1e63548b3fb691059e82813879968dbb2feb8b7cdb058e83e822b14"
 
 [[files]]
 file = "kubejs/server_scripts/dump.js"
-hash = "faf61916cd8117e807b0c8601eb2b38f1226a673da4fbbc5ee1894164ea07379"
+hash = "1f5fd12a5227396556961287c380a884ecf40cd581399c77bed49337df6db520"
 
 [[files]]
 file = "kubejs/server_scripts/events.js"
@@ -235,6 +235,10 @@ hash = "cf9807325c43fd14155ff25d92d95ad250a354fc075260242394849e503b6dab"
 [[files]]
 file = "kubejs/server_scripts/gamerules.js"
 hash = "0406810f1dd74b63473eb5bd80171a1afb6e0c935e8e12967c7b493d6f9e0dfe"
+
+[[files]]
+file = "kubejs/server_scripts/lib/dev.js"
+hash = "167d4d2f486184a0d4794db04dca6ef486877d5420f972f316bc7c427a9b9a26"
 
 [[files]]
 file = "kubejs/server_scripts/lib/gates.js"
@@ -258,7 +262,7 @@ hash = "2de905a8fd27d109802dfb1b1feb8ce92d0407de78142855bfc25dd4c6224562"
 
 [[files]]
 file = "kubejs/server_scripts/tagcheck.js"
-hash = "71beae2bffbb372b57e1dba8855f0ce8a3817e3a4252dbb856339a6dd4eed14d"
+hash = "0fad921107f5328f49a3e72e08837250539f497823609a4a056d148c0684b9b8"
 
 [[files]]
 file = "kubejs/server_scripts/tiers/tier0.js"
