@@ -34,6 +34,7 @@ TYPE = "industrialforegoing:dissolution_chamber"
 FRAMES = "industrialforegoing/recipe/dissolution_chamber/"
 SIMPLE, ADVANCED, SUPREME = (FRAMES + n + "_machine_frame.json" for n in ("simple", "advanced", "supreme"))
 UNOB_VIB = "confluence/recipe/tier5/unobtainium_vibranium_alloy_ingot.json"
+INFINITY = FRAMES + "infinity_drill.json"   # v1.0 spec §3.6 (A8): the X7.8 Infinity Drill, overridden at IF's own id
 
 # In-place overrides: our file at IF's own path and id replaces the jar's default. Path under kubejs/data -> (default inputs
 # ours drops, inputs ours adds). Every key but `input` must equal the default's. The jar is pinned; a new IF version means
@@ -49,6 +50,9 @@ OVERRIDES = {
     SUPREME: (Counter({"minecraft:netherite_ingot": 2, "#c:gems/diamond": 2, "#c:gears/diamond": 1}),
               Counter({"#c:ingots/unobtainium": 2, "powah:crystal_nitro": 1, "mekanism:ultimate_control_circuit": 1,
                        "allthemodium:unobtainium_allthemodium_alloy_ingot": 1})),
+    # X7.8 (v1.0 spec §3.6, A8): the third gold gear becomes the catalyst. The jar writes the diamond blocks as items; the dump
+    # shows #c:storage_blocks/diamond because Almost Unified rewrites them at load (tools/tests/test_tier7.py, plan Task 9).
+    INFINITY: (Counter({"#c:gears/gold": 1}), Counter({"kubejs:confluence_catalyst": 1})),
 }
 
 
@@ -84,7 +88,9 @@ def test_every_pack_dissolution_recipe_fits_codec_and_pack_conventions():
         assert isinstance(body["processingTime"], int) and body["processingTime"] > 0, path
         assert "output" in body or "outputFluid" in body, path
         if "output" in body:
-            assert "id" in body["output"] and set(body["output"]) <= {"id", "count"}, path
+            # `components` only where the default has them (the Infinity Drill's infinity_* components, v1.0 spec §3.6).
+            allowed = {"id", "count", "components"} if path == INFINITY else {"id", "count"}
+            assert "id" in body["output"] and set(body["output"]) <= allowed, path
         if "outputFluid" in body:
             assert "id" in body["outputFluid"] and "fluid" not in body["outputFluid"], path
 
