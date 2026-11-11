@@ -1,0 +1,126 @@
+{
+	default_hide_dependency_lines: false
+	default_quest_shape: "rsquare"
+	filename: "catalyst"
+	group: "0C0F1A0000000001"
+	icon: { id: "kubejs:confluence_catalyst" }
+	id: "308826EB505AAAE4"
+	images: [ ]
+	order_index: 8
+	progression_mode: "flexible"
+	quest_links: [ ]
+	quests: [
+		{
+			dependencies: ["773E794FFD41BC87", "079FCEA0591FA038", "22B1EC29A7933B31", "151B9F57CD64BD06", "1D427134CD615C79", "62AAA739637ABC07", "0331F1A221834109", "4A1695A52B788849", "532F495217179193"]
+			id: "334A934BD158BEA0"
+			rewards: [{ id: "2182B5C6E8B8BCF3" item: { count: 30, id: "kubejs:coin" } type: "item" }, { id: "729BFA0262D7CBCD" table_id: 868942939919745029L type: "loot" }]
+			tasks: [{ id: "45CC5C7928902D98" item: { count: 1, id: "kubejs:confluence_catalyst" } type: "item" }]
+			x: 0.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["334A934BD158BEA0"]
+			id: "1B1924D3E39966BE"
+			rewards: [{ id: "6224DF2DE042D814" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "3AC265EB23553375" item: { count: 1, id: "mekanism:creative_energy_cube" } type: "item" }]
+			x: 2.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["334A934BD158BEA0"]
+			id: "4034D3E77CF17AE0"
+			rewards: [{ id: "1D4791D13459F1F6" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "16AA494287AF26A1" item: { count: 1, id: "mekanism:creative_chemical_tank" } type: "item" }]
+			x: 2.0d
+			y: 2.0d
+		}
+		{
+			dependencies: ["334A934BD158BEA0"]
+			id: "4FDF52A7D5084A90"
+			rewards: [{ id: "6691A3CCF4A6A965" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "12E54942C3F5FCF2" item: { count: 1, id: "ae2:creative_energy_cell" } type: "item" }]
+			x: 2.0d
+			y: 4.0d
+		}
+		{
+			dependencies: ["334A934BD158BEA0"]
+			id: "1AD0AE34EF69BB66"
+			rewards: [{ id: "7232B93D8FF77058" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "3494C2CF367F14EF" item: { count: 1, id: "powah:energy_cell_creative" } type: "item" }]
+			x: 2.0d
+			y: 6.0d
+		}
+		{
+			dependencies: ["334A934BD158BEA0"]
+			id: "20186F210B684D8C"
+			rewards: [{ id: "086082C74D0BFE65" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "612B70DFFE5D5B83" item: { count: 1, id: "ars_nouveau:creative_source_jar" } type: "item" }]
+			x: 2.0d
+			y: 8.0d
+		}
+		{
+			dependencies: ["334A934BD158BEA0"]
+			id: "3AEF575AF25BE22B"
+			rewards: [{ id: "5670FAAEA54ECEFC" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "3627BE47FB5A849F" item: { count: 1, id: "mysticalagradditions:creative_essence" } type: "item" }]
+			x: 2.0d
+			y: 10.0d
+		}
+		{
+			dependencies: ["334A934BD158BEA0"]
+			id: "6A511A279F334AF8"
+			rewards: [{ id: "42560083A834B85D" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "7A78FF1104F39C44" item: { count: 1, id: "functionalstorage:creative_vending_upgrade" } type: "item" }]
+			x: 2.0d
+			y: 12.0d
+		}
+		{
+			dependencies: ["334A934BD158BEA0"]
+			id: "36646DA6332EB8F6"
+			rewards: [{ id: "0EDF2348CD1A2189" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "44C1D38369D65D43" item: { count: 1, id: "irons_spellbooks:netherite_spell_book" } type: "item" }]
+			x: 2.0d
+			y: 14.0d
+		}
+		{
+			dependencies: ["334A934BD158BEA0"]
+			id: "1F355095446D8F3F"
+			rewards: [{ id: "2CBE8C44A7BDF95F" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "6A894080655813DD" item: { count: 1, id: "toms_storage:adv_wireless_terminal" } type: "item" }]
+			x: 2.0d
+			y: 16.0d
+		}
+		{
+			dependencies: ["334A934BD158BEA0"]
+			id: "6E224F660BD33906"
+			rewards: [{ id: "2AE625B56A711E5A" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "40E4F386E960F175" item: { count: 1, id: "ad_astra:jet_suit" } type: "item" }]
+			x: 2.0d
+			y: 18.0d
+		}
+		{
+			dependencies: ["334A934BD158BEA0"]
+			id: "2A5C93F5FA5F730E"
+			rewards: [{ id: "72F375E5096D0A35" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "680BAD4E5BE121D9" item: { count: 1, id: "industrialforegoing:infinity_drill" } type: "item" }]
+			x: 2.0d
+			y: 20.0d
+		}
+		{
+			dependencies: ["334A934BD158BEA0"]
+			id: "431D59295EFA12B9"
+			rewards: [{ id: "072AF0470200246C" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "321F1275ED48C197" item: { count: 1, id: "productivelib:upgrade_productivity_4" } type: "item" }]
+			x: 2.0d
+			y: 22.0d
+		}
+		{
+			dependencies: ["334A934BD158BEA0"]
+			id: "601AB6763EF33423"
+			rewards: [{ id: "4A70EA6C95AD9521" item: { count: 10, id: "kubejs:coin" } type: "item" }]
+			tasks: [{ id: "14C339901C70700D" item: { count: 1, id: "twilightforest:triple_bow" } type: "item" }]
+			x: 2.0d
+			y: 24.0d
+		}
+	]
+}

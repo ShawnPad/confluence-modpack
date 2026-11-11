@@ -4,6 +4,7 @@
 	chapter.1FAA98FF40CC82E1.title: "Overworld"
 	chapter.22273CFA12CCC50B.title: "Nether"
 	chapter.2C3B87E1FC607085.title: "The Undergarden"
+	chapter.308826EB505AAAE4.title: "Catalyst"
 	chapter.411204531F46CE97.title: "The Aether"
 	chapter.4245286CDF0A5D04.title: "Twilight Forest"
 	chapter.43F8183D98ACEECD.title: "Cataclysm"
@@ -68,6 +69,10 @@
 	quest.1890D81D0709C89F.title: "Keys and the catalyst"
 	quest.18E57222FAD0E4FC.quest_desc: ["Soul Dew has no recipe. The Tangled drop one to three each and the Lunar Monstrosity three or four, and both live in the Cursed Garden; hold a vine in your other hand and a Seeking Eye leads there. Every Unrealium ingot takes one."]
 	quest.18E57222FAD0E4FC.title: "Soul Dew"
+	quest.1AD0AE34EF69BB66.quest_desc: ["Optional. An Energy Cell (Nitro) and a Confluence Catalyst make Powah's creative Energy Cell."]
+	quest.1AD0AE34EF69BB66.title: "Energy Cell (Creative)"
+	quest.1B1924D3E39966BE.quest_desc: ["Optional. An Ultimate Energy Cube and a Confluence Catalyst make a Creative Energy Cube. Empty the Ultimate cube first: the energy stored in it is not kept."]
+	quest.1B1924D3E39966BE.title: "Creative Energy Cube"
 	quest.1C96EE01961369A0.quest_desc: ["The first Unobtainium Smithing Template comes only from the trial spawner in the library of the Ancient Warped Forest's dungeons. Not every dungeon has a library, so keep looking. The spawner calls evokers and can pay out again every 30 minutes. At a crafting table, one template, seven Vibranium ingots and an end stone make two. At a smithing table, a template, a piece of Vibranium gear and an Unobtainium ingot make its Unobtainium version; the mace takes a Block of Unobtainium instead."]
 	quest.1C96EE01961369A0.title: "Unobtainium Template"
 	quest.1D0BCB2E7D3ED925.quest_desc: ["In the Dissolution Chamber with pink slime: two plastic, a Simple frame, two Vibranium ingots, a Lightning Upgrade Orb, a diamond gear and a gold ingot - the netherite scrap and one of the two golds are out. The key to The Other and the Supreme frame build on it."]
@@ -78,8 +83,12 @@
 	quest.1DE1E4C4EC7D8079.title: "Key to The Other"
 	quest.1E3F5FFA2B965670.quest_desc: ["Hand in 384 coins for a Legendary bag. It opens once you have set foot on Mercury, and it can be traded again and again."]
 	quest.1E3F5FFA2B965670.title: "Legendary Bag"
+	quest.1F355095446D8F3F.quest_desc: ["Optional. The Advanced Wireless Terminal is now crafted, not smithed: a Wireless Terminal, a netherite ingot, a Netherite Upgrade smithing template and a Confluence Catalyst."]
+	quest.1F355095446D8F3F.title: "Advanced Wireless Terminal"
 	quest.1FEF5F2F48909FF0.quest_desc: ["Craft the catalyst from a knightmetal ingot, an Allthemodium ingot, an Industrial Foregoing Simple Machine Frame and an Iron's Spells Upgrade Orb. The next quest shows the frame. Vibranium and the forgotten metal wait below - and the Rare bag opens in the Coin Shop."]
 	quest.1FEF5F2F48909FF0.title: "Undergarden Catalyst"
+	quest.20186F210B684D8C.quest_desc: ["Optional. A Source Jar and a Confluence Catalyst make a Creative Source Jar."]
+	quest.20186F210B684D8C.title: "Creative Source Jar"
 	quest.2053A3F99454EF66.quest_desc: ["Arcane essence has no recipe: it drops from Iron's Spells casters - necromancers roam every Overworld biome, while cultists, priests and apothecarists drop more - and it turns up in many vanilla chests. It is the second magic root and nothing has to be unlocked first, so start collecting the moment you spawn."]
 	quest.2053A3F99454EF66.title: "Arcane Essence"
 	quest.20BF64F7A5DAA021.quest_desc: ["Venus is 464 degrees: wear a Netherite Space Suit, or any space suit with Fire Resistance, and keep oxygen in it. Acid rain falls on Venus whenever it rains in the Overworld and hurts you under open sky; no suit or potion stops it, only a roof, a rocket or a lander over your head. Mine calorite here for the tier 4 rocket."]
@@ -96,6 +105,8 @@
 	quest.231729B4EB194AF6.title: "Steel Engine"
 	quest.28351C2AA5C24437.quest_desc: ["The ME Terminal is built from an Illuminated Panel, a formation core, an annihilation core, a Supreme Machine Frame, two logic processors and a QIO Dashboard. The ME Drive takes a QIO Drive Array, and the import and export buses take a QIO Importer and Exporter: Applied Energistics grows out of the Mekanism storage you already run."]
 	quest.28351C2AA5C24437.title: "ME Terminal"
+	quest.2A5C93F5FA5F730E.quest_desc: ["Optional. In the Dissolution Chamber the Infinity Drill takes a Confluence Catalyst in place of one gold gear, with Industrial Foregoing's 2000 mB of pink slime."]
+	quest.2A5C93F5FA5F730E.title: "Infinity Drill"
 	quest.2A9F87E95A613EC9.quest_desc: ["The dashboard is built from Tom's crafting terminal, a teleportation core, three refined obsidian ingots and a Vibranium ingot; the drive array swaps its bottom ender pearl for Vibranium, and the importer and exporter each swap one of their two lead ingots. This is the top of the storage line before Applied Energistics."]
 	quest.2A9F87E95A613EC9.title: "QIO Dashboard"
 	quest.2C69CB63F838AE13.quest_desc: ["Iron's Spells' anvil now takes an Industrial Foregoing Simple Machine Frame in place of one polished deepslate; everything else is Iron's default. Build it once you have a spare frame - it is the magic side's payoff for the tech chain you just finished."]
@@ -114,14 +125,20 @@
 	quest.315020D6830FCDD8.title: "Dissolution Chamber"
 	quest.32436DD018617D3A.quest_desc: ["Good to know: a bound Drygmy still farms drops from ordinary mobs, but the Forgotten Guardian, the Otherside's Sludges and Stalker, Cataclysm's Ender Guardian and Netherite Monstrosity, the Bee Queen, the Piglich, the Dead King, the dragon, the Wither and the Warden are all blacklisted from it, and so is the Echo of Tyros, First Flamebearer. The mobs this tree asks you to fight stay fights."]
 	quest.32436DD018617D3A.title: "No Henge Boss Loot"
+	quest.334A934BD158BEA0.quest_desc: ["The Confluence Catalyst is made at the Enchanting Apparatus with no Source. Put the Astral Focus on the Apparatus and seven Arcane Pedestals around it holding an Etrium Ingot, the three Allthemodium alloy ingots, a dragon egg, a Wireless Receiver and a Crafting Unit. Each creative item here, and each of the side quests beside it, uses up one catalyst. The egg can be grown again with Mystical Agradditions' dragon egg crop."]
+	quest.334A934BD158BEA0.title: "Confluence Catalyst"
 	quest.34C4DC4DF5B82831.quest_desc: ["Allthemodium spawns only in the Twilight Forest here, in the floors of caves below y 10, so look down rather than up. Bring a netherite-tier pickaxe or it will not break. The raw ore is what the smithing template and the Teleport Pad wait on. Raw Allthemodium Ore will not cook in a furnace or an Energized Smelter. Use a blast furnace, or turn it into dust in an Enrichment Chamber first, because the dust cooks in either."]
 	quest.34C4DC4DF5B82831.title: "Allthemodium Ore"
 	quest.34E69FBC45B51CB9.quest_desc: ["The Stalker drops a Soul Crystal. With an elytra, four sculk bone and two soul dust it makes the Soul Elytra, which boosts without rockets. A prize, not a gate."]
 	quest.34E69FBC45B51CB9.title: "Soul Crystal"
+	quest.36646DA6332EB8F6.quest_desc: ["Optional. The Ancient Codex now takes a Confluence Catalyst in place of one Arcane Cloth; the rest of the recipe is Iron's own."]
+	quest.36646DA6332EB8F6.title: "Ancient Codex"
 	quest.36A61935093AC8EB.quest_desc: ["End cities hold the elytra. Jetpacks, spells, wings and mounts can fly before this, but the space suit is built from an elytra, so keep this one."]
 	quest.36A61935093AC8EB.title: "Elytra"
 	quest.37C946B9E11F98EC.quest_desc: ["Hold a Wither in a Stasis Chamber and aim a Fluid Laser Drill with a purple lens at it for Ether Gas; the Supreme frame drinks it later. Industrial Foregoing's own recipes, unchanged."]
 	quest.37C946B9E11F98EC.title: "Stasis Chamber"
+	quest.3AEF575AF25BE22B.quest_desc: ["Optional. Awakened Supremium Essence and a Confluence Catalyst make Creative Essence."]
+	quest.3AEF575AF25BE22B.title: "Creative Essence"
 	quest.3C45360E65089FB8.quest_desc: ["At a smithing table, combine the diamond drawer upgrade with netherite. The storage terminal later wants one of these sitting on a drawer controller, so keep the pair together."]
 	quest.3C45360E65089FB8.title: "Netherite Drawer Upgrade"
 	quest.3C71B7C91C4975BE.quest_desc: ["Only the smallest Sludges drop Resonarium, and they live in the Blooming Caverns biome. Each Eye of Ender takes one, so hunt the little ones."]
@@ -134,6 +151,8 @@
 	quest.3E4C276445489292.title: "Glacio"
 	quest.3F18C6FDA435A668.quest_desc: ["Every rocket is built at the Nasa Workbench. It now takes an ultimate control circuit, an Unobtainium - Allthemodium alloy ingot, a Block of Unobtainium and an Unrealium ingot from Eternal Starlight, with three steel plates, a crafting table and a steel block."]
 	quest.3F18C6FDA435A668.title: "Nasa Workbench"
+	quest.4034D3E77CF17AE0.quest_desc: ["Optional. An Ultimate Chemical Tank and a Confluence Catalyst make a Creative Chemical Tank. The chemical stored in the Ultimate tank is not kept."]
+	quest.4034D3E77CF17AE0.title: "Creative Chemical Tank"
 	quest.40CBD13E78A1F42C.quest_desc: ["Craft the pad from four Allthemodium nuggets and an ender pearl; the recipe is unchanged. It opens the Mining Dimension, the only place Powah uraninite spawns in this pack, and uraninite is what the Spirited Crystal needs."]
 	quest.40CBD13E78A1F42C.title: "Teleport Pad"
 	quest.412E53F722A070FB.quest_desc: ["Ancient debris is the only source of netherite, so go digging once the Nether is open. A netherite ingot goes into the Twilight key, netherite-tier tools are what break Allthemodium later, and the drawer upgrade wants some too."]
@@ -146,6 +165,8 @@
 	quest.426E087DF5AC9F9E.title: "Netherite Monstrosity"
 	quest.42D307D4117DBAA3.quest_desc: ["Craft Functional Storage's drawer controller; its recipe is unchanged. It is the bottom rung of the storage ladder - it takes the netherite drawer upgrade next, and both are eaten by the storage terminal later."]
 	quest.42D307D4117DBAA3.title: "Drawer Controller"
+	quest.431D59295EFA12B9.quest_desc: ["Optional. Productive Bees' top productivity upgrade takes a Confluence Catalyst in place of the bottom Heart of the Sea."]
+	quest.431D59295EFA12B9.title: "Upgrade: Productivity Omega"
 	quest.46F3EB94FA4C484A.quest_desc: ["Infuse a basic control circuit first, then upgrade that into an advanced one. The advanced circuit goes into the Twilight key and a basic one is wanted by the Dissolution Chamber, so make spares."]
 	quest.46F3EB94FA4C484A.title: "Control Circuits"
 	quest.4A1695A52B788849.quest_desc: ["The Crafting Unit takes four fluix crystals, a calculation processor, an ostrum ingot, a Supreme Machine Frame, a fluix ME glass cable and a logic processor, and the ME Pattern Provider takes an ostrum ingot in its empty centre. The Molecular Assembler and the ME Pattern Encoding Terminal are unchanged, so a single assembler already works in tier 5; network autocrafting waits for Mars."]
@@ -164,6 +185,8 @@
 	quest.4F30B1642905E0F4.title: "Divine Soulshard"
 	quest.4FD848E606994BB4.quest_desc: ["Seven lightning runes, an upgrade orb and an Allthemodium ingot. The Advanced Machine Frame eats one."]
 	quest.4FD848E606994BB4.title: "Lightning Upgrade Orb"
+	quest.4FDF52A7D5084A90.quest_desc: ["Optional. A Dense Energy Cell and a Confluence Catalyst make AE2's Creative Energy Cell."]
+	quest.4FDF52A7D5084A90.title: "Creative Energy Cell"
 	quest.507D016CAAF0609B.quest_desc: ["Mekanism's Metallurgic Infuser now needs a source gem. Build it and it makes your steel and the control circuits the next quest asks for."]
 	quest.507D016CAAF0609B.title: "Metallurgic Infuser"
 	quest.51B7CA5D3BD490D1.quest_desc: ["Pick up the Monstrous Horn the Netherite Monstrosity drops. The Twilight key recipe needs one, so this boss sits on the critical path and is not a side trip."]
@@ -192,6 +215,8 @@
 	quest.5D93952B29860654.title: "The Piglich"
 	quest.5E1B6F2BBDE03DD1.quest_desc: ["Get any first generator running: Industrial Foregoing's Pitiful Generator, Mekanism's Heat Generator or a Powah furnator all count, and all three keep their default recipes. Power is the root of both tech branches - the Heat Generator and the Energizing Orb come straight off it."]
 	quest.5E1B6F2BBDE03DD1.title: "First Power"
+	quest.601AB6763EF33423.quest_desc: ["Optional. An Ice Bow, two bows, an Aurora Block and a Confluence Catalyst make a Tri-Bow. The Snow Queen still drops it too."]
+	quest.601AB6763EF33423.title: "Tri-Bow"
 	quest.6091B4F5B7C86DA3.quest_desc: ["Good to know: this pack locks things in exactly three ways - a rewritten crafting recipe, a dimension you cannot enter yet, and a script check. Ticking a quest never unlocks anything by itself; the quests only mirror those locks so you can see every one coming. Read on for the ladder they guard."]
 	quest.6091B4F5B7C86DA3.title: "How gates work"
 	quest.623AA49C6273667B.quest_desc: ["The portal is the reinforced-deepslate frame already standing at the centre of every Ancient City; the block cannot be mined, crafted or replaced, so never break it. Clear its inside to bare air, hold exactly one Heart of the Deep (every Warden death drops one, and lighting eats the whole stack) and right-click a frame face from inside. Nothing happens on failure, so check for leftover blocks. The way back builds itself. Resonarium is here and nowhere else."]
@@ -206,8 +231,12 @@
 	quest.6885D6C2C3465F52.title: "End Focus"
 	quest.68B9330B6BC20CF4.quest_desc: ["Good to know: the Twilight Forest Uncrafting Table is removed, because it could reverse the keys and cross-mod recipes this pack is built on. Plan your crafts - there is no taking them apart again."]
 	quest.68B9330B6BC20CF4.title: "No Uncrafting"
+	quest.6A511A279F334AF8.quest_desc: ["Optional. A Netherite Upgrade and a Confluence Catalyst make a Creative Vending Upgrade for your drawers."]
+	quest.6A511A279F334AF8.title: "Creative Vending Upgrade"
 	quest.6D26D80AC44CFFA7.quest_desc: ["The Inscriber now takes a Supreme Machine Frame, four HDPE sheets, two pistons and two copper ingots, and the Charger takes five knightmetal ingots and two copper. Every processor Applied Energistics needs starts here."]
 	quest.6D26D80AC44CFFA7.title: "Inscriber"
+	quest.6E224F660BD33906.quest_desc: ["Optional. Only the Jet Suit chestplate needs a Confluence Catalyst, in the top middle; the helmet, pants and boots are Ad Astra's own recipes."]
+	quest.6E224F660BD33906.title: "Jet Suit"
 	quest.6F0DAEEA9F65E32D.quest_desc: ["Craft a Sophisticated Storage chest with its normal recipe. One of these is an input of the storage terminal further up, so keep a spare aside."]
 	quest.6F0DAEEA9F65E32D.title: "Sophisticated Chest"
 	quest.6F8979047D2C3098.quest_desc: ["Four elite circuits, two atomic alloys, two Unobtainium ingots and a Wilden Tribute make four ultimate control circuits; Mekanism's own two recipes are gone. Ultimate factories, the ultimate induction provider, the MekaSuit, the Meka-Tool, fusion, the SPS and the Digital Miner all wait for it, and so do the Supreme frame, the Nasa Workbench, the Fuel Refinery and the Steel Engine."]

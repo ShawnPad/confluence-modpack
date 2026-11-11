@@ -1,0 +1,124 @@
+chapter: catalyst
+title: Catalyst
+group: 0C0F1A0000000001
+order: 8
+icon: kubejs:confluence_catalyst
+# Tier 7, the catalyst (v1.0 spec docs/superpowers/specs/2026-11-11-v1.0-catalyst-tier-design.md, "spec" below, §4.1; A11, A12;
+# D143, D144). Deps mirror the tree's "- gate:" refs as tools/check_quests.py reads them; CAT.* helper quests are pinned in
+# check_quests.HELPER_DEPS. Nothing depends on a side quest, so each is optional without FTB's own flag (A11).
+# Names are lang strings (D98) from the jars in pack/.run/server/mods (assets/<ns>/lang/en_us.json) and
+# pack/kubejs/startup_scripts/items.js (Confluence Catalyst). CT = research/phase7-v1.0-catalyst-tier.md.
+quests:
+  - node: X7.1
+    title: Confluence Catalyst
+    # kubejs:confluence_catalyst, items.js displayName "Confluence Catalyst". Recipe confluence:tier7/confluence_catalyst
+    # (tiers/tier7.js, spec §3.1, A2): Astral Focus reagent; Etrium ingot, the three Allthemodium alloy ingots, dragon egg, AE2
+    # Wireless Receiver, AE2 Crafting Unit on seven pedestals; sourceCost 0. Deps: the tree's X7.1 gate line
+    # (progression/combined-tree.md, "Top — the catalyst"). The egg is renewable: Mystical Agradditions' dragon egg crop (D88).
+    # Legendary bag: D144.
+    task: item:kubejs:confluence_catalyst
+    deps: [D6.9, X5.1, M5.1, X5.2, D4.2, M6.1, S6.1, S6.2, M1.1]
+    coins: 30
+    bag: legendary_bag
+    desc: "The Confluence Catalyst is made at the Enchanting Apparatus with no Source. Put the Astral Focus on the Apparatus and seven Arcane Pedestals around it holding an Etrium Ingot, the three Allthemodium alloy ingots, a dragon egg, a Wireless Receiver and a Crafting Unit. Each creative item here, and each of the side quests beside it, uses up one catalyst. The egg can be grown again with Mystical Agradditions' dragon egg crop."
+  - node: X7.2
+    title: Creative Energy Cube
+    # mekanism:creative_energy_cube "Creative Energy Cube": shapeless ultimate_energy_cube "Ultimate Energy Cube" + catalyst
+    # (spec §3.2; A3: the cube's stored energy is not kept).
+    task: item:mekanism:creative_energy_cube
+    deps: [X7.1]
+    coins: 10
+    desc: "Optional. An Ultimate Energy Cube and a Confluence Catalyst make a Creative Energy Cube. Empty the Ultimate cube first: the energy stored in it is not kept."
+  - node: CAT.1
+    title: Creative Chemical Tank
+    # mekanism:creative_chemical_tank "Creative Chemical Tank": ultimate_chemical_tank "Ultimate Chemical Tank" + catalyst
+    # (spec §3.2, A3). Whether it needs a chemical set before it supplies anything is [UNVERIFIED] (spec §10 item 13; K4).
+    task: item:mekanism:creative_chemical_tank
+    deps: [X7.1]
+    coins: 10
+    desc: "Optional. An Ultimate Chemical Tank and a Confluence Catalyst make a Creative Chemical Tank. The chemical stored in the Ultimate tank is not kept."
+  - node: X7.3
+    title: Creative Energy Cell
+    # ae2:creative_energy_cell "Creative Energy Cell": ae2:dense_energy_cell "Dense Energy Cell" + catalyst (spec §3.2).
+    task: item:ae2:creative_energy_cell
+    deps: [X7.1]
+    coins: 10
+    desc: "Optional. A Dense Energy Cell and a Confluence Catalyst make AE2's Creative Energy Cell."
+  - node: X7.4
+    title: Energy Cell (Creative)
+    # powah:energy_cell_creative "Energy Cell (Creative)": powah:energy_cell_nitro "Energy Cell (Nitro)" + catalyst (spec §3.2).
+    task: item:powah:energy_cell_creative
+    deps: [X7.1]
+    coins: 10
+    desc: "Optional. An Energy Cell (Nitro) and a Confluence Catalyst make Powah's creative Energy Cell."
+  - node: X7.5
+    title: Creative Source Jar
+    # ars_nouveau:creative_source_jar "Creative Source Jar": ars_nouveau:source_jar "Source Jar" + catalyst (spec §3.2).
+    task: item:ars_nouveau:creative_source_jar
+    deps: [X7.1]
+    coins: 10
+    desc: "Optional. A Source Jar and a Confluence Catalyst make a Creative Source Jar."
+  - node: X7.6
+    title: Creative Essence
+    # mysticalagradditions:creative_essence "Creative Essence": mysticalagriculture:awakened_supremium_essence "Awakened
+    # Supremium Essence" + catalyst (spec §3.2; D144).
+    task: item:mysticalagradditions:creative_essence
+    deps: [X7.1]
+    coins: 10
+    desc: "Optional. Awakened Supremium Essence and a Confluence Catalyst make Creative Essence."
+  - node: X7.7
+    title: Creative Vending Upgrade
+    # functionalstorage:creative_vending_upgrade "Creative Vending Upgrade": functionalstorage:netherite_upgrade "Netherite
+    # Upgrade" + catalyst (spec §3.2).
+    task: item:functionalstorage:creative_vending_upgrade
+    deps: [X7.1]
+    coins: 10
+    desc: "Optional. A Netherite Upgrade and a Confluence Catalyst make a Creative Vending Upgrade for your drawers."
+  - node: X7.8
+    title: Ancient Codex
+    # irons_spellbooks:netherite_spell_book "Ancient Codex": KNT / BRB / TLT, the catalyst in place of the top-left Arcane
+    # Cloth (item.irons_spellbooks.magic_cloth = "Arcane Cloth") (spec §3.3, A5, A12: the X7.8 node quest is the codex, the tree's first-named item).
+    task: item:irons_spellbooks:netherite_spell_book
+    deps: [X7.1]
+    coins: 10
+    desc: "Optional. The Ancient Codex now takes a Confluence Catalyst in place of one Arcane Cloth; the rest of the recipe is Iron's own."
+  - node: CAT.2
+    title: Advanced Wireless Terminal
+    # toms_storage:adv_wireless_terminal "Advanced Wireless Terminal": shapeless Wireless Terminal + netherite ingot +
+    # Netherite Upgrade smithing template + catalyst, in place of the smithing table (spec §3.4, A6).
+    task: item:toms_storage:adv_wireless_terminal
+    deps: [X7.1]
+    coins: 10
+    desc: "Optional. The Advanced Wireless Terminal is now crafted, not smithed: a Wireless Terminal, a netherite ingot, a Netherite Upgrade smithing template and a Confluence Catalyst."
+  - node: CAT.3
+    title: Jet Suit
+    # ad_astra:jet_suit "Jet Suit": #K# / TNT / CEC, the catalyst in the empty top-middle (spec §3.5, A7); helmet, pants and
+    # boots stay default (D144). N is the Netherite Space Suit, which takes an elytra (spec §7.1).
+    task: item:ad_astra:jet_suit
+    deps: [X7.1]
+    coins: 10
+    desc: "Optional. Only the Jet Suit chestplate needs a Confluence Catalyst, in the top middle; the helmet, pants and boots are Ad Astra's own recipes."
+  - node: CAT.4
+    title: Infinity Drill
+    # industrialforegoing:infinity_drill "Infinity Drill": Dissolution Chamber, one of the three gold gears is a catalyst
+    # (spec §3.6, A8). Item task on an item with components: spec §10 item 9, checked by K5.
+    task: item:industrialforegoing:infinity_drill
+    deps: [X7.1]
+    coins: 10
+    desc: "Optional. In the Dissolution Chamber the Infinity Drill takes a Confluence Catalyst in place of one gold gear, with Industrial Foregoing's 2000 mB of pink slime."
+  - node: CAT.5
+    title: "Upgrade: Productivity Omega"
+    # productivelib:upgrade_productivity_4 "Upgrade: Productivity Omega": CEC / EBE / CKC, the catalyst in place of the
+    # bottom-middle Heart of the Sea (spec §3.7, A9). Upgrade III is "Upgrade: Productivity Gamma".
+    task: item:productivelib:upgrade_productivity_4
+    deps: [X7.1]
+    coins: 10
+    desc: "Optional. Productive Bees' top productivity upgrade takes a Confluence Catalyst in place of the bottom Heart of the Sea."
+  - node: CAT.6
+    title: Tri-Bow
+    # twilightforest:triple_bow "Tri-Bow": shapeless Ice Bow + 2 bows + Aurora Block + catalyst (spec §3.8, A10). The Snow
+    # Queen's snow_queen_bows pool still drops it (D144).
+    task: item:twilightforest:triple_bow
+    deps: [X7.1]
+    coins: 10
+    desc: "Optional. An Ice Bow, two bows, an Aurora Block and a Confluence Catalyst make a Tri-Bow. The Snow Queen still drops it too."

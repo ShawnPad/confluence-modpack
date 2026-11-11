@@ -26,12 +26,16 @@ NO_QUEST = {"X0.3", "X3.3"}          # audit-only nodes with nothing to do (spec
 # chapter's boss-kill helper CATA.1 (D66 (1)-(2); D135: "The one older exception, v0.1's [D1.3] depending on CATA.1,
 # stays as shipped"). Every other tree-node quest mirrors its `gate:` line exactly (D135).
 TREE_DEP_EXCEPTIONS = {"D1.3": ["CATA.1"]}
-# Helper quests (not tree nodes) whose dependencies are pinned: the nine D135 logs for the v0.3 chapters (design/decisions.md
-# D135, "Helper-quest dependencies"). The older helpers (INTRO.1-3, CATA.1, AETHER.1, UG.1, END.1, OTHER.1-2, BZ.1-2) and the
+# Helper quests (not tree nodes) whose dependencies are pinned: the nine D135 logs for the v0.3 chapters and the six v1.0
+# Catalyst helpers (design/decisions.md D135, "Helper-quest dependencies"). The older helpers (INTRO.1-3, CATA.1, AETHER.1, UG.1, END.1, OTHER.1-2, BZ.1-2) and the
 # shop purchases (SHOP.1-5; tools/tests/test_chapters_v03.py pins SHOP.4-5) are not pinned here. HELPER_DEPS is pinned by
 # tools/tests/test_check_quests.py D135_HELPERS; a change edits the YAML, both dicts, and logs a decision (D135).
 HELPER_DEPS = {"OTHER5.1": ["D5.1"], "OTHER5.2": ["OTHER5.1"], "OTHER5.3": ["OTHER5.1"], "OTHER5.4": ["M3.1"],
-               "SPACE.1": ["T6.1"], "SPACE.2": ["M0.2"], "ES.1": [], "ES.2": ["D6.10"], "ES.3": ["D6.10"]}
+               "SPACE.1": ["T6.1"], "SPACE.2": ["M0.2"], "ES.1": [], "ES.2": ["D6.10"], "ES.3": ["D6.10"],
+               # v1.0 Catalyst chapter (spec §4.1-4.2, A11, A12; decisions.md, plan Task 10): the side quests that are not tree
+               # nodes, each on the catalyst.
+               "CAT.1": ["X7.1"], "CAT.2": ["X7.1"], "CAT.3": ["X7.1"], "CAT.4": ["X7.1"], "CAT.5": ["X7.1"],
+               "CAT.6": ["X7.1"]}
 # The recipe dump's verdicts on bag items (round 3, I3), written by tools/tests/test_bag_collisions.py from the last boot's
 # .run/server/kubejs/exported/{recipes,item_tag_members}.json and tools/gates.yaml, which test_bag_collisions.py also checks
 # it against whenever a dump exists. main() reads it, so a clone with no dump fails a gated output in a bag too.
@@ -86,6 +90,23 @@ FORBIDDEN_IDS = [
     r"mysticalagriculture:knightmetal_(essence|seeds)",
     r"mysticalagriculture:dragon_egg_(essence|seeds)",
     r"mysticalagradditions:dragon_egg_chunk",
+    # v1.0 (spec §5, A14; CT §2, §5): every creative item family. Lang keys from each jar's assets/<ns>/lang/en_us.json:
+    # block.mekanism.creative_{energy_cube,chemical_tank,fluid_tank,bin}; block.ae2.creative_energy_cell,
+    # item.ae2.creative_storage_cell;
+    # block.powah.energy_cell_creative; block.ars_nouveau.creative_source_jar, item.ars_nouveau.creative_spell_book;
+    # item.mysticalagradditions.creative_essence; item.functionalstorage.{creative_vending_upgrade,max_storage_upgrade};
+    # mysticalagriculture creative_soulium_dagger (item model + tooltip.mysticalagriculture.creative_soulium_dagger; no item.
+    # lang key); item.sophisticated{backpacks,storage}.{,survival_}infinity_upgrade;
+    # item.twilightforest.glass_sword ("Creative Mode-only" in its tooltip lang, spec §10 item 10).
+    r"mekanism:creative_(energy_cube|chemical_tank|fluid_tank|bin)",
+    r"ae2:creative_(energy_cell|storage_cell)",
+    r"powah:energy_cell_creative",
+    r"ars_nouveau:creative_(source_jar|spell_book)",
+    r"mysticalagradditions:creative_essence",
+    r"functionalstorage:(creative_vending_upgrade|max_storage_upgrade)",
+    r"mysticalagriculture:creative_soulium_dagger",
+    r"sophisticated(backpacks|storage):(survival_)?infinity_upgrade",
+    r"twilightforest:glass_sword",
 ]
 FORBIDDEN = re.compile('"(' + "|".join(FORBIDDEN_IDS) + ')"')
 # Spec §10's excluded set (D126): the gate inputs of §4.1, §5 and §6, which no bag may hold, resolved to ids (D133). One
@@ -152,6 +173,13 @@ EXCLUDED_IDS = [
     r"ae2:fluix_pearl",                           # "fluix pearls" (item.ae2.fluix_pearl; S6.1)
     r"ae2:quartz_fiber",                          # "quartz fiber" (item.ae2.quartz_fiber)
     r"eternal_starlight:unrealium_ingot",         # "Unrealium" [#c:ingots/unrealium]
+    # v1.0 X7.8 outputs (spec §3.3-3.8, §5, A14): each takes a catalyst.
+    r"irons_spellbooks:netherite_spell_book",     # "Ancient Codex" (item.irons_spellbooks.netherite_spell_book)
+    r"toms_storage:adv_wireless_terminal",        # "Advanced Wireless Terminal" (item.toms_storage.adv_wireless_terminal)
+    r"ad_astra:jet_suit",                         # "Jet Suit" (item.ad_astra.jet_suit)
+    r"industrialforegoing:infinity_drill",        # "Infinity Drill" (item.industrialforegoing.infinity_drill)
+    r"productivelib:upgrade_productivity_4",      # "Upgrade: Productivity Omega" (item.productivelib.upgrade_productivity_4)
+    r"twilightforest:triple_bow",                 # "Tri-Bow" (item.twilightforest.triple_bow)
 ]
 EXCLUDED = re.compile('"(' + "|".join(EXCLUDED_IDS) + ')"')
 # Both lists as one (round 3, M3): CHAPTER_BANNED below reads it quoted, and BANNED matches a bare id (fullmatch), as

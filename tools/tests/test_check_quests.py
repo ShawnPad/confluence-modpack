@@ -690,9 +690,9 @@ def test_the_real_chapters_and_data_pass():
 # tree ref sits in its quest's block; the Task 11 gates lens showed an extra dep (probe A), a dropped helper dep (B) and a
 # dangling dep id (E) all passed it. Now a tree-node quest's dependencies must equal its gate refs that have a quest (plus
 # check_quests.TREE_DEP_EXCEPTIONS), a pinned helper's must equal check_quests.HELPER_DEPS, and every dependency id must
-# name a quest. The probes edit a copy of the shipped chapters and run main() over tiers 0-6. Each first reads the copy's
+# name a quest. The probes edit a copy of the shipped chapters and run main() over tiers 0-7. Each first reads the copy's
 # clean summary line and expects it back with only the dep count changed: node counts are not pinned here (see CLEAN).
-ALL = "0,1,2,3,4,5,6"
+ALL = "0,1,2,3,4,5,6,7"
 
 
 def _main_tiers(monkeypatch, capsys, root, tiers):
@@ -822,15 +822,41 @@ def test_quest_deps_reads_one_line_and_ftb_resaved_arrays():
     assert check_quests.quest_deps(none) == {"426E087DF5AC9F9E": []}
 
 
-# B3: the nine helper-quest dependencies D135 logs (design/decisions.md D135, "Helper-quest dependencies"): OTHER5.1 on
-# [D5.1]; OTHER5.2 and OTHER5.3 on OTHER5.1; OTHER5.4 on [M3.1]; SPACE.1 on [T6.1]; SPACE.2 on [M0.2]; ES.1 on nothing;
-# ES.2 and ES.3 on [D6.10]. check_quests.main() holds the shipped SNBT to HELPER_DEPS; this pins HELPER_DEPS and the YAML.
+# B3: the 15 pinned helper-quest dependencies: the nine D135 logs (design/decisions.md D135, "Helper-quest dependencies"):
+# OTHER5.1 on [D5.1]; OTHER5.2 and OTHER5.3 on OTHER5.1; OTHER5.4 on [M3.1]; SPACE.1 on [T6.1]; SPACE.2 on [M0.2]; ES.1 on
+# nothing; ES.2 and ES.3 on [D6.10]; plus the six v1.0 CAT.1-CAT.6 on [X7.1] (decision D148). check_quests.main() holds the shipped SNBT to HELPER_DEPS; this pins HELPER_DEPS and the YAML.
 D135_HELPERS = {"OTHER5.1": ["D5.1"], "OTHER5.2": ["OTHER5.1"], "OTHER5.3": ["OTHER5.1"], "OTHER5.4": ["M3.1"],
-                "SPACE.1": ["T6.1"], "SPACE.2": ["M0.2"], "ES.1": [], "ES.2": ["D6.10"], "ES.3": ["D6.10"]}
+                "SPACE.1": ["T6.1"], "SPACE.2": ["M0.2"], "ES.1": [], "ES.2": ["D6.10"], "ES.3": ["D6.10"],
+                # v1.0 (spec §4.2, A11, A12; decision logged by plan Task 10): the six Catalyst side quests wait on the catalyst.
+                "CAT.1": ["X7.1"], "CAT.2": ["X7.1"], "CAT.3": ["X7.1"], "CAT.4": ["X7.1"], "CAT.5": ["X7.1"],
+                "CAT.6": ["X7.1"]}
 
 
-def test_helper_deps_are_d135s_nine():
+def test_helper_deps_are_the_15_pinned():
     from scaffold_chapter import CHAPTERS_DIR, parse_chapter
     assert check_quests.HELPER_DEPS == D135_HELPERS
     yaml = {q["node"]: q["deps"] for p in CHAPTERS_DIR.glob("*.yaml") for q in parse_chapter(p.read_text())["quests"]}
     assert {h: yaml.get(h) for h in D135_HELPERS} == D135_HELPERS
+
+
+# ---- v1.0 (spec §5, A14): every creative item family and the six X7.8 outputs are kept out of every reward ----
+CREATIVE_IDS = ["mekanism:creative_energy_cube", "mekanism:creative_chemical_tank", "mekanism:creative_fluid_tank",
+                "mekanism:creative_bin", "ae2:creative_energy_cell", "ae2:creative_storage_cell", "powah:energy_cell_creative",
+                "ars_nouveau:creative_source_jar", "ars_nouveau:creative_spell_book", "mysticalagradditions:creative_essence",
+                "functionalstorage:creative_vending_upgrade", "functionalstorage:max_storage_upgrade",
+                "mysticalagriculture:creative_soulium_dagger", "sophisticatedbackpacks:infinity_upgrade",
+                "sophisticatedbackpacks:survival_infinity_upgrade", "sophisticatedstorage:infinity_upgrade",
+                "sophisticatedstorage:survival_infinity_upgrade", "twilightforest:glass_sword", "kubejs:confluence_catalyst"]
+X78_IDS = ["irons_spellbooks:netherite_spell_book", "toms_storage:adv_wireless_terminal", "ad_astra:jet_suit",
+           "industrialforegoing:infinity_drill", "productivelib:upgrade_productivity_4", "twilightforest:triple_bow"]
+
+
+def test_every_creative_family_is_forbidden():
+    assert [i for i in CREATIVE_IDS if not check_quests.FORBIDDEN.search(f'"{i}"')] == []
+    # the alternatives are ids, not prefixes: a neighbour of a creative id stays allowed
+    assert not check_quests.FORBIDDEN.search('"mekanism:ultimate_energy_cube"')
+    assert not check_quests.FORBIDDEN.search('"ae2:dense_energy_cell"')
+
+
+def test_x78_outputs_are_excluded():
+    assert [i for i in X78_IDS if not check_quests.EXCLUDED.search(f'"{i}"')] == []
