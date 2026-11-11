@@ -197,6 +197,10 @@ file = "kubejs/data/industrialforegoing/recipe/dissolution_chamber/advanced_mach
 hash = "7d069f3f92624335065af12b8afcf90521158cb6a9c7baa231cc3c347cdb11eb"
 
 [[files]]
+file = "kubejs/data/industrialforegoing/recipe/dissolution_chamber/infinity_drill.json"
+hash = "7660998e03ae1874bc878f4d87fe71eefe52c76625ff5bc37402a92167ca4d24"
+
+[[files]]
 file = "kubejs/data/industrialforegoing/recipe/dissolution_chamber/simple_machine_frame.json"
 hash = "ed71d60e38f9e98d5ff3a71df2c9a8ff93b544c0d1e231068f728fd753f4d952"
 
@@ -246,7 +250,7 @@ hash = "513125401cee98784accfb0f317786d06cc67c3c46c093dc24b1715413c1781e"
 
 [[files]]
 file = "kubejs/server_scripts/lib/ids.js"
-hash = "b01a8f073ebaeb61219280aa5f98d902dd510166c743ec7a7f6034003c7a9c47"
+hash = "f1fb64bdfabf5c813fe67ffc7247a4865884fbeb119b2ea40462a689c4dc84eb"
 
 [[files]]
 file = "kubejs/server_scripts/lib/loot.js"
@@ -290,7 +294,11 @@ hash = "6591dec7e7d82b8f0c4914cd9f02f582b28703e9b2f669b511ca04697ccc3926"
 
 [[files]]
 file = "kubejs/server_scripts/tiers/tier6.js"
-hash = "d851e52276a145daaff9b87286b3827f0fd1bcf25a017089d79237849d82c1a7"
+hash = "8f8867d8a2fcb91ce343b162a6833e7f2e52b322a86fc1e07a7928ea8788c1c3"
+
+[[files]]
+file = "kubejs/server_scripts/tiers/tier7.js"
+hash = "b6b7b58cfccc84c7dd8ab4708d8bba3e60a8a40c74e1c103fb70274a75dc7260"
 
 [[files]]
 file = "kubejs/server_scripts/worldgen.js"
