@@ -61,7 +61,9 @@ const TAGCHECK_memberTags = () => {
   return wanted
 }
 
-ServerEvents.loaded(event => {
+// v1.0 spec §7.2: only with -Dconfluence.dev=true (lib/dev.js); production logs the skip line instead.
+if (!CONFLUENCE_DEV) console.log('confluence tagcheck: skipped (confluence.dev unset)')
+else ServerEvents.loaded(event => {
   const out = {}
   const wanted = TAGCHECK_memberTags()
   const members = {}

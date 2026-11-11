@@ -49,6 +49,10 @@ ROOT = Path(__file__).resolve().parents[1]
 EXPORT = ROOT / ".run" / "server" / "kubejs" / "exported" / "tags.json"
 MEMBERS = ROOT / ".run" / "server" / "kubejs" / "exported" / "tag_members.json"
 ITEM_MEMBERS = ROOT / ".run" / "server" / "kubejs" / "exported" / "item_tag_members.json"
+# v1.0 spec §7.2 (A16): the local boot runs with -Dconfluence.dev=true (tools/server_boot.sh), so dump.js, tagcheck.js and
+# routeexport.js export. A boot that lost the flag logs their skip lines and leaves the exports stale; fail on that.
+KJ_SERVER_LOG = ROOT / ".run" / "server" / "logs" / "kubejs" / "server.log"
+SKIP_MARK = "skipped (confluence.dev unset)"
 IDS_JS = ROOT / "kubejs" / "server_scripts" / "lib" / "ids.js"
 
 SCRIPT_DIRS = ("kubejs/server_scripts", "kubejs/startup_scripts", "kubejs/client_scripts")
@@ -427,6 +431,12 @@ def check_members(members: dict, nine: list, needs: list, immune: list, ores: li
     return bad
 
 
+def dev_flag_problems(log_text: str) -> list:
+    """One 'DEV FLAG UNSET' line per skip line in the local KubeJS server log (spec §7.2)."""
+    return [f"DEV FLAG UNSET: {line.strip()[:160]} (tools/server_boot.sh appends -Dconfluence.dev=true to "
+            f".run/server/user_jvm_args.txt)" for line in log_text.splitlines() if SKIP_MARK in line]
+
+
 def main() -> int:
     if not EXPORT.exists():
         print(f"MISSING EXPORT {EXPORT}")
@@ -461,9 +471,16 @@ def main() -> int:
             item_tags = len(item_members.get(ITEM_REGISTRY) or {}) if isinstance(item_members, dict) else 0
     except (OSError, ValueError) as e:
         item_bad = [f"CANNOT CHECK item tag members: {e}"]
-    bad_total = len(res.failures) + len(deny_bad) + len(members_bad) + len(item_bad)
+    # No log yet (a clone that never booted) is not a dev-flag failure: the exports are missing then, and fail above.
+    dev_bad = (dev_flag_problems(KJ_SERVER_LOG.read_text(encoding="utf-8", errors="replace")) if KJ_SERVER_LOG.exists()
+               else [])
+    bad_total = len(res.failures) + len(deny_bad) + len(members_bad) + len(item_bad) + len(dev_bad)
 
     print(f"tags: {len(refs)} referenced, {len(res.checked)} verified non-empty, {bad_total} bad")
+    # Second line, so the existing tests' first and last lines (tools/tests/test_check_tags.py) keep their places.
+    print(f"dev flag (spec §7.2): {len(dev_bad)} bad")
+    for line in dev_bad:
+        print(f"  {line}")
     for tag, count in sorted(res.checked.items()):
         print(f"  ok {tag} ({count})")
     for tag, registry, sources in res.no_registry:
@@ -491,7 +508,7 @@ def main() -> int:
           f"{len(item_bad)} bad")
     for line in item_bad:
         print(f"  {line}")
-    return 1 if res.failures or deny_bad or members_bad or item_bad else 0
+    return 1 if res.failures or deny_bad or members_bad or item_bad or dev_bad else 0
 
 
 if __name__ == "__main__":

@@ -16,7 +16,9 @@
 // Compare recipe types by the `type` column, not json.type: at 0.2.1, 469 bodies (Mystical Agriculture 387, MA Agradditions 49,
 // Tombstone 29, Explorer's and Nature's Compass 2 each) carry an un-namespaced type such as "crafting_shaped", and bodies may
 // carry neoforge:conditions (2553 at 0.2.1).
-ServerEvents.recipes(event => {
+// v1.0 spec §7.2: only with -Dconfluence.dev=true (lib/dev.js); production logs the skip line instead.
+if (!CONFLUENCE_DEV) console.log('confluence dump: skipped (confluence.dev unset)')
+else ServerEvents.recipes(event => {
   const rows = []
   let noJson = 0
   let firstErr = ''

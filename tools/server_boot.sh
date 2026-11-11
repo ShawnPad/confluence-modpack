@@ -143,6 +143,9 @@ if [ ! -f run.sh ]; then
 fi
 # The same pinned Ad Astra station list as production's start.sh (D141): no HTTP GET while mods construct.
 grep -q 'adastra.stations' user_jvm_args.txt || printf -- '-Dadastra.stations=config/confluence/adastra-stations.json\n' >> user_jvm_args.txt
+# The dev flag (v1.0 spec §7.2, A16; kubejs/server_scripts/lib/dev.js): dump.js, tagcheck.js and routeexport.js export only
+# with it. Local run folders only: production's start.sh never sets it, and tools/ptero_wait.py evidence checks that.
+grep -qxF -- '-Dconfluence.dev=true' user_jvm_args.txt || printf -- '-Dconfluence.dev=true\n' >> user_jvm_args.txt
 curl -fsSL -o packwiz-installer-bootstrap.jar https://github.com/packwiz/packwiz-installer-bootstrap/releases/download/v0.0.3/packwiz-installer-bootstrap.jar
 "$JAVA" -jar packwiz-installer-bootstrap.jar -g -s server http://localhost:8087/pack.toml
 kill "$SERVE_PID" || true
