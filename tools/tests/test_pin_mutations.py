@@ -95,13 +95,13 @@ CASES = [
           f"{PACKWIDE}::test_pinned_output_has_only_its_own_makers[allthemodium:vibranium_allthemodium_alloy_ingot]"}),
     # ---- Task 6 (Space, test_tier6_space_recipes.py)
     Case("t6 remove {mod: 'ad_astra'}", T6, recipes("event.remove({ mod: 'ad_astra' })"),
-         {f"{SPACE}::test_space_removals_are_the_five_defaults_only"}),
+         {f"{SPACE}::test_space_removals_are_the_six_defaults_only"}),
     Case("t6 remove {type: 'ad_astra:alloying'}", T6, recipes("event.remove({ type: 'ad_astra:alloying' })"),
-         {f"{SPACE}::test_space_removals_are_the_five_defaults_only"}),
+         {f"{SPACE}::test_space_removals_are_the_six_defaults_only"}),
     Case("t6 remove {input: '#ad_astra:steel_plates'}", T6, recipes("event.remove({ input: '#ad_astra:steel_plates' })"),
-         {f"{SPACE}::test_space_removals_are_the_five_defaults_only"}),
+         {f"{SPACE}::test_space_removals_are_the_six_defaults_only"}),
     Case("t6 regex removal in tier6.js", T6, recipes("event.remove({ id: /ad_astra:.*_rocket/ })"),
-         {f"{SPACE}::test_space_removals_are_the_five_defaults_only"}),
+         {f"{SPACE}::test_space_removals_are_the_six_defaults_only"}),
     Case("t6 second shaped maker of a machine", T6,
          recipes("gate.shaped(event, 'confluence:tier6/space_suit_twin', 'ad_astra:space_suit', ['A'], { A: 'minecraft:stick' })"),
          {f"{SPACE}::test_space_shaped_rows", f"{PACKWIDE}::test_pinned_output_has_only_its_own_makers[ad_astra:space_suit]"}),
@@ -114,7 +114,7 @@ CASES = [
     Case("t6 Item.of(spaceSuit, 2)", T6,
          ("gate.replaceShaped(event, 'confluence:tier6/space_suit', IDS.adastra.spaceSuit,",
           "gate.replaceShaped(event, 'confluence:tier6/space_suit', Item.of(IDS.adastra.spaceSuit, 2),"),
-         {f"{SPACE}::test_space_shaped_rows", f"{SPACE}::test_space_removals_are_the_five_defaults_only"},
+         {f"{SPACE}::test_space_shaped_rows", f"{SPACE}::test_space_removals_are_the_six_defaults_only"},
          {f"{SPACE}::test_space_machine_is_the_jar_default_plus_spec_slots[confluence:tier6/space_suit]"}),
     # ---- Task 7 (AE2, test_ae2_recipes.py): the seven removal shapes, then the one-maker cases
     *[Case(f"t7 remove {label}", T6, recipes(f"gate.remove(event, {filt})"), {f"{AE2}::test_ae2_defaults_removed_by_id_only"})
