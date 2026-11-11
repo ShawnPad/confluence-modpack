@@ -387,6 +387,49 @@ IDS.allthemodium.unregisteredTagEntries = [
   { tag: '#c:tools/shield', id: IDS.allthemodium.unregistered.shield },
 ]
 
+// v1.0 (spec docs/superpowers/specs/2026-11-11-v1.0-catalyst-tier-design.md §3, A1): the catalyst tier. Each id was read at plan
+// time (v1.0 plan Task 4, "Verified at plan time") from its jar in .run/server/mods: the lang file assets/<ns>/lang/en_us.json for
+// the item, data/<ns>/recipe/<path>.json for a default recipe id. CT = research/phase7-v1.0-catalyst-tier.md. ProductiveLib is
+// jar-in-jar: productivebees-1.21.1-13.13.5.jar!META-INF/jarjar/productivelib-1.21.1-0.2.0.jar.
+IDS.top = {
+  // X7.2-X7.7 bases and results (CT §2; spec §3.2). Lang: "Ultimate Energy Cube", "Creative Energy Cube", "Ultimate Chemical
+  // Tank", "Creative Chemical Tank", "Dense Energy Cell", "Creative Energy Cell", "Energy Cell (Nitro)", "Energy Cell (Creative)",
+  // "Source Jar", "Creative Source Jar", "Awakened Supremium Essence", "Creative Essence", "Creative Vending Upgrade".
+  ultimateEnergyCube: 'mekanism:ultimate_energy_cube', creativeEnergyCube: 'mekanism:creative_energy_cube',
+  ultimateChemicalTank: 'mekanism:ultimate_chemical_tank', creativeChemicalTank: 'mekanism:creative_chemical_tank',
+  denseEnergyCell: 'ae2:dense_energy_cell', creativeEnergyCell: 'ae2:creative_energy_cell',
+  nitroCell: 'powah:energy_cell_nitro', creativeCell: 'powah:energy_cell_creative',
+  sourceJar: 'ars_nouveau:source_jar', creativeSourceJar: 'ars_nouveau:creative_source_jar',
+  awakenedSupremiumEssence: 'mysticalagriculture:awakened_supremium_essence', creativeEssence: 'mysticalagradditions:creative_essence',
+  creativeVendingUpgrade: 'functionalstorage:creative_vending_upgrade',
+  // X7.8 Ancient Codex (spec §3.3): irons_spellbooks-1.21.1-3.16.3.jar!data/irons_spellbooks/recipe/netherite_spell_book.json.
+  codex: 'irons_spellbooks:netherite_spell_book', codexRecipe: 'irons_spellbooks:netherite_spell_book',
+  magicCloth: 'irons_spellbooks:magic_cloth', bloodVial: 'irons_spellbooks:blood_vial', ruinedBook: 'irons_spellbooks:ruined_book',
+  lightningBottle: 'irons_spellbooks:lightning_bottle',
+  // X7.8 Advanced Wireless Terminal (spec §3.4): toms_storage-1.21-2.4.2.jar!data/toms_storage/recipe/adv_wireless_terminal.json.
+  wirelessTerminal: 'toms_storage:wireless_terminal', advWirelessTerminal: 'toms_storage:adv_wireless_terminal',
+  advWirelessTerminalRecipe: 'toms_storage:adv_wireless_terminal', netheriteTemplate: 'minecraft:netherite_upgrade_smithing_template',
+  // X7.8 Jet Suit, the chest piece only (spec §3.5): adastra-1.21.1-1.16.25-neoforge.jar!data/ad_astra/recipe/jet_suit.json.
+  jetSuit: 'ad_astra:jet_suit', jetSuitRecipe: 'ad_astra:jet_suit', caloritePlateTag: '#ad_astra:calorite_plates',
+  caloriteTank: 'ad_astra:calorite_tank', etrionicCapacitor: 'ad_astra:etrionic_capacitor', caloriteEngine: 'ad_astra:calorite_engine',
+  // X7.8 Infinity Drill (spec §3.6): a datapack override at IF's own id (kubejs/data/industrialforegoing/recipe/
+  // dissolution_chamber/infinity_drill.json), so no script names it; listed for the tests and the quest.
+  infinityDrill: 'industrialforegoing:infinity_drill',
+  // X7.8 Upgrade: Productivity Omega (spec §3.7): productivelib jar data/productivelib/recipe/upgrades/productivity_4.json.
+  productivity4: 'productivelib:upgrade_productivity_4', productivity4Recipe: 'productivelib:upgrades/productivity_4',
+  productivity3: 'productivelib:upgrade_productivity_3', upgradeBlock: 'productivelib:upgrade_block',
+  heartOfTheSea: 'minecraft:heart_of_the_sea',
+  // X7.8 Tri-Bow (spec §3.8): no recipe in twilightforest-1.21.1-4.8.3345-universal.jar; inputs from the Snow Queen's
+  // structure (loot_table/chests/aurora_cache.json, aurora_room.json; loot_table/blocks/aurora_block.json).
+  triBow: 'twilightforest:triple_bow', iceBow: 'twilightforest:ice_bow', bow: 'minecraft:bow', auroraBlock: 'twilightforest:aurora_block',
+}
+IDS.vanilla.netheriteIngotTag = '#c:ingots/netherite'   // c: convention tag; tools/check_tags.py verifies it non-empty each boot
+// Spec §7.1 (A15): the Netherite Space Suit's default keys (adastra jar recipe/netherite_space_suit.json).
+IDS.adastra.netheriteSpaceSuit = 'ad_astra:netherite_space_suit'
+IDS.adastra.largeGasTank = 'ad_astra:large_gas_tank'
+IDS.adastra.ostrumPlateTag = '#ad_astra:ostrum_plates'
+IDS.vanilla.netheriteChestplate = 'minecraft:netherite_chestplate'
+
 // Raw recipe/worldgen JSON wants a tag id without the leading '#'. Fails loudly instead of silently mangling a plain id.
 function tagId(tag) {
   if (typeof tag !== 'string' || tag[0] !== '#') throw new Error('tagId: expected a #tag, got ' + tag)

@@ -35,10 +35,11 @@ import test_ae2_recipes
 import test_bypass_v03
 import test_mek_tier5
 import test_tier6_space_recipes
+import test_tier7
 from jslex import tokens
 from kjs import SCRIPTS_ENV, SCRIPTS_PREFIX, all_rows, output_problem, products, run, scripts_root
 
-SOURCES = (test_mek_tier5, test_tier6_space_recipes, test_ae2_recipes, test_bypass_v03)
+SOURCES = (test_mek_tier5, test_tier6_space_recipes, test_ae2_recipes, test_bypass_v03, test_tier7)
 SOLE_MAKERS = {}
 for _module in SOURCES:
     for _output, _ids in _module.SOLE_MAKERS.items():
@@ -84,6 +85,7 @@ PACK_REMOVALS = {
     "test_mek_tier5.REMOVED_BY_ID": list(test_mek_tier5.REMOVED_BY_ID),
     "test_ae2_recipes.REMOVED_BY_ID": list(test_ae2_recipes.REMOVED_BY_ID),
     "test_tier6_space_recipes.SHAPED outputs": ["output:" + v[0] for v in test_tier6_space_recipes.SHAPED.values()],
+    "test_tier7.REMOVED_BY_ID": list(test_tier7.REMOVED_BY_ID),
     "EARLY_TIER_REMOVALS": EARLY_TIER_REMOVALS,
 }
 # The members dump.js may name (round 4 R3), read from dump.js as it stands: an allowlist, not a ban list. Under Rhino the
