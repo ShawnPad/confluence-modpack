@@ -6,7 +6,7 @@ that names no quest in any chapter, a tree node's quest that has a lang title bu
 (UNREAD), a reward table not in the canonical shape
 (canonical_problems), a chapter off the measured reward shapes (chapter_problems), an emergency_items key in data.snbt
 (data_problems), a reward table holding a FORBIDDEN id, a reward table holding an EXCLUDED id (legendary_bag may hold
-LEGENDARY_ALLOWED), a reward table holding what tools/bag_banned.json bars it from (bag_collisions: a tier-5/6 input, a
+LEGENDARY_ALLOWED), a reward table holding what tools/bag_banned.json bars it from (bag_collisions: a tier-5/6/7 input, a
 gated output, a precursor), a chapter's quest rewards paying out any of those (chapter_reward_hits, reward_ids), and a
 missing tools/bag_banned.json. It prints one summary line, then one indented line per failure. It reads no recipes:
 tools/tests/test_bag_collisions.py computes tools/bag_banned.json from the boot's recipe dump and checks it is current.
@@ -460,31 +460,34 @@ def data_problems(text: str) -> list[tuple[int, str]]:
 
 
 # tools/bag_banned.json (SNAPSHOT) holds, for ids neither list names: "tier5_inputs" and "tier6_inputs" (every id a tier-5 or
-# tier-6 recipe takes, tag members included), "gated_outputs" (sole_producers outputs a tier-5/6 recipe makes), "precursors"
+# tier-6 recipe takes, tag members included), "tier7_inputs" (the catalyst recipe's inputs alone, v1.0 A13),
+# "gated_outputs" (sole_producers outputs a tier-5/6/7 recipe makes), "precursors"
 # ({id: the codes a chain of single-ingredient recipes from it reaches: "banned" a FORBIDDEN or EXCLUDED id, "allowed" a
-# LEGENDARY_ALLOWED id, "in5", "in6", "gated"}), and "pinned" ({table: {id: [code, ...]}}: the shipped bags' hits,
+# LEGENDARY_ALLOWED id, "in5", "in6", "in7", "gated"}), and "pinned" ({table: {id: [code, ...]}}: the shipped bags' hits,
 # reported and not judged, test_bag_collisions.SHIPPED_TIER_HITS and SHIPPED_PRECURSORS). A held id's codes are "in5",
-# "in6" and "gated" for what it is, and "pre:<code>" for what it makes. Legendary may hold LEGENDARY_MAY_HOLD; a pinned
+# "in6", "in7" and "gated" for what it is, and "pre:<code>" for what it makes. Legendary may hold LEGENDARY_MAY_HOLD; a pinned
 # (table, id, code) passes; every other code fails.
-CODE_TEXT = {"in5": "tier-5 input", "in6": "tier-6 input", "gated": "gated output",
+CODE_TEXT = {"in5": "tier-5 input", "in6": "tier-6 input",
+             "in7": "tier-7 input (a catalyst input, v1.0 spec §5)", "pre:in7": "precursor of a tier-7 input", "gated": "gated output",
              "pre:banned": "precursor of a FORBIDDEN or EXCLUDED id", "pre:allowed": "precursor of a LEGENDARY_ALLOWED id",
              "pre:in5": "precursor of a tier-5 input", "pre:in6": "precursor of a tier-6 input",
              "pre:gated": "precursor of a gated output"}
 
 
 def load_snapshot(path: Path):
-    """SNAPSHOT as {"in5", "in6", "gated": set, "precursors": {id: [code]}, "pinned": {table: {id: [code]}}}, or None when
+    """SNAPSHOT as {"in5", "in6", "in7", "gated": set, "precursors": {id: [code]}, "pinned": {table: {id: [code]}}}, or None when
     the file does not exist."""
     if not path.is_file():
         return None
     doc = json.loads(path.read_text())
-    return {"in5": set(doc["tier5_inputs"]), "in6": set(doc["tier6_inputs"]), "gated": set(doc["gated_outputs"]),
+    return {"in5": set(doc["tier5_inputs"]), "in6": set(doc["tier6_inputs"]), "in7": set(doc.get("tier7_inputs", [])),
+            "gated": set(doc["gated_outputs"]),
             "precursors": doc["precursors"], "pinned": doc["pinned"]}
 
 
 def snapshot_codes(item: str, snap) -> list[str]:
-    """The codes the snapshot holds for an id: "in5", "in6", "gated", then "pre:<code>" for each precursor code."""
-    return [c for c in ("in5", "in6", "gated") if item in snap[c]] + ["pre:" + c for c in snap["precursors"].get(item, ())]
+    """The codes the snapshot holds for an id: "in5", "in6", "in7", "gated", then "pre:<code>" for each precursor code."""
+    return [c for c in ("in5", "in6", "in7", "gated") if item in snap[c]] + ["pre:" + c for c in snap["precursors"].get(item, ())]
 
 
 def bag_collisions(stem: str, items, snap) -> list[tuple[str, list[str]]]:

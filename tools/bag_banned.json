@@ -483,5 +483,9 @@
  "minecraft:lightning_rod",
  "minecraft:netherite_chestplate",
  "minecraft:wool"
+ ],
+ "tier7_inputs": [
+ "ae2:crafting_unit",
+ "ae2:wireless_receiver"
  ]
 }

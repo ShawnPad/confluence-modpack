@@ -3,14 +3,14 @@
 check_quests.py reads the reward tables as text against two id lists, FORBIDDEN and EXCLUDED. This file reads what the last
 boot loaded: the recipe dump (.run/server/kubejs/exported/recipes.json, written by dump.js) and the item-tag export beside
 it (item_tag_members.json). It checks:
-  (a) the Epic bag (tier 5) holds no input of a tier-5 or tier-6 recipe;
-  (b) the Legendary bag (tier 6) holds no input of a tier-6 recipe, and its tier-5 inputs are exactly
+  (a) the Epic bag (tier 5) holds no input of a tier-5 or tier-6 recipe, nor a tier-7 input;
+  (b) the Legendary bag (tier 6) holds no input of a tier-6 recipe nor a tier-7 input, and its tier-5 inputs are exactly
       check_quests.LEGENDARY_ALLOWED (spec §10: "A tier-5 input may appear in the tier-6 bag");
-  (c) no table holds a gated output: an item under sole_producers: in tools/gates.yaml that a tier-5 or tier-6 recipe makes;
-  (d) no table holds a precursor (below) of a FORBIDDEN or EXCLUDED id, a tier-5 or tier-6 input or a gated output, except
+  (c) no table holds a gated output: an item under sole_producers: in tools/gates.yaml that a tier-5, tier-6 or tier-7 recipe makes;
+  (d) no table holds a precursor (below) of a FORBIDDEN or EXCLUDED id, a tier-5, tier-6 or tier-7 input or a gated output, except
       that the Legendary bag may hold a precursor of a tier-5 input or of LEGENDARY_ALLOWED (check_quests.LEGENDARY_MAY_HOLD).
       The shipped bags' hits are pinned in SHIPPED_PRECURSORS, reported for the owner;
-  (e) the shipped bags' tier-5/6 input hits, pinned in SHIPPED_TIER_HITS: reported, not judged (none since B1, below);
+  (e) the shipped bags' tier-5/6/7 input hits, pinned in SHIPPED_TIER_HITS: reported, not judged (none since B1, below);
   (f) tools/bag_banned.json (check_quests.SNAPSHOT) is what this file computes from the dump (snapshot_of), so
       check_quests.py applies (a)-(e) to every table and chapter reward with no dump present. Rewrite it with
       `python3 tools/tests/test_bag_collisions.py --write-snapshot` (check_quests.SNAPSHOT_COMMAND), from pack/, after a
@@ -24,8 +24,9 @@ Precursors (round 3, I4, I5). An edge X -> Y is a dump recipe, other than a tier
 distinct input (X, or a tag X is a member of) and makes Y (an item product, or a member of an item-tag product). Nothing is
 taken off the inputs: an input fluid with its output's id (industrialforegoing:pink_slime) is still an input. X is a
 precursor of every target a chain of edges reaches from it: the closure, taken to a fixed point. The targets are the
-FORBIDDEN and EXCLUDED ids, the tier-5 and tier-6 inputs and the gated outputs. A tier-5/6 recipe makes no edge, because its
-inputs are targets already. An item is not its own precursor: a round trip such as iron ingot -> iron block -> iron ingot
+FORBIDDEN and EXCLUDED ids, the tier-5, tier-6 and tier-7 inputs (tier 7 = the catalyst recipe's eight inputs alone, v1.0
+A13) and the gated outputs. A tier-5/6/7 recipe makes no edge, because its inputs are targets already (tier 5/6) or, for
+tier 7, skipping it loses no edge: every tier-7 recipe has at least two inputs, and its non-catalyst inputs are not targets. An item is not its own precursor: a round trip such as iron ingot -> iron block -> iron ingot
 adds nothing.
 
 Base materials (rounds 4-5). Spec §10 ¶1: "Base vanilla materials (iron, copper, pistons, buckets, furnaces, crafting
@@ -131,8 +132,8 @@ SHIPPED_PRECURSORS = {
 NSID = re.compile(r"#?[a-z0-9_.-]+:[a-z0-9_./-]+")
 NOT_INPUTS = {"type", "neoforge:conditions", "neoforge:load_conditions", "fabric:load_conditions"}
 # The precursor codes: what a chain from an item reaches. "banned" is a FORBIDDEN or EXCLUDED id other than
-# LEGENDARY_ALLOWED, "allowed" one of LEGENDARY_ALLOWED; "in5"/"in6" a tier-5/6 input; "gated" a gated output.
-PRE_CODES = ("allowed", "banned", "gated", "in5", "in6")
+# LEGENDARY_ALLOWED, "allowed" one of LEGENDARY_ALLOWED; "in5"/"in6"/"in7" a tier-5/6/7 input; "gated" a gated output.
+PRE_CODES = ("allowed", "banned", "gated", "in5", "in6", "in7")
 
 
 def classify(gates):
@@ -270,7 +271,7 @@ def precursor_closure(graph, own, ends=frozenset()):
     return pre
 
 
-def own_codes(item, in5, in6, gated):
+def own_codes(item, in5, in6, gated, in7=frozenset()):
     """The PRE_CODES an item is itself a target for."""
     codes = set()
     if BANNED.fullmatch(item):
@@ -279,6 +280,8 @@ def own_codes(item, in5, in6, gated):
         codes.add("in5")
     if item in in6:
         codes.add("in6")
+    if item in in7:
+        codes.add("in7")
     if item in gated:
         codes.add("gated")
     return codes
@@ -298,12 +301,14 @@ def build(rows, members, gates, sole):
     base = base_materials(members)
     in5 = set().union(*(expand(refs(json.loads(rows[i]["json"])), members) for i in tier5)) - base
     in6 = set().union(*(expand(refs(json.loads(rows[i]["json"])), members) for i in tier6)) - base
-    t56 = set(tier5) | set(tier6)
-    gated = {out for out, (kind, producers) in sole.items() if kind == "item" and t56 & set(producers)}
-    graph = single_ingredient_edges(rows, members, skip=t56)
-    pre = precursor_closure(graph, lambda i: own_codes(i, in5, in6, gated), ends=base)
+    # A13: the tier-7 gate inputs are the catalyst's inputs alone; every tier-7 output is a gated output.
+    in7 = expand(refs(json.loads(rows[CATALYST_RECIPE]["json"])), members) - base
+    t567 = set(tier5) | set(tier6) | set(tier7)
+    gated = {out for out, (kind, producers) in sole.items() if kind == "item" and t567 & set(producers)}
+    graph = single_ingredient_edges(rows, members, skip=t567)
+    pre = precursor_closure(graph, lambda i: own_codes(i, in5, in6, gated, in7), ends=base)
     return {"missing": [], "tier5": tier5, "tier6": tier6, "tier7": tier7, "unclassified": unclassified, "in5": in5, "in6": in6,
-            "gated": gated, "graph": graph, "pre": pre, "base": base}
+            "in7": in7, "gated": gated, "graph": graph, "pre": pre, "base": base}
 
 
 def load_tables(directory):
@@ -313,13 +318,14 @@ def load_tables(directory):
 
 # ---- the checks, each a function of the tables so a planted copy can run through it ----
 
-def epic_hits(tables, ctx):                         # (a)
-    return sorted(i for i in tables["epic_bag"] if i in ctx["in5"] | ctx["in6"])
+def epic_hits(tables, ctx):                         # (a); v1.0: tier-7 inputs too
+    return sorted(i for i in tables["epic_bag"] if i in ctx["in5"] | ctx["in6"] | ctx.get("in7", set()))
 
 
-def legendary_hits(tables, ctx):                    # (b): (tier-6 inputs held, tier-5 inputs held)
+def legendary_hits(tables, ctx):                    # (b): (tier-6 or tier-7 inputs held, tier-5 inputs held)
     held = tables["legendary_bag"]
-    return sorted(i for i in held if i in ctx["in6"]), sorted({i for i in held if i in ctx["in5"]})
+    later = ctx["in6"] | ctx.get("in7", set())
+    return sorted(i for i in held if i in later), sorted({i for i in held if i in ctx["in5"]})
 
 
 def gated_hits(tables, ctx):                        # (c)
@@ -360,7 +366,8 @@ def snapshot_of(ctx):
         return sorted(i for i in ids if not BANNED.fullmatch(i))
     return {"_comment": f"Generated by tools/tests/test_bag_collisions.py from the recipe dump; do not edit. Regenerate with "
                         f"`{SNAPSHOT_COMMAND}` (from pack/, after a boot).",
-            "tier5_inputs": free(ctx["in5"]), "tier6_inputs": free(ctx["in6"]), "gated_outputs": free(ctx["gated"]),
+            "tier5_inputs": free(ctx["in5"]), "tier6_inputs": free(ctx["in6"]), "tier7_inputs": free(ctx["in7"]),
+            "gated_outputs": free(ctx["gated"]),
             "precursors": {i: ctx["pre"][i] for i in free(ctx["pre"])}, "pinned": pinned()}
 
 
@@ -612,7 +619,8 @@ def test_the_snapshot_is_the_dump_recomputed(ctx):
 # (a) a tier-6 input in Epic, (b) a third tier-5 input in Legendary, (c) the ME controller, (d) the reviewers' chains.
 PLANTS = [("epic_bag", "minecraft:diamond", "ad_astra:rocket_nose_cone"),
           ("legendary_bag", "minecraft:diamond_block", "ae2:semi_dark_monitor"),
-          ("rare_bag", "mekanism:ingot_steel", "ae2:controller")] + [
+          ("rare_bag", "mekanism:ingot_steel", "ae2:controller"),
+          ("legendary_bag", "minecraft:experience_bottle", "ae2:crafting_unit")] + [
           (t, "minecraft:experience_bottle", i) for t, i, _ in CHAINS]
 
 
@@ -666,6 +674,46 @@ def test_check_quests_passes_the_shipped_tables_and_legendarys_allowance(tmp_pat
     assert {t: bag_collisions(t, items, snap) for t, items in tables.items()} == {t: [] for t in tables}
     planted = _planted(tmp_path, "legendary_bag", "minecraft:experience_bottle", "ae2:dark_monitor")
     assert bag_collisions("legendary_bag", planted["legendary_bag"], snap) == []
+
+
+# ---- v1.0 tier 7 (spec §5, A13) ----
+CATALYST_INPUTS = {"kubejs:astral_focus", "ad_astra:etrium_ingot", "allthemodium:vibranium_allthemodium_alloy_ingot",
+                   "allthemodium:unobtainium_allthemodium_alloy_ingot", "allthemodium:unobtainium_vibranium_alloy_ingot",
+                   "minecraft:dragon_egg", "ae2:wireless_receiver", "ae2:crafting_unit"}
+TIER7_OUTPUTS = {"kubejs:confluence_catalyst", "mekanism:creative_energy_cube", "mekanism:creative_chemical_tank",
+                 "ae2:creative_energy_cell", "powah:energy_cell_creative", "ars_nouveau:creative_source_jar",
+                 "mysticalagradditions:creative_essence", "functionalstorage:creative_vending_upgrade",
+                 "irons_spellbooks:netherite_spell_book", "toms_storage:adv_wireless_terminal", "ad_astra:jet_suit",
+                 "industrialforegoing:infinity_drill", "productivelib:upgrade_productivity_4", "twilightforest:triple_bow"}
+
+
+def test_in7_is_the_catalysts_inputs_only(ctx):
+    assert ctx["in7"] == CATALYST_INPUTS - ctx["base"]
+
+
+def test_every_tier7_output_is_gated(ctx):
+    assert TIER7_OUTPUTS - ctx["gated"] == set()
+
+
+def test_legendary_holds_no_tier7_input_today(ctx, tables):
+    assert legendary_hits(tables, ctx)[0] == []
+
+
+def test_a_catalyst_input_in_legendary_fails(ctx, tmp_path):
+    planted = _planted(tmp_path, "legendary_bag", "minecraft:experience_bottle", "ae2:crafting_unit")
+    assert "ae2:crafting_unit" in legendary_hits(planted, ctx)[0]
+
+
+def test_check_quests_names_a_planted_catalyst_input_as_in7(tmp_path):
+    planted = _planted(tmp_path, "legendary_bag", "minecraft:experience_bottle", "ae2:wireless_receiver")
+    hits = dict(bag_collisions("legendary_bag", planted["legendary_bag"], load_snapshot(SNAPSHOT)))
+    assert "in7" in hits["ae2:wireless_receiver"]
+
+
+def test_a_catalyst_input_in_epic_fails(ctx, tmp_path, tables):
+    old = tables["epic_bag"][0]
+    planted = _planted(tmp_path, "epic_bag", old, "ae2:wireless_receiver")
+    assert "ae2:wireless_receiver" in epic_hits(planted, ctx)
 
 
 if __name__ == "__main__":
