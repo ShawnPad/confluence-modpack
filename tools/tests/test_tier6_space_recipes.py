@@ -45,6 +45,10 @@ SHAPED = {
     # D6.3: default '# #' / TOT / #W#; elytra in the empty top-middle (D107).
     "confluence:tier6/space_suit": ("ad_astra:space_suit", ["#E#", "TOT", "#W#"], {
         "#": PLATE, "E": "minecraft:elytra", "T": "ad_astra:gas_tank", "O": "ad_astra:oxygen_gear", "W": "#minecraft:wool"}),
+    # v1.0 spec §7.1 (A15): the Netherite Space Suit, default '# #' / TOT / #N#; elytra in the empty top-middle, as the space suit.
+    "confluence:tier6/netherite_space_suit": ("ad_astra:netherite_space_suit", ["#E#", "TOT", "#N#"], {
+        "#": "#ad_astra:ostrum_plates", "E": "minecraft:elytra", "T": "ad_astra:large_gas_tank", "O": "ad_astra:oxygen_gear",
+        "N": "minecraft:netherite_chestplate"}),
     # D6.3: default #F# / G|G / #R#; electric pump for the redstone block.
     "confluence:tier6/oxygen_loader": ("ad_astra:oxygen_loader", ["#F#", "G|G", "#P#"], {
         "#": PLATE, "F": "ad_astra:fan", "G": "ad_astra:gas_tank", "|": "minecraft:lightning_rod", "P": "mekanism:electric_pump"}),
@@ -92,6 +96,9 @@ SLOT_CHANGES = {
     # D6.3: the elytra fills the empty top-middle (D107).
     "confluence:tier6/space_suit": {
         (0, 1): (EMPTY, "minecraft:elytra")},
+    # v1.0 spec §7.1 (A15): the elytra fills the empty top-middle (D107).
+    "confluence:tier6/netherite_space_suit": {
+        (0, 1): (EMPTY, "minecraft:elytra")},
     # D6.3: the electric pump replaces the redstone block (bottom-middle).
     "confluence:tier6/oxygen_loader": {
         (2, 1): ("minecraft:redstone_block", "mekanism:electric_pump")},
@@ -129,7 +136,7 @@ def calls(recorded, kind):
 
 
 def test_space_shaped_rows(recorded):
-    """The five machines' shaped rows (SHAPED), and one maker per machine: no other shaped, shapeless or custom recipe makes
+    """The six shaped rows (five machines and the Netherite Space Suit) (SHAPED), and one maker per machine: no other shaped, shapeless or custom recipe makes
     it (kjs.products: an output stack or id, or a custom recipe's json.result, json.output, an element of json.results, or
     any other result/output key), whether or not .id() was called on it. Nothing is chained on a machine's recipe."""
     for rid, (output, pattern, keys) in SHAPED.items():
@@ -142,8 +149,8 @@ def test_space_shaped_rows(recorded):
         assert one_maker(recorded, output) == [rid], output
 
 
-def test_space_removals_are_the_five_defaults_only(recorded):
-    """Two filter shapes only: {output: <one of the five machines>} and {id: <a string id outside ad_astra:>} (plan Task 7's
+def test_space_removals_are_the_six_defaults_only(recorded):
+    """Two filter shapes only: {output: <one of the SHAPED outputs: the five machines and, since v1.0, the Netherite Space Suit>} and {id: <a string id outside ad_astra:>} (plan Task 7's
     AE2 block removes by id). Anything else fails: a filter by type, mod or input, a regex or ad_astra: id, another output,
     or a combined filter. So D6.2 / D118 hold (rockets, the launch pad and the desh, ostrum and calorite engines keep their
     default recipes), and Etrium and the Astral Focus lose nothing (no default exists, AA §2.3)."""
@@ -157,7 +164,7 @@ def test_space_removals_are_the_five_defaults_only(recorded):
         return isinstance(f, dict) and set(f) == {"id"} and isinstance(f["id"], str) and not f["id"].startswith("ad_astra:")
 
     odd = [f for f in filters if not by_machine_output(f) and not by_other_id(f)]
-    assert odd == [], f"filters other than {{output: <one of the five machines>}} or {{id: <id outside ad_astra:>}}: {odd}"
+    assert odd == [], f"filters other than {{output: <one of the SHAPED outputs>}} or {{id: <id outside ad_astra:>}}: {odd}"
     assert sorted(f["output"] for f in filters if by_machine_output(f)) == sorted(outputs)
 
 
@@ -177,7 +184,7 @@ def adastra_jar():
 
 @pytest.mark.parametrize("rid", list(SLOT_CHANGES))
 def test_space_machine_is_the_jar_default_plus_spec_slots(recorded, rid):
-    """Each of the five machines tier6.js records is Ad Astra's jar default with exactly the SLOT_CHANGES cells changed. It
+    """Each SHAPED output tier6.js records (five machines and the Netherite Space Suit) is Ad Astra's jar default with exactly the SLOT_CHANGES cells changed. It
     fails when Ad Astra moves the id (remove-by-output would then miss it, or a second recipe appears) or changes the default
     (ours would silently drop the change), and when tier6.js changes a slot spec §6 keeps."""
     output = SHAPED[rid][0]

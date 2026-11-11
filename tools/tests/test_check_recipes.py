@@ -301,9 +301,9 @@ AT_LEAST = {
 }
 
 
-def test_the_real_manifest_reads_49_entries_including_the_brief_list():
+def test_the_real_manifest_reads_50_entries_including_the_brief_list():
     sole = load_sole_producers(GATES_YAML)
-    assert len(sole) == 49
+    assert len(sole) == 50
     assert sorted(set(AT_LEAST) - set(sole)) == []
     assert {o: sorted(sole[o][1]) for o, want in AT_LEAST.items() if want is not None and sorted(sole[o][1]) != sorted(want)} == {}
     assert sorted(o for o, (kind, _) in sole.items() if kind == "chemical") == [

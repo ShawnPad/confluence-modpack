@@ -428,7 +428,7 @@ def _planted(tmp_path, table, *swaps):
 
 def test_every_gates_row_is_classified(ctx):
     assert ctx["unclassified"] == []
-    assert (len(ctx["tier5"]), len(ctx["tier6"])) == (19, 16 + len(TIER6_DEFAULTS)), (ctx["tier5"], ctx["tier6"])
+    assert (len(ctx["tier5"]), len(ctx["tier6"])) == (19, 17 + len(TIER6_DEFAULTS)), (ctx["tier5"], ctx["tier6"])
 
 
 def test_a_planted_gates_row_is_unclassified(tmp_path):

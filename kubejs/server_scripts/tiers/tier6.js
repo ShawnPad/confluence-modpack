@@ -30,6 +30,12 @@ ServerEvents.recipes(event => {
   gate.replaceShaped(event, 'confluence:tier6/space_suit', IDS.adastra.spaceSuit,
     ['#E#', 'TOT', '#W#'], { '#': IDS.adastra.steelPlateTag, E: IDS.vanilla.elytra, T: IDS.adastra.gasTank, O: IDS.adastra.oxygenGear,
       W: IDS.vanilla.woolTag })
+  // v1.0 spec §7.1 (A15): the Netherite Space Suit. Default '# #' / TOT / #N# (adastra jar recipe/netherite_space_suit.json):
+  // the elytra fills the empty top-middle, so this suit no longer skips D128's elytra. One recipe makes the suit in the 0.3 dump
+  // (v1.0 plan Task 8 Step 1), so remove-by-output removes only Ad Astra's own. The jet suit consumes it (tier7.js).
+  gate.replaceShaped(event, 'confluence:tier6/netherite_space_suit', IDS.adastra.netheriteSpaceSuit,
+    ['#E#', 'TOT', '#N#'], { '#': IDS.adastra.ostrumPlateTag, E: IDS.vanilla.elytra, T: IDS.adastra.largeGasTank,
+      O: IDS.adastra.oxygenGear, N: IDS.vanilla.netheriteChestplate })
   // D6.3 Oxygen loader. Default #F# / G|G / #R# has no empty slot: Mekanism's electric pump replaces the redstone block R.
   gate.replaceShaped(event, 'confluence:tier6/oxygen_loader', IDS.adastra.oxygenLoader,
     ['#F#', 'G|G', '#P#'], { '#': IDS.adastra.steelPlateTag, F: IDS.adastra.fan, G: IDS.adastra.gasTank, '|': IDS.vanilla.lightningRod,

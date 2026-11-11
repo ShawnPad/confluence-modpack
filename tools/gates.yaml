@@ -63,6 +63,8 @@ gates:
   - confluence:tier6/etrium_ingot
   - confluence:tier6/etrium_plate
   - confluence:tier6/astral_focus
+  # v1.0 spec §7.1 (A15): the Netherite Space Suit (tiers/tier6.js)
+  - confluence:tier6/netherite_space_suit
   # v0.3 AE2: S5.1–S5.3 (tiers/tier5.js); S6.1–S6.2 (tiers/tier6.js); D107, D117
   - confluence:tier5/inscriber
   - confluence:tier5/charger
@@ -154,6 +156,8 @@ removed:
   - ad_astra:oxygen_loader
   - ad_astra:fuel_refinery
   - ad_astra:steel_engine
+  # v1.0 spec §7.1: removed by output (tiers/tier6.js)
+  - ad_astra:netherite_space_suit
   # v0.3 AE2: S5.1–S5.3 (tiers/tier5.js); S6.1–S6.2 (tiers/tier6.js); D107, D117. The ten AE2 defaults, removed by id.
   # The pattern provider's part <-> block conversions, the molecular assembler and the crafting and pattern encoding
   # terminals stay (D117; AE2 §3, §4.5; asserted under gates:)
@@ -212,6 +216,8 @@ sole_producers:
   ad_astra:etrium_ingot: [confluence:tier6/etrium_ingot]
   ad_astra:etrium_plate: [confluence:tier6/etrium_plate]
   kubejs:astral_focus: [confluence:tier6/astral_focus]
+  # v1.0 spec §7.1
+  ad_astra:netherite_space_suit: [confluence:tier6/netherite_space_suit]
   # v0.3 Space: Ad Astra defaults that stay, rockets, launch pad and the three later engines (D6.2); D118
   ad_astra:tier_1_rocket: [ad_astra:nasa_workbench/tier_1_rocket_from_nasa_workbench]
   ad_astra:tier_2_rocket: [ad_astra:nasa_workbench/tier_2_rocket_from_nasa_workbench]

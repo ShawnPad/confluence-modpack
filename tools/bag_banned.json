@@ -3,6 +3,7 @@
  "gated_outputs": [
  "ad_astra:fuel_refinery",
  "ad_astra:launch_pad",
+ "ad_astra:netherite_space_suit",
  "ad_astra:oxygen_loader",
  "ad_astra:space_suit",
  "ad_astra:steel_engine",
@@ -134,6 +135,7 @@
  "tier6_inputs": [
  "ad_astra:gas_tank",
  "ad_astra:glacian_fur",
+ "ad_astra:large_gas_tank",
  "ad_astra:oxygen_gear",
  "ad_astra:rocket_fin",
  "ad_astra:rocket_nose_cone",
@@ -479,6 +481,7 @@
  "chipped:woved_yellow_wool",
  "industrialforegoing:machine_frame/supreme",
  "minecraft:lightning_rod",
+ "minecraft:netherite_chestplate",
  "minecraft:wool"
  ]
 }
