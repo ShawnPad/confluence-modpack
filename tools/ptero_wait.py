@@ -14,8 +14,8 @@ lazy (_api), so `import ptero_wait` works without them (tools/tests/test_ptero_w
 `evidence` compares production with the local boot in <pack dir>/.run/server (v1.0 spec §4.2, §7.2, §9):
   - production's FTB Quests "Loaded ..." line and "confluence worldgen:" line must equal the local boot's, read from
     .run/server/logs/latest.log and .run/server/logs/kubejs/server.log (local_expectations), never hard-coded;
-  - production's logs/kubejs/server.log must hold both SKIP_LINES: start.sh never sets -Dconfluence.dev, so dump.js and
-    tagcheck.js must not run there (lib/dev.js);
+  - production's logs/kubejs/server.log must hold every SKIP_LINES line: start.sh never sets -Dconfluence.dev, so dump.js,
+    tagcheck.js and routeexport.js must not run there (lib/dev.js);
   - production's kubejs/exported/ must be absent, or hold no file modified after <since epoch>, the restart time.
 The rules are pure (problems, exported_problem), so a test can feed them made-up evidence.
 """
@@ -33,8 +33,9 @@ SERVER = "93ec4619"
 PTERO_DIR = os.path.expanduser("~/Documents/Projects/2-Homelab/pterodactyl")
 FTBQ = "[FTB Quests/]: Loaded"
 WORLDGEN = "confluence worldgen:"
-# lib/dev.js's callers log these when -Dconfluence.dev is unset (kubejs/server_scripts/dump.js, tagcheck.js).
-SKIP_LINES = ("confluence dump: skipped (confluence.dev unset)", "confluence tagcheck: skipped (confluence.dev unset)")
+# lib/dev.js's callers log these when -Dconfluence.dev is unset (kubejs/server_scripts/dump.js, tagcheck.js, routeexport.js).
+SKIP_LINES = ("confluence dump: skipped (confluence.dev unset)", "confluence tagcheck: skipped (confluence.dev unset)",
+              "confluence routeexport: skipped (confluence.dev unset)")   # routeexport.js: v1.0 plan Task 13
 _PT = []
 
 

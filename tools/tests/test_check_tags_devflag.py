@@ -25,7 +25,7 @@ def test_each_skip_line_is_one_problem():
 
 def test_script_skip_lines_match_the_deploy_check():
     """ptero_wait.SKIP_LINES (production evidence) must be logged verbatim by the scripts that skip."""
-    owner = {"confluence dump:": "dump.js", "confluence tagcheck:": "tagcheck.js"}
+    owner = {"confluence dump:": "dump.js", "confluence tagcheck:": "tagcheck.js", "confluence routeexport:": "routeexport.js"}
     assert len(SKIP_LINES) == len(owner)
     for line in SKIP_LINES:
         name = next(f for k, f in owner.items() if line.startswith(k))

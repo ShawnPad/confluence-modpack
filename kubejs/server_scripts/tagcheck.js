@@ -34,6 +34,12 @@
 // the members of every bound item tag, empty ones included, from the same walk. tools/check_recipes.py reads it to expand a
 // tag product (a recipe whose result is '#c:...' or {tag}) into the items it can give, and tools/check_tags.py checks that
 // each list is as long as tags.json's count and that every bound item tag is there, so the file is this boot's.
+//
+// v1.0 plan Task 13 (spec §6.1): it also writes kubejs/exported/block_tag_members.json, {"minecraft:block": {tag: [ids]}}, and
+// kubejs/exported/fluid_tag_members.json, {"minecraft:fluid": {...}, "mekanism:chemical": {...}}: the members of every tag of
+// those registries (TAGCHECK_ROUTE_REGISTRIES), from the same walk, for the route tools (tools/route_generated.py, bee flower
+// block tags; tools/check_route.py, fluid and chemical tag ingredients). routeexport.js writes the third route file,
+// ma_crops.json. tools/tests/test_route_exports.py checks each list against tags.json's count.
 
 // Rhino exposes a Java record component as a zero-arg method here, but KubeJS' type wrappers expose some as plain
 // properties; accept either shape rather than betting on one.
@@ -46,6 +52,9 @@ const TAGCHECK_component = (obj, name) => {
 const TAGCHECK_MEMBER_REGISTRY = 'minecraft:block'
 // Every tag of this registry has its members written, to its own file (see the header).
 const TAGCHECK_ITEM_REGISTRY = 'minecraft:item'
+// v1.0 (plan Task 13; spec §6.1): every tag of these registries also has its members written, for tools/check_route.py and
+// tools/route_generated.py (bee flower block tags; fluid and chemical tag ingredients). Same walk and member API as above.
+const TAGCHECK_ROUTE_REGISTRIES = { 'minecraft:block': true, 'minecraft:fluid': true, 'mekanism:chemical': true }
 const TAGCHECK_bare = t => (String(t).charAt(0) === '#' ? String(t).substring(1) : String(t))
 // The sorted registry ids of a tag's members (HolderSet.stream, Holder.getRegisteredName: see the header).
 const TAGCHECK_members = holders => {
@@ -68,6 +77,7 @@ else ServerEvents.loaded(event => {
   const wanted = TAGCHECK_memberTags()
   const members = {}
   const itemMembers = {}
+  const routeMembers = { 'minecraft:block': {}, 'minecraft:fluid': {}, 'mekanism:chemical': {} }
   let memberTags = 0
   let itemTags = 0
   let registries = 0
@@ -92,6 +102,7 @@ else ServerEvents.loaded(event => {
         itemMembers[id] = TAGCHECK_members(holders)
         itemTags++
       }
+      if (TAGCHECK_ROUTE_REGISTRIES[registryId] === true) routeMembers[registryId][id] = TAGCHECK_members(holders)
     })
     out[registryId] = counts
     registries++
@@ -103,6 +114,9 @@ else ServerEvents.loaded(event => {
   const itemOut = {}
   itemOut[TAGCHECK_ITEM_REGISTRY] = itemMembers
   JsonIO.write('kubejs/exported/item_tag_members.json', itemOut)
+  JsonIO.write('kubejs/exported/block_tag_members.json', { 'minecraft:block': routeMembers['minecraft:block'] })
+  JsonIO.write('kubejs/exported/fluid_tag_members.json',
+    { 'minecraft:fluid': routeMembers['minecraft:fluid'], 'mekanism:chemical': routeMembers['mekanism:chemical'] })
   console.log('confluence tagcheck: ' + tags + ' tags in ' + registries + ' registries (' + empty + ' bound-but-empty); members of ' +
     memberTags + ' ' + TAGCHECK_MEMBER_REGISTRY + ' tags and all ' + itemTags + ' ' + TAGCHECK_ITEM_REGISTRY + ' tags')
 })

@@ -499,8 +499,10 @@ def test_tagcheck_writes_exactly_the_files_the_checkers_read():
     server = check_tags.ROOT / ".run" / "server"
     scripts = check_tags.ROOT / "kubejs" / "server_scripts"
     written = {name: re.findall(r"JsonIO\.write\(\s*'([^']*)'", (scripts / name).read_text()) for name in ("tagcheck.js", "dump.js")}
+    # v1.0 plan Task 13: the two route member files are read by the route tools (spec §6.1), not by check_tags.py.
+    route = [server / "kubejs" / "exported" / "block_tag_members.json", server / "kubejs" / "exported" / "fluid_tag_members.json"]
     assert sorted(server / p for p in written["tagcheck.js"]) == sorted(
-        [check_tags.EXPORT, check_tags.MEMBERS, check_tags.ITEM_MEMBERS])
+        [check_tags.EXPORT, check_tags.MEMBERS, check_tags.ITEM_MEMBERS] + route)
     assert [server / p for p in written["dump.js"]] == [check_recipes.DUMP]
     assert check_recipes.ITEM_MEMBERS == check_tags.ITEM_MEMBERS
-    assert len(re.findall(r"JsonIO\.write\(", (scripts / "tagcheck.js").read_text())) == 3
+    assert len(re.findall(r"JsonIO\.write\(", (scripts / "tagcheck.js").read_text())) == 5
