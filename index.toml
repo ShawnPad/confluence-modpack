@@ -25,6 +25,10 @@ file = "config/ftbquests/quests/chapters/cataclysm.snbt"
 hash = "56e24cca2c89792c446dc41bc805844e5eb9a7fab6f97709e2ef93d59b124cff"
 
 [[files]]
+file = "config/ftbquests/quests/chapters/catalyst.snbt"
+hash = "1dab9fda2ca73cb4c93fe541f0e801d16a4ec27259f5445c866bb0312405d943"
+
+[[files]]
 file = "config/ftbquests/quests/chapters/end.snbt"
 hash = "bbc5b21cfe7e6df4775b55a19c783d4bb90c25314bf4920f9e9b83a70836dc62"
 
@@ -74,7 +78,7 @@ hash = "daed85b108619d4dd9044df7c0e38984dd6aa44b53e776cb493f453399776b3f"
 
 [[files]]
 file = "config/ftbquests/quests/lang/en_us.snbt"
-hash = "3854b493c02b2f32c865dd9d9c0faa01635c751fdb44e5fc62eba2fb18f1f868"
+hash = "975ab5219e4a276dbea59185eede6813fba12fc919249634a5d735a54a220a3d"
 
 [[files]]
 file = "config/ftbquests/quests/reward_tables/common_bag.snbt"
