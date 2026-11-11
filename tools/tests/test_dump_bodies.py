@@ -6,6 +6,7 @@ are imported, never copied:
   - test_mek_tier5: REWRITES + DEFAULTS (the six D113 rewrites and the Digital Miner, as view() tuples), T51_VIEW, KEY_VIEW,
     and CUSTOM_BODIES (M5.1, X5.1);
   - test_tier6_space_recipes: SHAPED (the five Space machines) and CUSTOM (Etrium ingot and plate, Astral Focus);
+  - test_tier7: SHAPED (the three X7.8 grid rows) and CUSTOM (the catalyst; v1.0 plan Task 9);
   - test_ae2_recipes: EXPECTED (the ten AE2 recipes) and CONVERSIONS (AE2's own pattern-provider conversions, kept);
   - test_bypass_v03: UNOB_BODIES (the X2.2 combining recipes).
 Not covered: the three v0.2 QIO recipes (test_mek_tier5 pins only their elite-circuit count, not a whole body).
@@ -45,6 +46,7 @@ import test_ae2_recipes as ae2
 import test_bypass_v03 as bypass
 import test_mek_tier5 as mek
 import test_tier6_space_recipes as space
+import test_tier7 as tier7
 from kjs import ROOT, ingredient
 
 DUMP_ENV = "CONFLUENCE_RECIPE_DUMP"
@@ -72,6 +74,14 @@ def strip(body):
     return {k: v for k, v in body.items() if not k.startswith(BOOKKEEPING)}
 
 
+# Iron's ItemStackMixin calls IPresetSpellContainer.initializeSpellContainer on every new ItemStack, so the result carries a
+# spell_container patch; Iron's own recipes in the dump carry it too (e.g. irons_spellbooks:priest_chestplate_crafting).
+ITEM_DEFAULT_COMPONENTS = {
+    "irons_spellbooks:netherite_spell_book": {"irons_spellbooks:spell_container": {
+        "mustEquip": True, "data": [], "maxSpells": 12, "spellWheel": True}},
+}
+
+
 def grid_view(body):
     """(type, category, pattern, key, (result id, count)) of a crafting-grid body, as the server builds the recipe (facts 1-3
     in the docstring). Keys are read strictly ({item} or {tag} only) and a result may hold only id and count."""
@@ -80,7 +90,9 @@ def grid_view(body):
     typ = body["type"]
     pattern = shrink(body["pattern"]) if typ in SHRUNK_TYPES else body["pattern"]
     result = body["result"]
-    assert set(result) <= {"id", "count"}, result
+    assert set(result) <= {"id", "count", "components"}, result
+    if "components" in result:   # only an item's own default components, pinned per id (v1.0 plan Task 9 deviation)
+        assert ITEM_DEFAULT_COMPONENTS.get(result["id"]) == result["components"], result
     return (typ, body.get("category", "misc"), pattern, {k: ingredient(v, json_only=True) for k, v in body["key"].items()},
             (result["id"], result.get("count", 1)))
 
@@ -100,11 +112,13 @@ def _grid_specs():
         specs[rid] = spec_view("kubejs:shaped", pattern, keys, (output, 1))
     for rid, (output, pattern, keys) in ae2.EXPECTED.items():
         specs[rid] = spec_view("kubejs:shaped", pattern, keys, (output, 1))
+    for rid, (output, pattern, keys) in tier7.SHAPED.items():
+        specs[rid] = spec_view("kubejs:shaped", pattern, keys, (output, 1))
     return specs
 
 
 GRID = _grid_specs()
-CUSTOM = {**mek.CUSTOM_BODIES, **space.CUSTOM, **ae2.CONVERSIONS, **bypass.UNOB_BODIES}
+CUSTOM = {**mek.CUSTOM_BODIES, **space.CUSTOM, **ae2.CONVERSIONS, **bypass.UNOB_BODIES, **tier7.CUSTOM}
 assert not set(GRID) & set(CUSTOM), sorted(set(GRID) & set(CUSTOM))
 
 
@@ -198,6 +212,18 @@ def test_grid_view_models_the_three_facts():
     for extra in ({"kubejs:mirror": False}, {"show_notification": False}, {"group": "g"}):
         with pytest.raises(AssertionError):
             grid_view({**body, **extra})
+    # A component is read only when it is the pinned default of that id: an extra or different one, or any on an unpinned id, fails.
+    pinned = "irons_spellbooks:netherite_spell_book"
+    comps = ITEM_DEFAULT_COMPONENTS[pinned]
+    pbody = {**body, "result": {"id": pinned, "count": 1, "components": comps}}
+    assert grid_view(pbody)[4] == (pinned, 1)
+    bad = ({"irons_spellbooks:spell_container": {**comps["irons_spellbooks:spell_container"], "maxSpells": 99}},
+           {**comps, "minecraft:damage": 1})
+    for c in bad:
+        with pytest.raises(AssertionError):
+            grid_view({**pbody, "result": {"id": pinned, "count": 1, "components": c}})
+    with pytest.raises(AssertionError):
+        grid_view({**body, "result": {"id": "m:o", "count": 2, "components": comps}})
     # A non-shrunk type is compared as written.
     mek_data = {**body, "type": "mekanism:mek_data"}
     assert grid_view(mek_data)[2] == ["   ", " A ", "   "]

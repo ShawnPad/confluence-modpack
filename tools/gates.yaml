@@ -99,6 +99,21 @@ gates:
   - allthemodium:unobtainium_ingot_from_raw_blasting
   - allthemodium:unobtainium_ingot_from_dust_smelting
   - allthemodium:unobtainium_ingot_from_dust_blasting
+  # v1.0 tier 7: X7.1-X7.8 (tiers/tier7.js; the drill is a kubejs/data override at IF's own id); v1.0 spec §3, D143, D144
+  - confluence:tier7/confluence_catalyst
+  - confluence:tier7/creative_energy_cube
+  - confluence:tier7/creative_chemical_tank
+  - confluence:tier7/creative_energy_cell
+  - confluence:tier7/energy_cell_creative
+  - confluence:tier7/creative_source_jar
+  - confluence:tier7/creative_essence
+  - confluence:tier7/creative_vending_upgrade
+  - confluence:tier7/netherite_spell_book
+  - confluence:tier7/adv_wireless_terminal
+  - confluence:tier7/jet_suit
+  - confluence:tier7/upgrade_productivity_4
+  - confluence:tier7/triple_bow
+  - industrialforegoing:dissolution_chamber/infinity_drill
 removed:
   # v0.1 tiers 0–2
   - minecraft:flint_and_steel
@@ -182,6 +197,11 @@ removed:
   - allthemodium:allthemodium_ingot_from_raw_smelting
   - allthemodium:vibranium_ingot_from_raw_smelting
   - allthemodium:unobtainium_ingot_from_raw_smelting
+  # v1.0 tier 7: the four X7.8 crafting defaults, removed by id (tiers/tier7.js); v1.0 spec §3.3-3.5, 3.7
+  - irons_spellbooks:netherite_spell_book
+  - toms_storage:adv_wireless_terminal
+  - ad_astra:jet_suit
+  - productivelib:upgrades/productivity_4
 sole_producers:
   # Each gated output -> exactly the recipe ids whose dump `json` body makes it (tools/check_recipes.py's producer rule, in
   # its docstring); [] means nothing may make it. An entry is an item unless written {kind: chemical, producers: [...]}.
@@ -268,3 +288,19 @@ sole_producers:
   allthemodium:unobtainium_ingot: [allthemodium:unobtainium_ingot, allthemodium:unobtainium_ingot_from_block,
     allthemodium:unobtainium_ingot_from_ore_blasting, allthemodium:unobtainium_ingot_from_raw_blasting,
     allthemodium:unobtainium_ingot_from_dust_smelting, allthemodium:unobtainium_ingot_from_dust_blasting]
+  # v1.0 tier 7: the catalyst, the seven creative items and the six X7.8 items, each made by its one tier-7 recipe (v1.0 spec
+  # §3.9). Confirmed against the plan-time dump: no producer of the catalyst or a creative output existed before v1.0.
+  kubejs:confluence_catalyst: [confluence:tier7/confluence_catalyst]
+  mekanism:creative_energy_cube: [confluence:tier7/creative_energy_cube]
+  mekanism:creative_chemical_tank: [confluence:tier7/creative_chemical_tank]
+  ae2:creative_energy_cell: [confluence:tier7/creative_energy_cell]
+  powah:energy_cell_creative: [confluence:tier7/energy_cell_creative]
+  ars_nouveau:creative_source_jar: [confluence:tier7/creative_source_jar]
+  mysticalagradditions:creative_essence: [confluence:tier7/creative_essence]
+  functionalstorage:creative_vending_upgrade: [confluence:tier7/creative_vending_upgrade]
+  irons_spellbooks:netherite_spell_book: [confluence:tier7/netherite_spell_book]
+  toms_storage:adv_wireless_terminal: [confluence:tier7/adv_wireless_terminal]
+  ad_astra:jet_suit: [confluence:tier7/jet_suit]
+  industrialforegoing:infinity_drill: [industrialforegoing:dissolution_chamber/infinity_drill]
+  productivelib:upgrade_productivity_4: [confluence:tier7/upgrade_productivity_4]
+  twilightforest:triple_bow: [confluence:tier7/triple_bow]

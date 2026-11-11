@@ -296,14 +296,16 @@ AT_LEAST = {
     **{f"allthemodium:{m}_crystal": [f"allthemodium:processing/{m}/crystal/from_slurry"] + [
         f"confluence:bypass/{m}_crystal_from_{x}" for x in ("ore", "raw_ore", "raw_block")]
        for m in ("allthemodium", "vibranium", "unobtainium")},
+    "kubejs:confluence_catalyst": ["confluence:tier7/confluence_catalyst"],
+    "industrialforegoing:infinity_drill": ["industrialforegoing:dissolution_chamber/infinity_drill"],
     **{f"allthemodium:dirty_{m}": [] for m in ("allthemodium", "vibranium", "unobtainium")},
     **{f"allthemodium:{m}_ingot": None for m in ("allthemodium", "vibranium", "unobtainium")},
 }
 
 
-def test_the_real_manifest_reads_50_entries_including_the_brief_list():
+def test_the_real_manifest_reads_64_entries_including_the_brief_list():
     sole = load_sole_producers(GATES_YAML)
-    assert len(sole) == 50
+    assert len(sole) == 64
     assert sorted(set(AT_LEAST) - set(sole)) == []
     assert {o: sorted(sole[o][1]) for o, want in AT_LEAST.items() if want is not None and sorted(sole[o][1]) != sorted(want)} == {}
     assert sorted(o for o, (kind, _) in sole.items() if kind == "chemical") == [
@@ -454,7 +456,7 @@ def test_a_listed_output_under_an_ingredient_key_of_an_unreviewed_type_is_an_unk
 
 def test_the_reviewed_consuming_types():
     assert check_recipes.CONSUMING_TYPES == {
-        "minecraft:crafting_shaped", "minecraft:crafting_shapeless", "kubejs:shaped", "minecraft:smithing_transform",
+        "minecraft:crafting_shaped", "minecraft:crafting_shapeless", "kubejs:shaped", "kubejs:shapeless", "minecraft:smithing_transform",
         "mekanism:combining", "mekanism:washing", "mekanism:mek_data", "industrialforegoing:dissolution_chamber",
         "ars_nouveau:enchanting_apparatus", "ad_astra:compressing", "ad_astra:nasa_workbench", "ae2:inscriber"}
 

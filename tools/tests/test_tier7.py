@@ -200,3 +200,114 @@ def test_x78_shaped_rows(recorded):
         c = one(recorded, rid)
         assert c["kind"] == "shaped", (rid, c["kind"])
         assert (c["output"], c["pattern"], c["key"]) == ({"id": output, "count": 1}, pattern, keys), rid
+
+
+# ---- the boot dump (plan Task 9; spec §3.9) ----
+DRILL_ID = "industrialforegoing:dissolution_chamber/infinity_drill"
+DRILL_FILE = ROOT / "kubejs" / "data" / "industrialforegoing" / "recipe" / "dissolution_chamber" / "infinity_drill.json"
+# Almost Unified's load-time rewrite of the drill's inputs, read from the 0.3 dump row of IF's default at plan time.
+AU_REWRITES = {json.dumps({"item": "minecraft:diamond_block"}, sort_keys=True): {"tag": "c:storage_blocks/diamond"}}
+# Spec §5 / CT §2: every creative item family in the pack (A14's FORBIDDEN alternatives).
+CREATIVE = re.compile(r"mekanism:creative_(energy_cube|chemical_tank|fluid_tank|bin)|ae2:creative_(energy_cell|storage_cell)"
+                      r"|powah:energy_cell_creative|ars_nouveau:creative_(source_jar|spell_book)|mysticalagradditions:creative_essence"
+                      r"|functionalstorage:(creative_vending_upgrade|max_storage_upgrade)|mysticalagriculture:creative_soulium_dagger"
+                      r"|sophisticated(backpacks|storage):(survival_)?infinity_upgrade|twilightforest:glass_sword")
+# CT §2: its input is the creative spell book itself (type ars_nouveau:dye), so it creates nothing.
+CREATIVE_EXEMPT = {"ars_nouveau:dye_creative_spell_book"}
+
+
+@pytest.fixture(scope="module")
+def dump_rows():
+    # Imported here, not at the top: test_dump_bodies imports this module (its tier-7 tables), so a top-level import would be
+    # circular whichever module pytest collects first.
+    from test_dump_bodies import DUMP, newest_kubejs_file, staleness
+    if not DUMP.is_file():
+        pytest.skip(f"{DUMP} does not exist (no server has been booted from this clone)")
+    stale = staleness(DUMP.stat().st_mtime, newest_kubejs_file())
+    if stale:
+        pytest.fail(stale)
+    return {r["id"]: r for r in json.loads(DUMP.read_text())}
+
+
+def body(rows, rid):
+    assert rid in rows and rows[rid].get("json"), f"{rid} has no body in the dump"
+    return json.loads(rows[rid]["json"])
+
+
+def unwrap_au(b):
+    """The body with Almost Unified's runtime form undone: each almostunified:conditional condition replaced by its
+    original_conditions, and AU_REWRITES applied to each input."""
+    b = json.loads(json.dumps(b))
+    conds = []
+    for c in b.get("neoforge:conditions", []):
+        conds.extend(c["original_conditions"] if c.get("type") == "almostunified:conditional" else [c])
+    if "neoforge:conditions" in b:
+        b["neoforge:conditions"] = conds
+    if "input" in b:
+        b["input"] = [AU_REWRITES.get(json.dumps(i, sort_keys=True), i) for i in b["input"]]
+    return b
+
+
+def test_every_x72_to_x78_body_holds_the_catalyst(dump_rows):
+    for rid in [*SHAPELESS, *SHAPED, DRILL_ID]:
+        assert CATALYST in dump_rows[rid]["json"], rid
+
+
+def test_catalyst_body_is_a2(dump_rows):
+    b = body(dump_rows, "confluence:tier7/confluence_catalyst")
+    want = CUSTOM["confluence:tier7/confluence_catalyst"]
+    assert b["type"] == want["type"] and b["sourceCost"] == 0 and b["reagent"] == want["reagent"], b
+    assert Counter(ingredient(i, json_only=True) for i in b["pedestalItems"]) == Counter(
+        ingredient(i, json_only=True) for i in want["pedestalItems"]), b["pedestalItems"]
+
+
+def test_shapeless_bodies_are_the_table(dump_rows):
+    """The loaded type of a gate.shapeless row is read from the dump, not assumed; inputs and result must be the table's."""
+    for rid, (output, inputs) in SHAPELESS.items():
+        b = body(dump_rows, rid)
+        assert b["type"] in ("kubejs:shapeless", "minecraft:crafting_shapeless"), (rid, b["type"])
+        assert Counter(ingredient(i, json_only=True) for i in b["ingredients"]) == Counter(inputs), rid
+        assert b["result"]["id"] == output and b["result"].get("count", 1) == 1, (rid, b["result"])
+
+
+def test_drill_override_is_spec_36_and_loaded_as_written(dump_rows):
+    ours = json.loads(DRILL_FILE.read_text())
+    assert ours["inputFluid"] == {"amount": 2000, "fluid": "industrialforegoing:pink_slime"} and ours["processingTime"] == 400
+    assert ours["output"] == {"components": {"industrialforegoing:infinity_can_charge": True,
+                                             "industrialforegoing:infinity_item_power": 0,
+                                             "industrialforegoing:infinity_item_selected_tier": "poor",
+                                             "industrialforegoing:infinity_item_special": False},
+                              "count": 1, "id": "industrialforegoing:infinity_drill"}
+    assert Counter(ingredient(i, json_only=True) for i in ours["input"]) == Counter({
+        "minecraft:diamond_block": 3, "minecraft:diamond_shovel": 1, "industrialforegoing:range_addon_tier_11": 1,
+        "#c:gears/gold": 2, CATALYST: 1})
+    loaded = unwrap_au(body(dump_rows, DRILL_ID))
+    written = unwrap_au(ours)
+    for key in sorted(set(written) | set(loaded)):
+        if key == "input":
+            assert Counter(json.dumps(i, sort_keys=True) for i in loaded[key]) == Counter(
+                json.dumps(i, sort_keys=True) for i in written[key]), loaded[key]
+        else:
+            assert loaded.get(key) == written.get(key), key
+
+
+def test_no_stray_creative_producer(dump_rows):
+    """No dump row makes a creative id unless gates.yaml sole_producers names it as that id's producer (CREATIVE_EXEMPT aside)."""
+    import sys
+    sys.path.insert(0, str(ROOT / "tools"))
+    from check_recipes import MANIFEST, load_sole_producers, products
+    sole = load_sole_producers(MANIFEST)
+    stray, seen = [], set()
+    for rid, row in dump_rows.items():
+        if not row.get("json") or rid in CREATIVE_EXEMPT:
+            continue
+        for item in products(json.loads(row["json"]))[0]:
+            if CREATIVE.fullmatch(item):
+                seen.add(item)
+                if rid not in sole.get(item, ("item", []))[1]:
+                    stray.append((rid, item))
+    assert stray == []
+    # The scan is live: it saw the seven creative outputs, and the exemption names a row that still exists.
+    assert {o for _, (o, _) in SHAPELESS.items() if CREATIVE.fullmatch(o)} <= seen
+    assert len({o for o in seen if o in sole}) >= 7
+    assert all(dump_rows.get(rid, {}).get("json") for rid in CREATIVE_EXEMPT), "the exempt row is gone from the dump"

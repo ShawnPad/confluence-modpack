@@ -88,6 +88,12 @@ TIER6_DEFAULTS = (
     "ad_astra:space_helmet", "ad_astra:space_pants", "ad_astra:space_boots",
     "ae2:network/crafting/molecular_assembler", "ae2:network/parts/terminals_pattern_encoding",
 )
+# Tier 7 (v1.0 spec §5, A13): the pack's tier-7 recipes and the Infinity Drill override at IF's own id (spec §3.6).
+TIER7_PREFIXES = ("confluence:tier7/",)
+T7_OVERRIDE = "industrialforegoing:dissolution_chamber/infinity_drill"
+# The one tier-7 recipe whose inputs are tier-7 gate inputs (A13): the catalyst. The rest of each X7.2-X7.8 recipe is the mod's
+# default and is not a gate input.
+CATALYST_RECIPE = "confluence:tier7/confluence_catalyst"
 # Shipped tiers (v0.1-v0.2): tiers 1-4, the Allthemodium and Vibranium bypass crystals, the advanced frame (v0.2's T4.1
 # override), and Task 8's kept Allthemodium (tier 2) and Vibranium (tier 3) ingot recipes.
 SHIPPED = ("confluence:tier1/", "confluence:tier2/", "confluence:tier3/", "confluence:tier4/",
@@ -130,11 +136,12 @@ PRE_CODES = ("allowed", "banned", "gated", "in5", "in6")
 
 
 def classify(gates):
-    """(tier-5 recipe ids, tier-6 recipe ids, unclassified gates rows). Tier 6 includes TIER6_DEFAULTS."""
+    """(tier-5 recipe ids, tier-6 recipe ids, tier-7 recipe ids, unclassified gates rows). Tier 6 includes TIER6_DEFAULTS."""
     tier5 = sorted({g for g in gates if g.startswith(TIER5_PREFIXES)} | {T5_OVERRIDE} | set(KEPT_T5))
     tier6 = sorted({g for g in gates if g.startswith(TIER6_PREFIXES)} | set(KEPT_T6) | set(TIER6_DEFAULTS))
-    unclassified = [g for g in gates if g not in tier5 and g not in tier6 and not g.startswith(SHIPPED)]
-    return tier5, tier6, unclassified
+    tier7 = sorted({g for g in gates if g.startswith(TIER7_PREFIXES)} | {T7_OVERRIDE})
+    unclassified = [g for g in gates if g not in tier5 and g not in tier6 and g not in tier7 and not g.startswith(SHIPPED)]
+    return tier5, tier6, tier7, unclassified
 
 
 def refs(body):
@@ -284,8 +291,8 @@ def base_materials(members):
 
 def build(rows, members, gates, sole):
     """Everything the checks read, from the dump rows ({id: row}), the item-tag members, the gates: rows and sole_producers."""
-    tier5, tier6, unclassified = classify(gates)
-    missing = [i for i in tier5 + tier6 if not rows.get(i, {}).get("json")]
+    tier5, tier6, tier7, unclassified = classify(gates)
+    missing = [i for i in tier5 + tier6 + tier7 if not rows.get(i, {}).get("json")]
     if missing:
         return {"missing": missing}
     base = base_materials(members)
@@ -295,7 +302,7 @@ def build(rows, members, gates, sole):
     gated = {out for out, (kind, producers) in sole.items() if kind == "item" and t56 & set(producers)}
     graph = single_ingredient_edges(rows, members, skip=t56)
     pre = precursor_closure(graph, lambda i: own_codes(i, in5, in6, gated), ends=base)
-    return {"missing": [], "tier5": tier5, "tier6": tier6, "unclassified": unclassified, "in5": in5, "in6": in6,
+    return {"missing": [], "tier5": tier5, "tier6": tier6, "tier7": tier7, "unclassified": unclassified, "in5": in5, "in6": in6,
             "gated": gated, "graph": graph, "pre": pre, "base": base}
 
 
@@ -428,16 +435,17 @@ def _planted(tmp_path, table, *swaps):
 
 def test_every_gates_row_is_classified(ctx):
     assert ctx["unclassified"] == []
-    assert (len(ctx["tier5"]), len(ctx["tier6"])) == (19, 17 + len(TIER6_DEFAULTS)), (ctx["tier5"], ctx["tier6"])
+    assert (len(ctx["tier5"]), len(ctx["tier6"]), len(ctx["tier7"])) == (19, 17 + len(TIER6_DEFAULTS), 14), (
+        ctx["tier5"], ctx["tier6"], ctx["tier7"])
 
 
 def test_a_planted_gates_row_is_unclassified(tmp_path):
     text = MANIFEST.read_text()
     assert len(re.findall(r"^gates:\n", text, re.M)) == 1
     planted = tmp_path / "gates.yaml"
-    planted.write_text(re.sub(r"^gates:\n", "gates:\n  - confluence:tier7/planted\n", text, flags=re.M))
+    planted.write_text(re.sub(r"^gates:\n", "gates:\n  - confluence:tier8/planted\n", text, flags=re.M))
     gates, _ = load_manifest(planted)
-    assert classify(gates)[2] == ["confluence:tier7/planted"]
+    assert classify(gates)[3] == ["confluence:tier8/planted"]
 
 
 # ---- (a)-(e) on the shipped tables ----

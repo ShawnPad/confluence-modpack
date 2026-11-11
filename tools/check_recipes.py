@@ -226,8 +226,10 @@ INGREDIENT_KEYS = frozenset({
 # coordinator; the 0.3 dump names a listed output under an ingredient key (other than `type`) only in rows of these types
 # (ae2:inscriber names one only as its `type`). A listed output named under an ingredient key of any other type fails as
 # UNKNOWN SHAPE: an inverted type (chipped:workbench, twilightforest:uncrafting) keeps its products there.
+# v1.0 Task 9 added kubejs:shapeless (KubeJS's serialisation of crafting_shapeless: ingredients consumed, result is the
+# product; only confluence:tier3/ritual_brazier and the 9 tier-7 rows load as it).
 CONSUMING_TYPES = frozenset({
-    "minecraft:crafting_shaped", "minecraft:crafting_shapeless", "kubejs:shaped", "minecraft:smithing_transform",
+    "minecraft:crafting_shaped", "minecraft:crafting_shapeless", "kubejs:shaped", "kubejs:shapeless", "minecraft:smithing_transform",
     "mekanism:combining", "mekanism:washing", "mekanism:mek_data", "industrialforegoing:dissolution_chamber",
     "ars_nouveau:enchanting_apparatus", "ad_astra:compressing", "ad_astra:nasa_workbench", "ae2:inscriber",
 })
