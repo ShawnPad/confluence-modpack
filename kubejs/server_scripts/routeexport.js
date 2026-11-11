@@ -1,11 +1,15 @@
 // Dev-only route export (v1.0 spec §6.1 "sources: (generated)", §10 item 12; v1.0 plan Task 13). Writes
-// kubejs/exported/ma_crops.json, {crops: [{id, enabled, seeds, essence, crux, material, biomes}]}: every Mystical Agriculture
+// kubejs/exported/ma_crops.json, {crops: [{id, enabled, seeds, essence, crux, material,
+// biomes, tier_essence, crafting_seed}]}: every Mystical Agriculture
 // crop the registry holds (Agradditions registers into the same registry), for tools/route_generated.py. Runs only with
 // -Dconfluence.dev=true (lib/dev.js), like dump.js and tagcheck.js; production logs the skip line instead.
 // API (MysticalAgriculture-1.21.1-8.0.28.jar, javap): com.blakebr0.mysticalagriculture.api.MysticalAgricultureAPI
 //   .getCropRegistry() -> ICropRegistry; .getCrops() -> List<Crop>; Crop.getId() ResourceLocation, isEnabled(),
 //   getSeedsItem(), getEssenceItem(), getCruxBlock() (Block, null when the crop has none), getLazyIngredient() ->
 //   LazyIngredient.getId() String (null for EMPTY), isTag(); getRequiredBiomes() -> Set<ResourceLocation>.
+// tier_essence / crafting_seed: what MA's crop-component ingredient matches for `essence` and `seed`
+//   (crafting/ingredient/CropComponentIngredient bytecode: Crop.getTier() -> CropTier.getEssence() Item;
+//   Crop.getType() -> CropType.getCraftingSeed() Item). Null when the tier, type or item is missing (Task 15 review C1).
 // Ids: net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(item). KubeJS's class filter allows both packages
 // (ClassFilter.isAllowed0 allows any class no deny rule names; v1.0 plan Task 13).
 // JsonIO.write(Path, JsonElement) (kubejs-neoforge-2101.7.2-build.377.jar, javap): the JS object reaches it through
@@ -24,6 +28,10 @@ else ServerEvents.loaded(event => {
     const biomes = []
     crop.getRequiredBiomes().forEach(b => { biomes.push(String(b)) })
     biomes.sort()
+    const tier = crop.getTier()
+    const tierEssence = tier ? tier.getEssence() : null
+    const type = crop.getType()
+    const craftingSeed = type ? type.getCraftingSeed() : null
     out.push({
       id: String(crop.getId()),
       enabled: crop.isEnabled() == true,
@@ -32,6 +40,8 @@ else ServerEvents.loaded(event => {
       crux: cruxItem === 'minecraft:air' ? null : cruxItem,
       material: lazyId ? { id: String(lazyId), tag: lazy.isTag() == true } : null,
       biomes: biomes,
+      tier_essence: tierEssence ? String(registries.ITEM.getKey(tierEssence)) : null,
+      crafting_seed: craftingSeed ? String(registries.ITEM.getKey(craftingSeed)) : null,
     })
   })
   JsonIO.write('kubejs/exported/ma_crops.json', { crops: out })

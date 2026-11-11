@@ -19,7 +19,7 @@ TAGCHECK = ROOT / "kubejs" / "server_scripts" / "tagcheck.js"
 EXPORTED_ENV = "CONFLUENCE_EXPORTED_DIR"
 EXPORTED = Path(os.environ[EXPORTED_ENV]).resolve() if os.environ.get(EXPORTED_ENV) else (
     ROOT / ".run" / "server" / "kubejs" / "exported")
-CROP_KEYS = ["biomes", "crux", "enabled", "essence", "id", "material", "seeds"]
+CROP_KEYS = ["biomes", "crafting_seed", "crux", "enabled", "essence", "id", "material", "seeds", "tier_essence"]
 
 
 def test_routeexport_is_behind_the_dev_flag():
@@ -76,6 +76,12 @@ def test_ma_crops_export(exported):
     assert len(ids) == len(set(ids)), f"duplicate crop ids: {sorted({i for i in ids if ids.count(i) > 1})[:5]}"
     assert any(i.startswith("mysticalagradditions:") for i in ids), "no Mystical Agradditions crop in the registry export"
     assert not [c["id"] for c in crops if c["crux"] == "minecraft:air"], "a crux exported as minecraft:air, not null"
+    # What MA's crop-component ingredient matches for `essence` and `seed` (CropComponentIngredient: Crop.getTier().getEssence(),
+    # Crop.getType().getCraftingSeed(); Task 15 review C1). Iron at the Task 15 dev boot:
+    iron = next(c for c in crops if c["id"] == "mysticalagriculture:iron")
+    assert (iron["tier_essence"], iron["crafting_seed"]) == ("mysticalagriculture:tertium_essence",
+                                                             "mysticalagriculture:prosperity_seed_base"), iron
+    assert not [c["id"] for c in crops if c["enabled"] and not (c["tier_essence"] and c["crafting_seed"])]
 
 
 @pytest.mark.parametrize("name, registries", [
