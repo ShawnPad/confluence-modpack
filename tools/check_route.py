@@ -477,9 +477,13 @@ def run_checks(inp, ban=frozenset(), disable=frozenset()):
         counts["reachable" if ok else "unreachable"] += 1
         if not ok:
             fails.append(f"UNREACHABLE {n} ({p}): " + ", ".join(blockers(model, full, p, ban)))
+    ctx = Ctx(model, srcs, refs, products, nodes, frozenset(ban), frozenset(disable))
+    fails += skippable_checks(ctx, checked, counts)
+    fails += early_checks(ctx, trunk, counts)
     qo, roots_used = quest_order(inp.chapters, {n for e in srcs["accepted"] if e["code"] == "QUEST_ORDER"
                                                 for n in _nodes(e)})
     fails += qo
+    fails += accepted_checks(ctx, checked, tree, leaves, fired, roots_used)
     kinds = sorted({(code, t) for code, t, _, _ in model.unmodelled})
     for code, t in kinds:
         rids = sorted(rid for c, tt, rid, _ in model.unmodelled if (c, tt) == (code, t))
@@ -493,6 +497,150 @@ def run_checks(inp, ban=frozenset(), disable=frozenset()):
 
 def _nodes(entry):
     return entry["node"] if isinstance(entry["node"], list) else [entry["node"]]
+
+
+@dataclass
+class Ctx:
+    """What SKIPPABLE, EARLY and ACCEPTED_UNUSED share: the model, the bans of every run, and each checked node's refs."""
+    model: object
+    srcs: dict
+    refs: dict
+    products: dict
+    nodes: dict
+    ban: frozenset
+    disable: frozenset
+    soft: set = field(default_factory=set)
+    by_node: dict = field(default_factory=dict)      # tree node -> keys of the sources whose node: it is
+    cache: dict = field(default_factory=dict)
+
+    def __post_init__(self):
+        self.soft = {(s["node"], s["ref"]) for s in self.srcs["soft_refs"]}
+        for s in self.srcs["sources"]:
+            if s.get("node"):
+                self.by_node.setdefault(s["node"], set()).add(s["key"])
+
+    def run(self, ban, disable):
+        key = (frozenset(ban), frozenset(disable))
+        if key not in self.cache:
+            self.cache[key] = fixpoint(self.model, *key)
+        return self.cache[key]
+
+    def accepted_units(self, code, node, but=None):
+        """The units of every accepted `code` route for `node`, except entry `but` (whose own units stay on)."""
+        out = set()
+        for e in self.srcs["accepted"]:
+            if e["code"] == code and e is not but and node in _nodes(e):
+                out |= set(e["route"])
+        return out - set(but["route"] if but else ())
+
+    def gate_refs(self, n):
+        """(ref, its product) for each non-soft gate ref of n that has a product."""
+        return [(r, self.products[r]) for r in self.refs.get(n, []) if (n, r) not in self.soft and self.products.get(r)]
+
+    def skip_runs(self, n, off):
+        """(ref, product, (reached, fired)) for each gate ref R of n: R's product banned, R's own sources and `off` disabled."""
+        return [(r, rp, self.run(self.ban | {rp}, self.disable | self.by_node.get(r, set()) | off))
+                for r, rp in self.gate_refs(n)]
+
+    def first_tiers(self, off):
+        """({token: first dimension tier it is reached at}, {tier: units that ran}): a tier-k run closes every dimension of a
+        higher tier."""
+        first, fired_at = {}, {}
+        for k in sorted({d["tier"] for d in self.srcs["dimensions"]}):
+            closed = {"dim:" + d["id"] for d in self.srcs["dimensions"] if d["tier"] > k}
+            reached, fired_at[k] = self.run(self.ban | closed, self.disable | off)
+            for t in reached:
+                first.setdefault(t, k)
+        return first, fired_at
+
+    def early(self, n, first):
+        """(n's first tier, (ref tier, ref)) when n is reached before its latest gate ref, else None. TOP is skipped."""
+        if tree_tier(n) >= TOP_TIER or not self.nodes[n]["reachable"]:
+            return None
+        ft = first.get(self.nodes[n]["product"])
+        ref_ft = [(first[rp], r) for r, rp in self.gate_refs(n) if rp in first]
+        if ft is None or not ref_ft or ft >= max(ref_ft)[0]:
+            return None
+        return ft, max(ref_ft)
+
+
+def skippable_checks(ctx, checked, counts):
+    """SKIPPABLE: N still reachable with a gate ref's product banned, the ref's own sources and every accepted SKIPPABLE route
+    for N disabled, so an accepted route cannot hide a second one (spec §6.1)."""
+    fails = []
+    for n in checked:
+        if not ctx.nodes[n]["reachable"]:
+            continue
+        p = ctx.nodes[n]["product"]
+        for r, rp, (got, _) in ctx.skip_runs(n, ctx.accepted_units("SKIPPABLE", n)):
+            if p in got:
+                ctx.nodes[n]["skippable_by"].append(r)
+                ban = ctx.ban | {rp}
+                fails.append(f"SKIPPABLE {n} without [{r}] ({rp}): " + " ".join(explain(ctx.model, got, p, ban)[1]))
+        if ctx.nodes[n]["skippable_by"]:
+            counts["skippable"] += 1
+    return fails
+
+
+def early_checks(ctx, trunk, counts):
+    """EARLY: N's first tier is below the highest first tier of its (non-soft) gate refs' products, not N's tree tier; accepted
+    EARLY routes are disabled in these runs (spec §6.1). The top tier adds no dimension and is skipped."""
+    off = set()
+    for e in ctx.srcs["accepted"]:
+        if e["code"] == "EARLY":
+            off |= set(e["route"])
+    first, _ = ctx.first_tiers(off)
+    for n in ctx.nodes:
+        ctx.nodes[n]["first_tier"] = first.get(ctx.nodes[n]["product"])
+    fails = []
+    for n in sorted(trunk):
+        hit = ctx.early(n, first)
+        if hit:
+            counts["early"] += 1
+            fails.append(f"EARLY {n}: reachable at tier {hit[0]}, before its gate ref [{hit[1][1]}] (tier {hit[1][0]})")
+    return fails
+
+
+def accepted_checks(ctx, checked, tree, leaves, fired, roots_used):
+    """ACCEPTED_UNUSED: an accepted route that is empty or has a unit that never runs in the full fixpoint; a SKIPPABLE/EARLY
+    route that no longer reaches its node on its own (its node's other accepted routes of that code off, the route's units all
+    run, and the node is reached without a gate ref / before its gate refs); an accepted QUEST_ORDER root that no chain reaches;
+    or a soft_refs pair that is no longer a gate ref."""
+    fails = []
+    for e in ctx.srcs["accepted"]:
+        head = f"ACCEPTED_UNUSED {'/'.join(_nodes(e))} {e['code']} ({e['decision']}): "
+        if e["code"] == "QUEST_ORDER":
+            for n in _nodes(e):
+                if n not in roots_used:
+                    fails.append(f"ACCEPTED_UNUSED {n} QUEST_ORDER ({e['decision']}): not a dep-less quest on {TOP}'s chains")
+            continue
+        if not e["route"]:
+            fails.append(head + "empty route")
+            continue
+        idle = [u for u in e["route"] if u not in fired]
+        if idle:
+            fails.append(head + ", ".join(f"{u} never runs" for u in idle))
+            continue
+        route = set(e["route"])
+        for n in _nodes(e):
+            if n not in ctx.nodes or n not in checked:
+                fails.append(head + "not a trunk node or tier-7 leaf")
+                continue
+            p = ctx.nodes[n]["product"]
+            off = ctx.accepted_units(e["code"], n, but=e)
+            if e["code"] == "SKIPPABLE":
+                ok = any(p in got and route <= ran for _, _, (got, ran) in ctx.skip_runs(n, off))
+                if not ok:
+                    fails.append(head + f"does not reach {n} without any gate ref on its own")
+            elif e["code"] == "EARLY":
+                first, fired_at = ctx.first_tiers(off)
+                hit = ctx.early(n, first)
+                if not (hit and route <= fired_at[hit[0]]):
+                    fails.append(head + f"does not reach {n} before its gate refs on its own")
+    for s in ctx.srcs["soft_refs"]:
+        if s["ref"] not in tree.get(s["node"], []) and not (s["node"] in leaves and s["ref"] == TOP):
+            fails.append(f"ACCEPTED_UNUSED soft_ref {s['node']} -> {s['ref']}: not one of its gate refs")
+    return fails
 
 
 def staleness_problems(exports, newest):

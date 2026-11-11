@@ -282,3 +282,133 @@ def test_stale_compares_with_the_newest_input(tmp_path, monkeypatch):
         "STALE ma_crops.json missing (boot with tools/server_boot.sh first)"]
     rep = run_checks(inp)
     assert rep.summary == "route: not run (3 export problems)" and rep.model is None
+
+
+# --- Task 17: SKIPPABLE, EARLY, ACCEPTED_UNUSED, CLI ---------------------------------------------------------------------
+
+def test_first_tier_and_json_row():
+    rep = run_checks(world())
+    assert rep.nodes["T1.1"] == {"product": "x:gem", "reachable": True, "first_tier": 1,
+                                 "witness": ["r:gem", "blaze", "dim:minecraft:the_nether#0", "r:fas"], "skippable_by": []}
+    assert rep.nodes["D0.1"]["first_tier"] == 0
+
+
+def test_a_bypass_is_skippable_and_early():
+    rep = run_checks(world(rows=ROWS + [BYPASS]))
+    assert "SKIPPABLE T1.1 without [D1.1] (dim:minecraft:the_nether): r:cheap_gem" in rep.failures
+    assert "EARLY T1.1: reachable at tier 0, before its gate ref [D1.1] (tier 1)" in rep.failures
+    assert rep.nodes["T1.1"]["skippable_by"] == ["D1.1"]
+
+
+def test_a_leaf_without_the_catalyst_is_skippable():
+    rows = ROWS + [shapeless("r:free", "x:creative", "minecraft:stick")]
+    rep = run_checks(world(rows=rows))
+    assert "SKIPPABLE X7.2 without [X7.1] (kubejs:confluence_catalyst): r:free" in rep.failures
+
+
+def test_accepted_routes_clear_skippable_and_early():
+    accepted = [{"node": "T1.1", "code": "SKIPPABLE", "route": ["r:cheap_gem"], "decision": "D1"},
+                {"node": "T1.1", "code": "EARLY", "route": ["r:cheap_gem"], "decision": "D1"}]
+    rep = run_checks(world(rows=ROWS + [BYPASS], sources=edited(accepted=accepted)))
+    assert rep.failures == []
+
+
+def test_accepted_unused():
+    accepted = [{"node": "T1.1", "code": "SKIPPABLE", "route": ["r:nope"], "decision": "D2"},
+                {"node": "D4.3", "code": "QUEST_ORDER", "route": [], "decision": "D3"}]
+    soft = SOURCES["soft_refs"] + [{"node": "T1.1", "ref": "D0.1", "cite": "t"}]
+    rep = run_checks(world(sources=edited(accepted=accepted, soft_refs=soft)))
+    assert rep.failures == ["ACCEPTED_UNUSED T1.1 SKIPPABLE (D2): r:nope never runs",
+                            "ACCEPTED_UNUSED D4.3 QUEST_ORDER (D3): not a dep-less quest on X7.1's chains",
+                            "ACCEPTED_UNUSED soft_ref T1.1 -> D0.1: not one of its gate refs"]
+
+
+def test_main_prints_and_writes_json(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(check_route, "load_inputs", lambda include_sources=True: world(rows=ROWS + [BYPASS]))
+    out = tmp_path / "route.json"
+    assert check_route.main(["--json", str(out), "--explain", "x:gem"]) == 1
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[0] == "x:gem <- r:cheap_gem"
+    assert lines[2] == "route: 5 trunk nodes, 5 reachable, 0 unreachable, 1 skippable, 1 early, 0 unmodelled types"
+    assert json.loads(out.read_text())["T1.1"]["skippable_by"] == ["D1.1"]
+
+
+def test_cli_ban_and_disable_reach_every_run(monkeypatch, capsys):
+    """--disable removes a unit and --ban a token in the full run and in every SKIPPABLE/EARLY re-run (spec §7.5)."""
+    monkeypatch.setattr(check_route, "load_inputs", lambda include_sources=True: world(rows=ROWS + [BYPASS]))
+    assert check_route.main(["--disable", "r:cheap_gem"]) == 0
+    assert capsys.readouterr().out.splitlines()[0].endswith("0 skippable, 0 early, 0 unmodelled types")
+    assert check_route.main(["--ban", "minecraft:stick"]) == 1    # no bypass, no leaf: X7.2 unreachable
+    out = capsys.readouterr().out
+    assert "1 unreachable, 0 skippable, 0 early" in out and "UNREACHABLE X7.2 (x:creative)" in out
+
+
+def test_empty_accepted_routes_are_unused():
+    """A SKIPPABLE or EARLY entry with `route: []` disables nothing and accepts nothing: ACCEPTED_UNUSED."""
+    accepted = [{"node": "T1.1", "code": "SKIPPABLE", "route": [], "decision": "D7"},
+                {"node": "T1.1", "code": "EARLY", "route": [], "decision": "D8"}]
+    rep = run_checks(world(rows=ROWS + [BYPASS], sources=edited(accepted=accepted)))
+    assert "ACCEPTED_UNUSED T1.1 SKIPPABLE (D7): empty route" in rep.failures
+    assert "ACCEPTED_UNUSED T1.1 EARLY (D8): empty route" in rep.failures
+    # and the bypass itself is still reported: an empty route hides nothing
+    assert "SKIPPABLE T1.1 without [D1.1] (dim:minecraft:the_nether): r:cheap_gem" in rep.failures
+    assert any(f.startswith("EARLY T1.1:") for f in rep.failures)
+
+
+# A second Overworld gem. It needs the stick too, so in the fixpoint it fires after r:cheap_gem: a run that left the accepted
+# r:cheap_gem on would name r:cheap_gem as the witness, not r:cheap_gem2.
+CHEAP2 = shapeless("r:cheap_gem2", "x:gem", "minecraft:flint", "minecraft:stick")
+
+
+def test_an_accepted_route_does_not_hide_a_second_one():
+    """SKIPPABLE and EARLY disable N's accepted routes in their re-runs, so an unaccepted second bypass is still reported,
+    with its own witness (spec §6.1 revised)."""
+    accepted = [{"node": "T1.1", "code": "SKIPPABLE", "route": ["r:cheap_gem"], "decision": "D1"},
+                {"node": "T1.1", "code": "EARLY", "route": ["r:cheap_gem"], "decision": "D1"}]
+    rep = run_checks(world(rows=ROWS + [BYPASS, CHEAP2], sources=edited(accepted=accepted)))
+    assert rep.failures == ["SKIPPABLE T1.1 without [D1.1] (dim:minecraft:the_nether): r:cheap_gem2",
+                            "EARLY T1.1: reachable at tier 0, before its gate ref [D1.1] (tier 1)"]
+
+
+def test_each_accepted_route_must_still_bypass_on_its_own():
+    """An accepted SKIPPABLE/EARLY route whose units all run but which no longer reaches its node without the gate (or before
+    it), with the node's other accepted routes off, is ACCEPTED_UNUSED. Two real bypasses, both accepted, each pass alone."""
+    accepted = [{"node": "T1.1", "code": "SKIPPABLE", "route": ["r:gem", "blaze"], "decision": "D9"},
+                {"node": "T1.1", "code": "EARLY", "route": ["r:gem"], "decision": "D9"}]
+    rep = run_checks(world(sources=edited(accepted=accepted)))
+    assert rep.failures == ["ACCEPTED_UNUSED T1.1 SKIPPABLE (D9): does not reach T1.1 without any gate ref on its own",
+                            "ACCEPTED_UNUSED T1.1 EARLY (D9): does not reach T1.1 before its gate refs on its own"]
+    both = [{"node": "T1.1", "code": c, "route": [rid], "decision": d}
+            for c in ("SKIPPABLE", "EARLY") for rid, d in (("r:cheap_gem", "D1"), ("r:cheap_gem2", "D5"))]
+    assert run_checks(world(rows=ROWS + [BYPASS, CHEAP2], sources=edited(accepted=both))).failures == []
+
+
+def test_an_accepted_route_for_an_unchecked_node_is_unused():
+    accepted = [{"node": "Z9.9", "code": "SKIPPABLE", "route": ["r:gem"], "decision": "D6"}]
+    assert run_checks(world(sources=edited(accepted=accepted))).failures == [
+        "ACCEPTED_UNUSED Z9.9 SKIPPABLE (D6): not a trunk node or tier-7 leaf"]
+
+
+def test_early_compares_with_gate_refs_not_the_tree_tier_and_skips_top():
+    """A tier-1 node gated only by a tier-0 node is not EARLY even when reachable at tier 0 (spec §6.1 revised), and X7.1 (the
+    top tier, no dimension) is never EARLY; it is still SKIPPABLE."""
+    tree = TREE.replace("### Tier 1", "- [T0.1] Lighter\n  - gate: [D0.1]\n### Tier 1").replace(
+        "### Top", "- [T1.2] Torch\n  - gate: [T0.1]\n### Top").replace(
+        "- [X7.1] Catalyst\n  - gate: [T1.1]", "- [X7.1] Catalyst\n  - gate: [T1.1], [T1.2]")
+    chapters = copy.deepcopy(CHAPTERS)
+    chapters["tier0"]["quests"].append({"node": "T0.1", "task": "item:minecraft:flint_and_steel", "deps": ["D0.1"]})
+    chapters["tier1"]["quests"].append({"node": "T1.2", "task": "item:x:torch", "deps": ["T0.1"]})
+    chapters["catalyst"]["quests"][0]["deps"] = ["T1.1", "T1.2"]
+    rows = [r for r in ROWS if r["id"] != "r:cat"] + [
+        shapeless("r:torch", "x:torch", "minecraft:flint_and_steel", "minecraft:stick"),
+        shapeless("r:cat", "kubejs:confluence_catalyst", "x:gem", "x:torch")]
+    soft = SOURCES["soft_refs"] + [{"node": "T0.1", "ref": "D0.1", "cite": "t"}]
+    srcs = edited(soft_refs=soft)
+    rep = run_checks(world(rows=rows, chapters=chapters, tree=tree, sources=srcs))
+    assert rep.nodes["T1.2"]["first_tier"] == 0 and rep.nodes["T0.1"]["first_tier"] == 0
+    assert rep.failures == []
+    cheap_cat = shapeless("r:cheap_cat", "kubejs:confluence_catalyst", "minecraft:stick")
+    rep = run_checks(world(rows=rows + [cheap_cat], chapters=chapters, tree=tree, sources=srcs))
+    assert rep.nodes["X7.1"]["first_tier"] == 0
+    assert not any(f.startswith("EARLY") for f in rep.failures)
+    assert "SKIPPABLE X7.1 without [T1.1] (x:gem): r:cheap_cat" in rep.failures
