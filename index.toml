@@ -269,8 +269,12 @@ file = "kubejs/server_scripts/loot.js"
 hash = "2de905a8fd27d109802dfb1b1feb8ce92d0407de78142855bfc25dd4c6224562"
 
 [[files]]
+file = "kubejs/server_scripts/routeexport.js"
+hash = "e1ba228a051ea45f351d378a8fe7e4368b14ffa39002953ce4cc253cf9b1d33c"
+
+[[files]]
 file = "kubejs/server_scripts/tagcheck.js"
-hash = "0fad921107f5328f49a3e72e08837250539f497823609a4a056d148c0684b9b8"
+hash = "8cfc2d084cd2a84e9b6cb0c32dde67f789c1ae46fd72c6008323814f38e72d21"
 
 [[files]]
 file = "kubejs/server_scripts/tiers/tier0.js"
