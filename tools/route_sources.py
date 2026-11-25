@@ -8,10 +8,12 @@ Anything else is an error naming its line. Every entry carries "cite" (a researc
 accepted: entries, which carry "decision" (the D-number the owner confirmed). parse() checks each entry's keys and value
 shapes and never guesses: id-like fields are non-blank strings, an object may not repeat a key, NaN and Infinity are
 refused, and kind "quest" goes with item null (and a node). After the entries it cross-checks that exactly one dimension
-is the root (from: null) and that every dimensions.from and sources.dimension names a listed dimension.
+is the root (from: null) and that every dimensions.from, sources.dimension and biome_dimensions.dimension names a listed
+dimension.
 
 Rule and needs_groups are shared by route_generated.py and check_route.py. Tokens (plan "Route group"): an item id,
-'fluid:<id>', 'dim:<id>', 'node:<id>', 'bee:<id>', 'comb:<bee id>', 'egg:<bee id>'.
+'fluid:<id>' (a fluid), 'chem:<id>' (a Mekanism chemical; Task 18 review C8: 12 ids are both), 'dim:<id>', 'node:<id>',
+'bee:<id>', 'comb:<bee id>'.
 """
 import json
 import re
@@ -194,7 +196,8 @@ def parse(text: str, name: str = "tools/route_sources.yaml") -> dict:
 
 
 def _cross_check(name, lines, dims, header_line, n_lines):
-    """Exactly one root dimension (from: null); every dimensions.from and sources.dimension is a listed dimension."""
+    """Exactly one root dimension (from: null); every dimensions.from, sources.dimension and biome_dimensions.dimension is a
+    listed dimension (Task 18 review C6)."""
     roots = [(n, e["id"]) for n, s, e in lines if s == "dimensions" and e["from"] is None]
     if not roots:
         where = header_line.get("dimensions", n_lines)
@@ -203,7 +206,7 @@ def _cross_check(name, lines, dims, header_line, n_lines):
         raise RouteSourceError(f"{name} line {roots[1][0]}: {roots[1][1]} is a second root dimension "
                                f"(first {roots[0][1]} at line {roots[0][0]})")
     for n, s, e in lines:
-        ref = e["from"] if s == "dimensions" else e["dimension"] if s == "sources" else None
+        ref = e["from"] if s == "dimensions" else e["dimension"] if s in ("sources", "biome_dimensions") else None
         if ref is not None and ref not in dims:
             raise RouteSourceError(f"{name} line {n}: unknown dimension {ref} (not in dimensions:)")
 

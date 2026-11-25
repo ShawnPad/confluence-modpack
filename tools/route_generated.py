@@ -89,11 +89,13 @@ def condition_holds(c, mods, item_members, fluid_members) -> bool:
 
 
 def load_bee_definitions(jar: Path, mods, item_members, fluid_members):
-    """({bee id: definition}, problems): every data/productivebees/productivebees/**.json in the jar whose `conditions` all
-    hold, keyed productivebees:<file stem>. Several files share a stem (chemlib/lithium.json and mekanism/lithium.json), and
-    their conditions pick one (plan Task 15: at most one live file per stem at plan time). Two live files for one bee, or a
-    condition type not read, is a problem."""
-    defs, problems = {}, []
+    """({bee id: definition}, problems, dead): every data/productivebees/productivebees/**.json in the jar whose `conditions`
+    all hold, keyed productivebees:<file stem>. Several files share a stem (chemlib/lithium.json and mekanism/lithium.json),
+    and their conditions pick one (plan Task 15: at most one live file per stem at plan time). Two live files for one bee, or a
+    condition type not read, is a problem. dead: the bees that have a definition file but no live one (Task 18 review C10:
+    such a bee is reported where its flower is needed, never read as a bee with no flower). fluid_members: the
+    minecraft:fluid tags only (productivelib:fluid_tag_empty)."""
+    defs, problems, seen = {}, [], set()
     with zipfile.ZipFile(jar) as z:
         for name in sorted(z.namelist()):
             if not (name.startswith(PB_DEFS) and name.endswith(".json")):
@@ -104,14 +106,15 @@ def load_bee_definitions(jar: Path, mods, item_members, fluid_members):
             except (ValueError, KeyError) as e:
                 problems.append(f"BEE DEFINITION {name}: {e}")
                 continue
+            bee = "productivebees:" + Path(name).stem
+            seen.add(bee)
             if not live:
                 continue
-            bee = "productivebees:" + Path(name).stem
             if bee in defs:
                 problems.append(f"BEE DEFINITION {name}: a second live definition for {bee}")
                 continue
             defs[bee] = d
-    return defs, problems
+    return defs, problems, seen - set(defs)
 
 
 def load_crops(path: Path = MA_CROPS) -> list:
@@ -159,7 +162,7 @@ def flower_group(bee, defn, block_members, fluid_members, item_members, problems
     with ModTags.getItemTag, for the Feeder; Task 15 review I2), and the members are one group. An empty group is always a
     BEE FLOWER problem (review I3)."""
     if defn is None:
-        return ()   # a bee with no definition file is one of Productive Bees' own classes: no flower data to read
+        return ()   # a bee with no definition file is one of Productive Bees' own classes (a dead one is caught by _shape)
     if defn.get("flowerType") == "entity_types":
         return ()   # the bee "pollinates" entities (its flowerTag is then an entity tag); no item to hold
     if "flowerTag" in defn:
@@ -196,7 +199,7 @@ def _ingredient(read_ingredient, v, rid, problems):
 
 def _shape(t, b, rid, ctx, problems):
     """(outputs, groups) for one generated row, or (None, None) after recording a problem."""
-    defs, block_members, fluid_members, item_members, biome_map, read_ingredient, read_products = ctx
+    defs, dead, block_members, fluid_members, item_members, biome_map, read_ingredient, read_products = ctx
     bee = "bee:".__add__
     extra = sorted(set(b) - ALLOWED_KEYS[t])
     if extra:
@@ -230,8 +233,11 @@ def _shape(t, b, rid, ctx, problems):
             if g is None:
                 return None, None
             groups.append(g)
-        return {"egg:" + kind, bee(kind)}, groups
+        return {bee(kind)}, groups   # the spawn egg itself is no token: nothing needs it (Task 18 review C10)
     who = b["ingredient"]   # BEEHIVE: the bee in the hive
+    if who not in defs and who in dead:
+        problems.append(f"BEE DEFINITION {who} ({rid}): its definition's load conditions are false, so its flower is not read")
+        return None, None
     # AdvancedBeehiveRecipe.getRecipeOutputs: when the hive bee is configurable (it has a definition), BeeCreator.setType(
     # hive bee, stack) retypes every configurable_honeycomb output, whatever component the recipe wrote (review I1: lead's
     # recipe writes leaden, amethyst's writes none). A built-in bee keeps the component the recipe wrote.
@@ -251,11 +257,12 @@ def _shape(t, b, rid, ctx, problems):
 
 
 def pb_rules(rows, defs, block_members, fluid_members, item_members, biome_map, machine_groups, read_ingredient,
-             read_products):
+             read_products, dead=frozenset()):
     """(rules, problems) for every dump row of GENERATED_TYPES. machine_groups: type -> the groups of its machines: entry.
-    item_members: the item tag export (flowerTag is also an item tag; review I2)."""
+    item_members: the item tag export (flowerTag is also an item tag; review I2). dead: load_bee_definitions' condition-false
+    bees."""
     rules, problems, no_machine = [], [], {}
-    ctx = (defs, block_members, fluid_members, item_members, biome_map, read_ingredient, read_products)
+    ctx = (defs, dead, block_members, fluid_members, item_members, biome_map, read_ingredient, read_products)
     for row in rows:
         t = row.get("type")
         if t not in GENERATED_TYPES or not row.get("json"):

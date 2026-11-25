@@ -81,7 +81,7 @@ def test_each_pb_type():
     assert (r["c"].outputs, r["c"].groups) == (("bee:productivebees:d",), (
         frozenset({"bee:productivebees:c"}), frozenset({"minecraft:crimson_fungus"})))
     assert (r["f"].outputs, r["f"].groups) == (("bee:productivebees:sponge",), (frozenset({"dim:minecraft:overworld"}),))
-    assert (r["i"].outputs, r["i"].groups) == (("bee:productivebees:cheese", "egg:productivebees:cheese"), (
+    assert (r["i"].outputs, r["i"].groups) == (("bee:productivebees:cheese",), (
         frozenset({"bee:productivebees:rancher_bee"}), frozenset({"ad_astra:cheese_block"})))
     assert (r["h"].outputs, r["h"].groups) == (("comb:productivebees:lead",), (
         frozenset({"bee:productivebees:lead"}), frozenset({"minecraft:lead_block_stand_in"}),
@@ -219,7 +219,7 @@ def test_real_jar_definitions():
     fluids = json.loads(members[1].read_text())["minecraft:fluid"]
     mods = loaded_mod_ids()
     assert {"productivebees", "productivelib", "mekanism"} <= mods and "productivemetalworks" not in mods
-    defs, problems = load_bee_definitions(jar, mods, items, fluids)
+    defs, problems, _ = load_bee_definitions(jar, mods, items, fluids)
     assert problems == []
     assert len(defs) == 104   # live definitions at plan time (0.3 mods; 431 file stems, 440 files)
     keys = {k for d in defs.values() for k in d if k.startswith("flower")}
@@ -238,7 +238,7 @@ def test_real_dump_bees_and_seeds():
     rows = json.loads(paths[0].read_text())
     items = json.loads(paths[1].read_text())["minecraft:item"]
     fluids = json.loads(paths[2].read_text())["minecraft:fluid"]
-    defs, _ = load_bee_definitions(jar, loaded_mod_ids(), items, fluids)
+    defs, _, _ = load_bee_definitions(jar, loaded_mod_ids(), items, fluids)
     import zipfile
     with zipfile.ZipFile(jar) as z:
         lang = json.loads(z.read("assets/productivebees/lang/en_us.json"))
@@ -277,3 +277,21 @@ def test_real_dump_bees_and_seeds():
     assert len(bees & set(defs)) > 90   # 95 configurable bees at Task 15
     crops = json.loads(paths[3].read_text())["crops"]
     assert [p for p in coverage_problems(crops, [], [], items) if "_seeds" in p] == []
+
+
+def test_c10_a_condition_false_bee_is_reported_and_eggs_are_gone(tmp_path):
+    """Task 18 review C10: a hive bee whose definition file exists but whose load conditions are false is a BEE DEFINITION
+    problem, not a bee with no flower; load_bee_definitions names such bees. item_conversion makes only the bee."""
+    import zipfile
+    jar = tmp_path / "productivebees-test.jar"
+    with zipfile.ZipFile(jar, "w") as z:
+        z.writestr("data/productivebees/productivebees/lead.json", json.dumps(
+            {"conditions": [{"type": "neoforge:mod_loaded", "modid": "nope"}], "flowerBlock": "x:f"}))
+        z.writestr("data/productivebees/productivebees/tin.json", json.dumps({"flowerBlock": "x:f"}))
+    defs, problems, dead = load_bee_definitions(jar, set(), {}, {})
+    assert set(defs) == {"productivebees:tin"} and problems == [] and dead == {"productivebees:lead"}
+    rules, problems = pb_rules([ROWS[-1]], {}, BLOCKS, {}, ITEMS, BIOMES, MACHINES, read_ingredient, read_products,
+                               dead=dead)
+    assert rules == [] and problems == [
+        "BEE DEFINITION productivebees:lead (h): its definition's load conditions are false, so its flower is not read"]
+    assert rules_by_unit()["i"].outputs == ("bee:productivebees:cheese",)

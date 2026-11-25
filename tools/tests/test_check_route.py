@@ -145,7 +145,7 @@ def test_reader_shapes():
     r = Reader({"c:ingots/iron": ["minecraft:iron_ingot"]}, {"c:water": ["minecraft:water"]}, [IRON_CROP])
     assert r.tokens("#c:ingots/iron") == frozenset({"minecraft:iron_ingot"})
     assert r.tokens({"tag": "c:water", "amount": 100}) == frozenset({"fluid:minecraft:water"})
-    assert r.tokens({"chemical": "mekanism:oxygen", "amount": 1}) == frozenset({"fluid:mekanism:oxygen"})
+    assert r.tokens({"chemical": "mekanism:oxygen", "amount": 1}) == frozenset({"chem:mekanism:oxygen"})   # C8
     assert r.tokens({"count": 2, "ingredient": {"item": "a:b"}}) == frozenset({"a:b"})
     assert r.tokens({"type": "neoforge:compound", "children": [{"item": "a:b"}, {"item": "c:d"}]}) == frozenset({"a:b", "c:d"})
     assert r.tokens({"type": "neoforge:components", "items": "a:b", "components": {}}) == frozenset({"a:b"})
@@ -412,3 +412,185 @@ def test_early_compares_with_gate_refs_not_the_tree_tier_and_skips_top():
     assert rep.nodes["X7.1"]["first_tier"] == 0
     assert not any(f.startswith("EARLY") for f in rep.failures)
     assert "SKIPPABLE X7.1 without [T1.1] (x:gem): r:cheap_cat" in rep.failures
+
+
+# --- Task 18: review fixes (research/phase7-v1.0-route-review.md) ---------------------------------------------------------
+
+def test_c1_fluid_key_is_read_per_type():
+    """`fluid` is consumed by productivebees:bottler and irons alchemist_cauldron_empty, and made by productivebees:centrifuge
+    and irons alchemist_cauldron_fill (the 0.3 dump's rows); on any other type it is not read."""
+    r = Reader({}, {"c:experience": ["x:xp"]}, [])
+    bottler = {"type": "productivebees:bottler", "fluid": {"fluid": "minecraft:milk", "amount": 250},
+               "ingredient": {"item": "minecraft:glass_bottle"}, "result": {"id": "productivebees:milk_bottle"}}
+    assert r.recipe_groups(bottler) == ((frozenset({"fluid:minecraft:milk"}), frozenset({"minecraft:glass_bottle"})), None)
+    empty = {"type": "irons_spellbooks:alchemist_cauldron_empty", "fluid": {"amount": 250, "id": "i:rare_ink"},
+             "input": {"item": "minecraft:glass_bottle"}, "result": {"count": 1, "id": "i:rare_ink"}}
+    assert r.recipe_groups(empty) == ((frozenset({"fluid:i:rare_ink"}), frozenset({"minecraft:glass_bottle"})), None)
+    centrifuge = {"type": "productivebees:centrifuge", "ingredient": {"item": "minecraft:honeycomb"},
+                  "outputs": [{"item": {"item": "productivebees:wax"}}], "fluid": {"fluid": "allthemodium:soul_lava", "amount": 20}}
+    assert r.recipe_groups(centrifuge) == ((frozenset({"minecraft:honeycomb"}),), None)
+    assert r.products(centrifuge) == frozenset({"productivebees:wax", "fluid:allthemodium:soul_lava"})
+    xp = {**centrifuge, "fluid": {"tag": "c:experience", "amount": 100}}
+    assert r.products(xp) == frozenset({"productivebees:wax", "fluid:x:xp"})
+    fill = {"type": "irons_spellbooks:alchemist_cauldron_fill", "fluid": {"amount": 250, "id": "i:epic_ink"},
+            "input": {"item": "i:epic_ink"}, "result": {"count": 1, "id": "minecraft:glass_bottle"}}
+    assert r.recipe_groups(fill) == ((frozenset({"i:epic_ink"}),), None)
+    assert r.products(fill) == frozenset({"minecraft:glass_bottle", "fluid:i:epic_ink"})
+    other = {"type": "foo:bar", "fluid": {"fluid": "minecraft:lava", "amount": 1}, "result": {"id": "x:y"}}
+    assert r.recipe_groups(other) == (None, ("fluid", {"fluid": "minecraft:lava", "amount": 1}))
+
+
+def test_c1_a_centrifuge_making_a_watched_fluid_is_unmodelled():
+    rows = ROWS + [{"id": "r:soul", "type": "productivebees:centrifuge", "json": json.dumps(
+        {"type": "productivebees:centrifuge", "ingredient": {"item": "minecraft:honeycomb"}, "outputs": [],
+         "fluid": {"fluid": "allthemodium:soul_lava", "amount": 20}})}]
+    inp = world(rows=rows)
+    inp.sole = {**inp.sole, "allthemodium:soul_lava": ("chemical", [])}
+    assert ("UNMODELLED (a) productivebees:centrifuge: 1 recipes make watched items (r:soul): fluid:allthemodium:soul_lava"
+            in run_checks(inp).failures)
+
+
+def test_c2_other_keys_naming_ids_are_unread():
+    """A key the role table calls "other" whose value names a resource location is not read (UNMODELLED (c)), unless it is a
+    listed setting (group, sound); settings without ids (time, experience) pass."""
+    r = Reader({}, {}, [])
+    body = {"type": "farmersdelight:cooking", "ingredients": [{"item": "minecraft:beetroot"}],
+            "container": {"count": 1, "id": "minecraft:bowl"}, "result": {"count": 1, "id": "minecraft:beetroot_soup"},
+            "experience": 0.35, "cookingtime": 200, "group": "x:soups", "sound": "minecraft:item.bucket.fill"}
+    assert r.recipe_groups(body) == (None, ("container", {"count": 1, "id": "minecraft:bowl"}))
+    del body["container"]
+    assert r.recipe_groups(body) == ((frozenset({"minecraft:beetroot"}),), None)
+    rows = ROWS + [{"id": "r:soup_gem", "type": "minecraft:crafting_shapeless", "json": json.dumps(
+        {"type": "minecraft:crafting_shapeless", "ingredients": [{"item": "minecraft:stick"}],
+         "materials": [{"count": 1, "ingredient": {"item": "x:rare"}}], "result": {"id": "x:gem"}})}]
+    assert ("UNMODELLED (c) minecraft:crafting_shapeless: 1 recipes make watched items (r:soup_gem): x:gem"
+            in run_checks(world(rows=rows)).failures)
+
+
+def test_c3_products_not_read_are_reported_for_any_type():
+    """A product the reader cannot read, or a key not read, that names a watched item is reported whether the type is a
+    machine, ignored or unlisted."""
+    conv = {"id": "r:conv", "type": "foo:conv", "json": json.dumps(
+        {"type": "foo:conv", "from": {"Name": "minecraft:stick"}, "result": {"Name": "x:gem"}})}
+    line = ("UNMODELLED (c) foo:conv: 1 recipes have a product or key not read that names watched items (r:conv): x:gem")
+    assert line in run_checks(world(rows=ROWS + [conv])).failures
+    ign = edited(ignored_types=[{"type": "foo:conv", "cite": "t"}])
+    assert line in run_checks(world(rows=ROWS + [conv], sources=ign)).failures
+    mach = edited(machines=SOURCES["machines"] + [{"type": "foo:conv", "needs": [], "cite": "t"}])
+    assert line in run_checks(world(rows=ROWS + [conv], sources=mach)).failures
+    hidden = {"id": "r:hid", "type": "foo:hid", "json": json.dumps({"type": "foo:hid", "becomes": "x:gem"})}
+    assert ("UNMODELLED (c) foo:hid: 1 recipes have a product or key not read that names watched items (r:hid): x:gem"
+            in run_checks(world(rows=ROWS + [hidden])).failures)
+    harmless = {"id": "r:h2", "type": "foo:hid", "json": json.dumps({"type": "foo:hid", "becomes": "x:decor"})}
+    assert run_checks(world(rows=ROWS + [harmless])).failures == []
+
+
+def test_c6_unsourced_needs():
+    mach = edited(machines=[{"type": "minecraft:crafting_shapeless", "needs": ["x:table"], "cite": "t"}],
+                  sources=SOURCES["sources"] + [{"key": "pig", "item": "x:pork", "dimension": "minecraft:overworld",
+                                                 "kind": "mob", "needs": [["minecraft:stick", "x:sword"]], "cite": "t"}])
+    fails = run_checks(world(sources=mach)).failures
+    assert "UNSOURCED NEEDS x:table (minecraft:crafting_shapeless)" in fails
+    assert "UNSOURCED NEEDS x:sword (pig)" in fails
+
+
+def test_c7_nested_ingredient_with_amount_is_a_fluid_and_unknown_fluid_tags_are_unread():
+    r = Reader({"c:water": ["x:water_item"]}, {"c:water": ["minecraft:water"]}, [])
+    assert r.tokens({"ingredient": {"tag": "c:water"}, "amount": 100}) == frozenset({"fluid:minecraft:water"})
+    assert r.tokens({"tag": "c:nothing", "amount": 100}) is None
+
+
+def test_c8_chemicals_have_their_own_prefix():
+    r = Reader({}, {"c:hydrogen": ["mekanism:hydrogen"]}, [], {"mekanism:hydrogen": ["mekanism:hydrogen"],
+                                                               "mekanism:water_vapor": ["mekanism:steam"]})
+    assert r.tokens({"chemical": "mekanism:oxygen", "amount": 1}) == frozenset({"chem:mekanism:oxygen"})
+    assert r.tokens({"fluid": "mekanism:oxygen", "amount": 1}) == frozenset({"fluid:mekanism:oxygen"})
+    inj = {"type": "mekanism:injecting", "chemical_input": {"amount": 1, "tag": "mekanism:water_vapor"},
+           "item_input": {"count": 1, "item": "x:a"}, "output": {"count": 1, "id": "x:b"}, "per_tick_usage": True}
+    assert r.recipe_groups(inj) == ((frozenset({"chem:mekanism:steam"}), frozenset({"x:a"})), None)
+    rot = {"type": "mekanism:rotary", "chemical_output": {"amount": 1, "id": "mekanism:hydrogen"},
+           "fluid_output": {"amount": 1, "id": "mekanism:hydrogen"}}
+    assert r.products(rot) == frozenset({"chem:mekanism:hydrogen", "fluid:mekanism:hydrogen"})
+    ox = {"type": "mekanism:oxidizing", "input": {"count": 1, "item": "x:a"}, "output": {"amount": 10, "id": "mekanism:x"}}
+    assert r.products(ox) == frozenset({"chem:mekanism:x"})
+    evap = {"type": "mekanism:evaporating", "input": {"amount": 10, "tag": "c:hydrogen"},
+            "output": {"amount": 1, "id": "mekanism:lithium"}}
+    assert r.recipe_groups(evap) == ((frozenset({"fluid:mekanism:hydrogen"}),), None)
+    assert r.products(evap) == frozenset({"fluid:mekanism:lithium"})
+    odd = {"type": "mekanism:new_machine", "input": {"amount": 1, "id": "x:y"}, "output": {"count": 1, "id": "x:z"}}
+    assert r.recipe_groups(odd)[0] is None    # a Mekanism amount stack of a kind not listed: not read
+
+
+def test_c9_a_leaf_on_the_trunk_fails():
+    chapters = copy.deepcopy(CHAPTERS)
+    gem = chapters["tier1"]["quests"].pop()
+    chapters["catalyst"]["quests"].append(gem)
+    rep = run_checks(world(chapters=chapters))
+    assert "LEAF IN TRUNK T1.1: a catalyst.yaml quest node is also on X7.1's trunk" in rep.failures
+
+
+def test_c11_a_string_ingredient_that_is_no_id_is_unread():
+    r = Reader({}, {}, [])
+    assert r.tokens("<inert>") is None and r.tokens("Not An Id") is None
+    assert r.tokens("minecraft:stick") == frozenset({"minecraft:stick"})
+
+
+def test_c12_gate_inputs_not_read_fail():
+    rows = [r for r in ROWS if r["id"] != "r:cat"] + [{"id": "r:cat", "type": "minecraft:crafting_shapeless", "json": json.dumps(
+        {"type": "minecraft:crafting_shapeless", "ingredients": [{"item": "x:gem"}, {"type": "neoforge:intersection"}],
+         "result": {"id": "kubejs:confluence_catalyst"}})}]
+    fails = run_checks(world(rows=rows)).failures
+    assert 'GATE INPUT r:cat: ingredients {"type": "neoforge:intersection"} not read' in fails
+    inp = world()
+    inp.gates = ["r:missing"]
+    assert "GATE INPUT r:missing: not in the dump" in run_checks(inp).failures
+
+
+def test_s1_early_disables_accepted_routes_per_node():
+    """An accepted EARLY route for one node does not hide another node's EARLY, and the reported first_tier is from the run
+    with nothing disabled."""
+    other = [{"node": "D1.1", "code": "EARLY", "route": ["r:cheap_gem"], "decision": "D11"}]
+    rep = run_checks(world(rows=ROWS + [BYPASS], sources=edited(accepted=other)))
+    assert "EARLY T1.1: reachable at tier 0, before its gate ref [D1.1] (tier 1)" in rep.failures
+    own = [{"node": "T1.1", "code": "EARLY", "route": ["r:cheap_gem"], "decision": "D12"},
+           {"node": "T1.1", "code": "SKIPPABLE", "route": ["r:cheap_gem"], "decision": "D12"}]
+    rep = run_checks(world(rows=ROWS + [BYPASS], sources=edited(accepted=own)))
+    assert rep.failures == [] and rep.nodes["T1.1"]["first_tier"] == 0
+
+
+def test_s3_a_gate_refs_node_sources_are_disabled():
+    """A boss source makes its drop and node:R. N needs the drop and is gated by [R]; banning node:R alone would leave the
+    drop, so SKIPPABLE must disable R's own sources too."""
+    tree = TREE.replace("### Top", "- [M1.1] Boss\n  - gate: [D1.1]\n- [T1.2] Trophy\n  - gate: [M1.1]\n### Top").replace(
+        "- [X7.1] Catalyst\n  - gate: [T1.1]", "- [X7.1] Catalyst\n  - gate: [T1.1], [T1.2]")
+    chapters = copy.deepcopy(CHAPTERS)
+    chapters["tier1"]["quests"] += [{"node": "M1.1", "task": "kill:x:boss", "deps": ["D1.1"]},
+                                    {"node": "T1.2", "task": "item:x:trophy", "deps": ["M1.1"]}]
+    chapters["catalyst"]["quests"][0]["deps"] = ["T1.1", "T1.2"]
+    srcs = edited(sources=SOURCES["sources"] + [{"key": "boss", "item": "x:drop", "dimension": "minecraft:the_nether",
+                                                 "kind": "boss", "needs": [], "node": "M1.1", "cite": "t"}])
+    rows = [r for r in ROWS if r["id"] != "r:cat"] + [shapeless("r:trophy", "x:trophy", "x:drop"),
+                                                       shapeless("r:cat", "kubejs:confluence_catalyst", "x:gem", "x:trophy")]
+    rep = run_checks(world(rows=rows, chapters=chapters, tree=tree, sources=srcs))
+    assert rep.nodes["T1.2"]["reachable"] and rep.failures == []
+
+
+def test_s5_an_accepted_early_on_a_node_without_a_tree_tier_is_unused():
+    chapters = copy.deepcopy(CHAPTERS)
+    chapters["catalyst"]["quests"].append({"node": "CAT.1", "task": "item:x:creative", "deps": ["X7.1"]})
+    accepted = [{"node": "CAT.1", "code": "EARLY", "route": ["r:creative"], "decision": "D13"}]
+    rep = run_checks(world(chapters=chapters, sources=edited(accepted=accepted)))
+    assert rep.failures == ["ACCEPTED_UNUSED CAT.1 EARLY (D13): not a trunk node with a tree tier"]
+
+
+def test_s12_base_tags_root_seed_and_duplicate_units():
+    inp = world(sources=edited(base=SOURCES["base"] + [{"tag": "c:empty", "cite": "t"}]))
+    assert "BASE TAG c:empty: no members in the item tag export" in run_checks(inp).failures
+    home = edited(dimensions=[{**SOURCES["dimensions"][0], "id": "x:home"},
+                              {**SOURCES["dimensions"][1], "from": "x:home"}],
+                  sources=[SOURCES["sources"][0], {**SOURCES["sources"][1], "dimension": "x:home"}])
+    rep = run_checks(world(sources=home))
+    assert rep.failures == [] and rep.nodes["D0.1"]["reachable"]
+    dup = edited(sources=SOURCES["sources"] + [{"key": "r:gem", "item": "x:gem", "dimension": "minecraft:overworld",
+                                                "kind": "loot", "needs": ["x:never"], "cite": "t"}])
+    assert any(f.startswith("DUPLICATE UNIT r:gem:") for f in run_checks(world(sources=dup)).failures)

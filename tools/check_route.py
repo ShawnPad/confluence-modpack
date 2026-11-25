@@ -1,7 +1,8 @@
 """Route check (v1.0 spec §6.1, the D143 automated half; A18; plan Tasks 16-17).
 
 Shows that every trunk node up to [X7.1] and every tier-7 leaf has a survival route, and that every gate on the way is
-needed. A fixpoint over tokens (plan "Route group": items, fluid:, dim:, node:, bee:, comb:, egg:) from:
+needed. A fixpoint over tokens (plan "Route group": items, fluid:, dim:, node:, bee:, comb:; Task 18 review C8 adds chem:
+for Mekanism chemicals and C10 drops egg:) from:
   - the boot's dump (.run/server/kubejs/exported/recipes.json), read with check_recipes.py's producer rule (made_by) and its
     key roles (key_role); a recipe is usable when its type is in route_sources.yaml machines: (whose items it then needs too);
   - the tag exports (item, block, fluid and chemical tag members) and kubejs/exported/ma_crops.json;
@@ -12,8 +13,9 @@ needed. A fixpoint over tokens (plan "Route group": items, fluid:, dim:, node:, 
 Counts, energy, Source, chances and components are ignored (spec §6.1 model steps 5-6). The summary's "trunk nodes" are the
 trunk (X7.1's ancestor closure) plus the 13 tier-7 leaves of the Catalyst chapter.
 
-Failure codes (exit 1): UNREACHABLE, SKIPPABLE, EARLY, QUEST_ORDER, UNMODELLED (a/b/c), ACCEPTED_UNUSED, STALE, and the
-generated sources' problems (UNMAPPED BIOME, BEE FLOWER, BEE DEFINITION, NO GENERATED SOURCE).
+Failure codes (exit 1): UNREACHABLE, SKIPPABLE, EARLY, QUEST_ORDER, UNMODELLED (a/b/c), ACCEPTED_UNUSED, STALE, the
+generated sources' problems (UNMAPPED BIOME, BEE FLOWER, BEE DEFINITION, NO GENERATED SOURCE), and the model's own
+(DUPLICATE UNIT, BASE TAG, GATE INPUT, UNSOURCED NEEDS, LEAF IN TRUNK; Task 18 review).
 
     python3 tools/check_route.py [--ban TOKEN]... [--disable UNIT]... [--json PATH] [--explain TOKEN] [--sources-edited]
 
@@ -23,6 +25,7 @@ being written (plan Task 19); the loop and the release never pass it.
 """
 import argparse
 import json
+import re
 import sys
 from collections import Counter
 from dataclasses import dataclass, field
@@ -32,7 +35,8 @@ TOOLS = Path(__file__).resolve().parent
 sys.path.insert(0, str(TOOLS))
 sys.path.insert(0, str(TOOLS / "tests"))
 from check_quests import NO_QUEST, TREE, tree_nodes  # noqa: E402
-from check_recipes import DUMP, ITEM_MEMBERS, MANIFEST, json_item_id, key_role, load_manifest, load_sole_producers, made_by  # noqa: E402,E501
+from check_recipes import (DUMP, ITEM_MEMBERS, MANIFEST, Made, _read_product, json_item_id, key_role,  # noqa: E402
+                           load_manifest, load_sole_producers, product_values)
 from route_generated import (GENERATED_TYPES, MA_CROPS, coverage_problems, load_bee_definitions, load_crops,  # noqa: E402
                              loaded_mod_ids, ma_rules, pb_jar, pb_rules)
 from route_sources import ROUTE_SOURCES, Rule, load as load_sources, needs_groups  # noqa: E402
@@ -48,37 +52,108 @@ TOP = "X7.1"
 LEAF_CHAPTER = "catalyst"
 ROOT_CHAPTERS = ("intro", "tier0")
 TOP_TIER = 7
-# Keys outside check_recipes.INGREDIENT_KEYS that hold a consumed fluid, read from the 0.3 dump at plan time (Task 16):
-# Industrial Foregoing's inputFluid, Productive Bees' bottler `fluid`. Every other key the role table calls "other" is a
-# setting (time, experience, energy) and is not read (A18).
-FLUID_KEYS = frozenset({"inputFluid", "fluid"})
+# Fluid keys the role table calls "other", by recipe type, read from the dump's rows (Task 18 review C1): `fluid` is consumed by
+# the bottler (milk -> milk bottle) and the cauldron's empty recipe (ink fluid + bottle -> ink item), and made by the
+# centrifuge (comb -> wax + fluid) and the cauldron's fill recipe (ink item -> fluid + bottle). On any other type it is a key
+# not read (UNREAD_OK below).
+FLUID_INPUTS = {"industrialforegoing:dissolution_chamber": {"inputFluid"}, "productivebees:bottler": {"fluid"},
+                "irons_spellbooks:alchemist_cauldron_empty": {"fluid"}}
+FLUID_PRODUCTS = {"productivebees:centrifuge": {"fluid"}, "irons_spellbooks:alchemist_cauldron_fill": {"fluid"}}
+# "other" keys that are settings even though their value names a resource location (Task 18 review C2/S4; the 0.3 dump's
+# 98 (type, key) pairs with an id in an "other" key were surveyed): a recipe-book group and a sound. Every other "other" key
+# whose value names a resource location is not read, so a row of a machine type with one is UNMODELLED (c).
+SETTING_KEYS = frozenset({"group", "sound"})
+SETTING_KEYS_BY_TYPE = {"ars_nouveau:caster_tome": {"color"}}
+# The kind of an amount stack ({amount, id} or {amount, tag} with no count) a key holds, where its name does not say
+# (Task 18 review C8; the 0.3 dump's Mekanism rows): thermal evaporation and electrolysis take and make fluids, the rest of
+# these make chemicals. A Mekanism key not listed and not named *chemical* or *fluid* is not read; any other mod's amount
+# stack is a fluid.
+AMOUNT_KIND = {("mekanism:evaporating", "input"): "fluid", ("mekanism:evaporating", "output"): "fluid",
+               ("mekanism:separating", "input"): "fluid"}
+AMOUNT_KIND.update({(t, "output"): "chem" for t in (
+    "mekanism:activating", "mekanism:centrifuging", "mekanism:chemical_conversion", "mekanism:chemical_infusing",
+    "mekanism:dissolution", "mekanism:oxidizing", "mekanism:pigment_extracting", "mekanism:pigment_mixing",
+    "mekanism:washing")})
+PREFIX = {"fluid": "fluid:", "chem": "chem:"}
 NOT_INPUTS = frozenset({"type", "pattern", "neoforge:conditions", "neoforge:load_conditions", "fabric:load_conditions"})
 EACH_ELEMENT = frozenset({"ingredients", "input", "inputs", "pedestalItems"})   # a list here is one ingredient per element
 PB_COMBS = frozenset({"productivebees:configurable_honeycomb", "productivebees:configurable_comb_block"})
+ID_STRING = re.compile(r"#?[a-z0-9_.-]+:[a-z0-9_./-]+")   # an ingredient string: an id or a #tag, nothing else (C11)
+
+
+def amount_kind(rtype, key):
+    """'fluid', 'chem', or None (not read) for an amount stack under `key` of a `rtype` body."""
+    if (rtype, key) in AMOUNT_KIND:
+        return AMOUNT_KIND[rtype, key]
+    k = key.lower()
+    if "chemical" in k or k == "gas":
+        return "chem"
+    if "fluid" in k:
+        return "fluid"
+    return None if (rtype or "").startswith("mekanism:") else "fluid"
+
+
+def names_an_id(v):
+    """True when a value holds a resource-location string anywhere."""
+    if isinstance(v, str):
+        return ID_STRING.fullmatch(v) is not None
+    if isinstance(v, list):
+        return any(names_an_id(x) for x in v)
+    if isinstance(v, dict):
+        return any(names_an_id(x) for x in v.values())
+    return False
+
+
+def unread_keys(rtype, body):
+    """The "other" keys of a body that this module reads neither as an ingredient nor as a product, nor lists as a setting,
+    and whose value names an id (C2): what they hold is unknown, consumed or made."""
+    out = []
+    for k, v in body.items():
+        if k in NOT_INPUTS or v is None or key_role(rtype, k) != "other":
+            continue
+        if k in FLUID_INPUTS.get(rtype, ()) or k in FLUID_PRODUCTS.get(rtype, ()):
+            continue
+        if k in SETTING_KEYS or k in SETTING_KEYS_BY_TYPE.get(rtype, ()) or not names_an_id(v):
+            continue
+        out.append(k)
+    return out
 
 
 class Reader:
     """Ingredient and product tokens of recipe bodies (spec §6.1 model step 7: a shape it does not read is None)."""
 
-    def __init__(self, item_members, fluid_members, crops):
+    def __init__(self, item_members, fluid_members, crops, chem_members=None):
         self.items = item_members
         self.fluids = fluid_members
+        self.chems = chem_members or {}
         self.crops = {c["id"]: c for c in crops}
 
-    def tag(self, t, fluid=False):
-        t = t.lstrip("#")
-        if fluid:
-            return frozenset("fluid:" + x for x in self.fluids.get(t, ()))
-        return frozenset(self.items.get(t, ()))
+    def tag(self, t):
+        return frozenset(self.items.get(t.lstrip("#"), ()))
 
-    def tokens(self, v):
-        """The tokens any one of which satisfies ingredient `v`, or None for a shape not read."""
+    def amount_tag(self, t, kind):
+        """A fluid or chemical tag's tokens: looked up in `kind`'s export first, then the other; None when neither has it or
+        the kind is not known (C7, C8)."""
+        t = t.lstrip("#")
+        if kind is None:
+            return None
+        for k in (kind, "chem" if kind == "fluid" else "fluid"):
+            members = (self.fluids if k == "fluid" else self.chems).get(t)
+            if members is not None:
+                return frozenset(PREFIX[k] + x for x in members)
+        return None
+
+    def tokens(self, v, kind="fluid", amount=False):
+        """The tokens any one of which satisfies ingredient `v`, or None for a shape not read. kind: what an amount stack
+        here is ('fluid', 'chem', or None: not read); amount: an enclosing {amount, ingredient} made this a fluid (C7)."""
         if isinstance(v, str):
-            return self.tag(v) if v.startswith("#") else frozenset([json_item_id(v)])
+            if not ID_STRING.fullmatch(v):
+                return None
+            return self.tag(v) if v.startswith("#") else frozenset([v])
         if isinstance(v, list):
             out = set()
             for x in v:
-                t = self.tokens(x)
+                t = self.tokens(x, kind, amount)
                 if t is None:
                     return None
                 out |= t
@@ -87,11 +162,11 @@ class Reader:
             return None
         typ = v.get("type")
         if typ == "neoforge:compound":
-            return self.tokens(v.get("children", v.get("ingredients")))
+            return self.tokens(v.get("children", v.get("ingredients")), kind)
         if typ == "neoforge:components":
-            return self.tokens(v["items"]) if "items" in v else None
+            return self.tokens(v["items"], kind) if "items" in v else None
         if typ == "neoforge:difference":
-            return self.tokens(v["base"]) if "base" in v else None   # the subtracted part is ignored: the generous reading
+            return self.tokens(v["base"], kind) if "base" in v else None   # the subtracted part is ignored: the generous reading
         if typ == "functionalstorage:tag_without_component":
             return self.tag(v["tag"]) if isinstance(v.get("tag"), str) else None
         if typ == "mysticalagriculture:crop_component":
@@ -101,17 +176,20 @@ class Reader:
             return frozenset(["comb:" + bee]) if bee and v.get("items") in PB_COMBS else None
         if typ is not None:
             return None   # neoforge:intersection and every other custom ingredient type: fails closed
+        amount = amount or ("amount" in v and "count" not in v)
         if "ingredient" in v:
-            return self.tokens(v["ingredient"])
+            return self.tokens(v["ingredient"], kind, amount)
         if isinstance(v.get("item"), str):
-            return frozenset([v["item"]])
-        if isinstance(v.get("tag"), str):
-            return self.tag(v["tag"], fluid="amount" in v and "count" not in v)
-        for k in ("fluid", "chemical", "gas"):
+            return self.tokens(v["item"])
+        for k, pre in (("chemical", "chem:"), ("gas", "chem:"), ("fluid", "fluid:")):
             if isinstance(v.get(k), str):
-                return frozenset(["fluid:" + v[k]])
+                return frozenset([pre + v[k]])
+        if isinstance(v.get("tag"), str):
+            return self.amount_tag(v["tag"], kind) if amount else self.tag(v["tag"])
         if isinstance(v.get("id"), str):
-            return frozenset(["fluid:" + v["id"]] if "amount" in v and "count" not in v else [v["id"]])
+            if not amount:
+                return frozenset([v["id"]])
+            return frozenset([PREFIX[kind] + v["id"]]) if kind else None
         return None
 
     def crop_part(self, crop, component):
@@ -130,15 +208,19 @@ class Reader:
             return self.tag(m["id"]) if m["tag"] else frozenset([m["id"]])
         return None
 
-    def recipe_groups(self, body):
-        """(groups, None), or (None, (key, value)) for the first ingredient not read."""
+    def input_parts(self, body):
+        """[(key, part, tokens or None)] for each ingredient of a body; a key not read (unread_keys) is one part with None."""
         rtype = body.get("type")
-        groups = []
+        out = []
+        unread = set(unread_keys(rtype, body))
         for k, v in body.items():
             if k in NOT_INPUTS or v is None:
                 continue
+            if k in unread:
+                out.append((k, v, None))
+                continue
             role = key_role(rtype, k)
-            if role in ("product", None) or (role == "other" and k not in FLUID_KEYS):
+            if role in ("product", None) or (role == "other" and k not in FLUID_INPUTS.get(rtype, ())):
                 continue
             if k == "key" and isinstance(v, dict):
                 parts = list(v.values())
@@ -147,19 +229,47 @@ class Reader:
             else:
                 parts = [v]
             for part in parts:
-                t = self.tokens(part)
-                if t is None:
-                    return None, (k, part)
-                groups.append(t)
+                out.append((k, part, self.tokens(part, amount_kind(rtype, k))))
+        return out
+
+    def recipe_groups(self, body):
+        """(groups, None), or (None, (key, value)) for the first ingredient not read."""
+        groups = []
+        for k, part, t in self.input_parts(body):
+            if t is None:
+                return None, (k, part)
+            groups.append(t)
         return tuple(groups), None
 
-    def products(self, body):
-        made = made_by(body)
-        out = set(made.items) | {"fluid:" + c for c in made.chemicals}
-        for t, kind in made.tags:
-            out |= self.tag(t, fluid=kind == "chemical")
+    def product_parts(self, body):
+        """(tokens, [(key, value) not read]) of what a body makes: check_recipes' producer rule (made_by) per product value,
+        with each amount stack read by its key's kind (C8), plus FLUID_PRODUCTS keys (C1)."""
+        rtype = body.get("type")
+        values = product_values(body) + [(k, body[k]) for k in sorted(FLUID_PRODUCTS.get(rtype, ()))
+                                         if body.get(k) is not None]
+        out, unread = set(), []
+        for k, v in values:
+            made, u = Made(), []
+            _read_product(v, made, u)
+            unread += [(k, x) for x in u]
+            out |= set(made.items)
+            kind = amount_kind(rtype, k)
+            for c in made.chemicals:
+                if kind is None:
+                    unread.append((k, c))
+                else:
+                    out.add(PREFIX[kind] + c)
+            for t, tk in made.tags:
+                got = self.tag(t) if tk == "item" else self.amount_tag(t, kind)
+                if got is None:
+                    unread.append((k, "#" + t))
+                else:
+                    out |= got
         out.discard("minecraft:air")
-        return frozenset(out)
+        return frozenset(out), unread
+
+    def products(self, body):
+        return self.product_parts(body)[0]
 
 
 @dataclass
@@ -177,13 +287,15 @@ class Inputs:
     sole: dict
     stale: list = field(default_factory=list)
     problems: list = field(default_factory=list)   # loading problems (bee definitions)
+    chem_members: dict = field(default_factory=dict)   # mekanism:chemical tags (C8: kept apart from the fluid tags)
+    dead_bees: frozenset = frozenset()   # bees whose definition files are all condition-false (C10)
 
 
 @dataclass
 class Model:
     rules: list = field(default_factory=list)
     seed: frozenset = frozenset()
-    unmodelled: list = field(default_factory=list)   # (code, type, recipe id, [watched products])
+    unmodelled: list = field(default_factory=list)   # (code, type, recipe id, [watched tokens]); code "p": C3
     problems: list = field(default_factory=list)
     by_unit: dict = field(default_factory=dict)
     makers: dict = field(default_factory=dict)
@@ -206,21 +318,45 @@ def _body(row):
 
 
 def gate_inputs(reader, body):
-    """Every token a gate recipe's readable ingredients name (an unread part adds nothing; the gate row itself is read as
-    any other row below)."""
+    """(tokens, [(key, part)] not read): every token a gate recipe's readable ingredients name, and the parts it cannot read
+    (C12: each is a failure; the gate row itself is read as any other row below)."""
+    out, unread = set(), []
+    for k, part, t in reader.input_parts(body) if body else ():
+        if t is None:
+            unread.append((k, part))
+        else:
+            out |= t
+    return out, unread
+
+
+QUOTED = re.compile(r'"((?:[^"\\]|\\.)*)"')
+PREFIXES = ("fluid:", "chem:", "dim:", "node:", "bee:", "comb:")
+
+
+def bare(token):
+    for p in PREFIXES:
+        if token.startswith(p):
+            return token[len(p):]
+    return token
+
+
+def watched_names(watched, reader):
+    """The ids and tag names a raw recipe json may name a watched token by (C3): each watched token without its prefix, and
+    every item, fluid or chemical tag with a watched member."""
+    names = {bare(t) for t in watched}
+    for pre, members in (("", reader.items), ("fluid:", reader.fluids), ("chem:", reader.chems)):
+        names |= {tag for tag, ms in members.items() if any(pre + m in watched for m in ms)}
+    return names
+
+
+def named(text, names):
+    """The names a json text holds as a quoted string (a '#tag', '2x id' and 'id[components]' read as their id)."""
     out = set()
-    if not body:
-        return out
-    rtype = body.get("type")
-    for k, v in body.items():
-        if k in NOT_INPUTS or v is None:
-            continue
-        role = key_role(rtype, k)
-        if role in ("product", None) or (role == "other" and k not in FLUID_KEYS):
-            continue
-        parts = list(v.values()) if k == "key" and isinstance(v, dict) else v if isinstance(v, list) else [v]
-        for part in parts:
-            out |= reader.tokens(part) or frozenset()
+    for q in QUOTED.findall(text):
+        q = q.lstrip("#")
+        for x in (q, json_item_id(q)):
+            if x in names:
+                out.add(x)
     return out
 
 
@@ -228,11 +364,18 @@ def build_model(inp, watched_nodes):
     """The rules of every usable recipe, source, dimension and generated source. watched_nodes: the checked nodes' products;
     gate inputs and sole_producers outputs are added here (spec §6.1 UNMODELLED)."""
     srcs = inp.sources
-    reader = Reader(inp.item_members, inp.fluid_members, inp.crops)
+    reader = Reader(inp.item_members, inp.fluid_members, inp.crops, inp.chem_members)
     model = Model()
-    seed = {"dim:" + OVERWORLD}
+    root = [d["id"] for d in srcs["dimensions"] if d["from"] is None]
+    seed = {"dim:" + root[0]} if root else set()   # route_sources.parse guarantees exactly one root (S12)
     for b in srcs["base"]:
-        seed |= {b["id"]} if "id" in b else reader.tag(b["tag"])
+        if "id" in b:
+            seed.add(b["id"])
+            continue
+        members = reader.tag(b["tag"])
+        if not members:
+            model.problems.append(f"BASE TAG {b['tag']}: no members in the item tag export")
+        seed |= members
     model.seed = frozenset(seed)
     for d in srcs["dimensions"]:
         if d["from"] is None:
@@ -247,16 +390,30 @@ def build_model(inp, watched_nodes):
     ignored = {i["type"] for i in srcs["ignored_types"]}
     rows = {r["id"]: r for r in inp.rows}
     watched = set(watched_nodes)
-    watched |= {o if kind == "item" else "fluid:" + o for o, (kind, _) in inp.sole.items()}
+    for o, (kind, _) in inp.sole.items():
+        watched |= {o} if kind == "item" else {"fluid:" + o, "chem:" + o}   # gates.yaml's `chemical` is either (C8)
     for g in inp.gates:
-        watched |= gate_inputs(reader, _body(rows.get(g)))
+        if g not in rows:
+            model.problems.append(f"GATE INPUT {g}: not in the dump")
+            continue
+        got, unread = gate_inputs(reader, _body(rows[g]))
+        watched |= got
+        model.problems += [f"GATE INPUT {g}: {k} {json.dumps(v, sort_keys=True)} not read" for k, v in unread]
+    names = watched_names(watched, reader)
     for row in inp.rows:
         body = _body(row)
         t = row.get("type")
         if body is None or t in GENERATED_TYPES:
             continue
-        prods = reader.products(body)
+        prods, unread_prods = reader.product_parts(body)
         hits = sorted(prods & watched)
+        # C3: a product not read, or a key not read, may make anything; it is reported for any type when it (or a product
+        # read) names a watched token.
+        hidden = [v for _, v in unread_prods] + [body[k] for k in unread_keys(t, body)]
+        if hidden:
+            seen = named(json.dumps(hidden), names)
+            if seen or (unread_prods and hits):
+                model.unmodelled.append(("p", t, row["id"], sorted(seen | set(hits))))
         if t in ignored:
             if hits:
                 model.unmodelled.append(("b", t, row["id"], hits))
@@ -274,11 +431,27 @@ def build_model(inp, watched_nodes):
     biome_map = {b["biome"]: b["dimension"] for b in srcs["biome_dimensions"]}
     ma, p1 = ma_rules(inp.crops, biome_map)
     pb, p2 = pb_rules(inp.rows, inp.bee_defs, inp.block_members, inp.fluid_members, inp.item_members, biome_map,
-                      {t: machines[t] for t in GENERATED_TYPES if t in machines}, reader.tokens, reader.products)
+                      {t: machines[t] for t in GENERATED_TYPES if t in machines}, reader.tokens, reader.products,
+                      dead=inp.dead_bees)
     model.rules += ma + pb
     model.problems += list(inp.problems) + p1 + p2 + coverage_problems(inp.crops, ma + pb, inp.rows, inp.item_members)
     model.index()
+    model.problems += unsourced_needs(model, srcs)
     return model
+
+
+def unsourced_needs(model, srcs):
+    """UNSOURCED NEEDS lines (C6): a token named in a machines:, sources: or dimensions.enter list that no rule makes and the
+    seed does not hold."""
+    have = set(model.makers) | model.seed
+    out = []
+    lists = [(m["type"], m["needs"]) for m in srcs["machines"]] + [(s["key"], s["needs"]) for s in srcs["sources"]]
+    lists += [(f"dim:{d['id']}#{i}", lst) for d in srcs["dimensions"] if d["from"] is not None
+              for i, lst in enumerate(d["enter"])]
+    for unit, needs in lists:
+        for g in needs_groups(needs):
+            out += [f"UNSOURCED NEEDS {t} ({unit})" for t in sorted(g - have)]
+    return sorted(set(out), key=out.index)
 
 
 def fixpoint(model, ban=frozenset(), disable=frozenset()):
@@ -444,8 +617,13 @@ class Report:
     full: dict = field(default_factory=dict)
 
 
+TREE_ID = re.compile(r"[A-Z]([0-9]+)\.[0-9]+")
+
+
 def tree_tier(n):
-    return int(n[1:].split(".")[0])
+    """A tree node's tier (T1.2 -> 1), or None for an id with none (CAT.1; S5)."""
+    m = TREE_ID.fullmatch(n)
+    return int(m.group(1)) if m else None
 
 
 def run_checks(inp, ban=frozenset(), disable=frozenset()):
@@ -457,11 +635,14 @@ def run_checks(inp, ban=frozenset(), disable=frozenset()):
     leaves = {n: p for n, p in node_products({LEAF_CHAPTER: inp.chapters.get(LEAF_CHAPTER, {"quests": []})}).items()
               if n != TOP}
     trunk = trunk_nodes(tree)
+    on_trunk = sorted(trunk & set(leaves))
+    leaves = {n: p for n, p in leaves.items() if n not in trunk}
     checked = sorted(trunk) + sorted(leaves)
     refs = {n: [r for r in tree[n] if r not in NO_QUEST] for n in trunk}
     refs.update({n: [TOP] for n in leaves})
     model = build_model(inp, {p for n in checked if (p := products.get(n))})
-    fails = list(model.problems)
+    fails = [f"LEAF IN TRUNK {n}: a {LEAF_CHAPTER}.yaml quest node is also on {TOP}'s trunk" for n in on_trunk]
+    fails += model.problems
     full, fired = fixpoint(model, ban, disable)
     nodes, counts = {}, Counter()
     for n in checked:
@@ -483,12 +664,14 @@ def run_checks(inp, ban=frozenset(), disable=frozenset()):
     qo, roots_used = quest_order(inp.chapters, {n for e in srcs["accepted"] if e["code"] == "QUEST_ORDER"
                                                 for n in _nodes(e)})
     fails += qo
-    fails += accepted_checks(ctx, checked, tree, leaves, fired, roots_used)
+    fails += accepted_checks(ctx, checked, trunk, tree, leaves, fired, roots_used)
     kinds = sorted({(code, t) for code, t, _, _ in model.unmodelled})
     for code, t in kinds:
         rids = sorted(rid for c, tt, rid, _ in model.unmodelled if (c, tt) == (code, t))
         hits = sorted({h for c, tt, _, hs in model.unmodelled if (c, tt) == (code, t) for h in hs})
-        fails.append(f"UNMODELLED ({code}) {t}: {len(rids)} recipes make watched items ({', '.join(rids[:5])}"
+        what = ("have a product or key not read that names watched items" if code == "p"
+                else "make watched items")
+        fails.append(f"UNMODELLED ({'c' if code == 'p' else code}) {t}: {len(rids)} recipes {what} ({', '.join(rids[:5])}"
                      f"{', …' if len(rids) > 5 else ''}): {', '.join(hits[:8])}{', …' if len(hits) > 8 else ''}")
     summary = (f"route: {len(checked)} trunk nodes, {counts['reachable']} reachable, {counts['unreachable']} unreachable, "
                f"{counts['skippable']} skippable, {counts['early']} early, {len(kinds)} unmodelled types")
@@ -555,7 +738,8 @@ class Ctx:
 
     def early(self, n, first):
         """(n's first tier, (ref tier, ref)) when n is reached before its latest gate ref, else None. TOP is skipped."""
-        if tree_tier(n) >= TOP_TIER or not self.nodes[n]["reachable"]:
+        tier = tree_tier(n)
+        if tier is None or tier >= TOP_TIER or not self.nodes[n]["reachable"]:
             return None
         ft = first.get(self.nodes[n]["product"])
         ref_ft = [(first[rp], r) for r, rp in self.gate_refs(n) if rp in first]
@@ -583,25 +767,22 @@ def skippable_checks(ctx, checked, counts):
 
 
 def early_checks(ctx, trunk, counts):
-    """EARLY: N's first tier is below the highest first tier of its (non-soft) gate refs' products, not N's tree tier; accepted
-    EARLY routes are disabled in these runs (spec §6.1). The top tier adds no dimension and is skipped."""
-    off = set()
-    for e in ctx.srcs["accepted"]:
-        if e["code"] == "EARLY":
-            off |= set(e["route"])
-    first, _ = ctx.first_tiers(off)
+    """EARLY: N's first tier is below the highest first tier of its (non-soft) gate refs' products, not N's tree tier; N's own
+    accepted EARLY routes are disabled in its runs (spec §6.1; S1: per node, so one node's accepted route hides no other
+    node's). The reported first_tier is from the runs with nothing disabled. The top tier adds no dimension and is skipped."""
+    first, _ = ctx.first_tiers(set())
     for n in ctx.nodes:
         ctx.nodes[n]["first_tier"] = first.get(ctx.nodes[n]["product"])
     fails = []
     for n in sorted(trunk):
-        hit = ctx.early(n, first)
+        hit = ctx.early(n, ctx.first_tiers(ctx.accepted_units("EARLY", n))[0])
         if hit:
             counts["early"] += 1
             fails.append(f"EARLY {n}: reachable at tier {hit[0]}, before its gate ref [{hit[1][1]}] (tier {hit[1][0]})")
     return fails
 
 
-def accepted_checks(ctx, checked, tree, leaves, fired, roots_used):
+def accepted_checks(ctx, checked, trunk, tree, leaves, fired, roots_used):
     """ACCEPTED_UNUSED: an accepted route that is empty or has a unit that never runs in the full fixpoint; a SKIPPABLE/EARLY
     route that no longer reaches its node on its own (its node's other accepted routes of that code off, the route's units all
     run, and the node is reached without a gate ref / before its gate refs); an accepted QUEST_ORDER root that no chain reaches;
@@ -625,6 +806,9 @@ def accepted_checks(ctx, checked, tree, leaves, fired, roots_used):
         for n in _nodes(e):
             if n not in ctx.nodes or n not in checked:
                 fails.append(head + "not a trunk node or tier-7 leaf")
+                continue
+            if e["code"] == "EARLY" and (n not in trunk or tree_tier(n) is None):
+                fails.append(head + "not a trunk node with a tree tier")   # S5: EARLY checks only the trunk
                 continue
             p = ctx.nodes[n]["product"]
             off = ctx.accepted_units(e["code"], n, but=e)
@@ -671,17 +855,17 @@ def load_inputs(include_sources=True):
         return Inputs([], {}, {}, {}, [], {}, {}, "", {}, [], {}, stale)
     items = json.loads(ITEM_MEMBERS.read_text())["minecraft:item"]
     fluid_doc = json.loads(FLUID_MEMBERS.read_text())
-    fluids = {**fluid_doc["minecraft:fluid"], **fluid_doc["mekanism:chemical"]}
+    fluids, chems = fluid_doc["minecraft:fluid"], fluid_doc["mekanism:chemical"]   # two dicts, two prefixes (C8)
     jar = pb_jar()
-    defs, problems = (load_bee_definitions(jar, loaded_mod_ids(), items, fluids) if jar
-                      else ({}, ["BEE DEFINITION no productivebees jar in .run/server/mods"]))
+    defs, problems, dead = (load_bee_definitions(jar, loaded_mod_ids(), items, fluids) if jar
+                            else ({}, ["BEE DEFINITION no productivebees jar in .run/server/mods"], set()))
     gates, _ = load_manifest(MANIFEST)
     return Inputs(
         rows=json.loads(DUMP.read_text()), item_members=items, fluid_members=fluids,
         block_members=json.loads(BLOCK_MEMBERS.read_text())["minecraft:block"], crops=load_crops(), bee_defs=defs,
         sources=load_sources(), tree_text=TREE.read_text(),
         chapters={p.stem: parse_chapter(p.read_text()) for p in sorted(CHAPTERS_DIR.glob("*.yaml"))},
-        gates=gates, sole=load_sole_producers(MANIFEST), problems=problems)
+        gates=gates, sole=load_sole_producers(MANIFEST), problems=problems, chem_members=chems, dead_bees=frozenset(dead))
 
 
 def main(argv=None):

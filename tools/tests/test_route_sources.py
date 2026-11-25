@@ -128,3 +128,11 @@ def test_an_empty_accepted_route_still_loads():
     """QUEST_ORDER entries carry route: [] (task 17's ACCEPTED_UNUSED flags an empty route on SKIPPABLE/EARLY)."""
     got = parse(GOOD.replace('"route": ["blaze"]', '"route": []'))
     assert got["accepted"][0]["route"] == []
+
+
+def test_c6_biome_dimensions_name_a_listed_dimension():
+    """Task 18 review C6: biome_dimensions.dimension is cross-checked like dimensions.from and sources.dimension."""
+    text = GOOD.replace('"dimension": "minecraft:overworld", "cite": "t"}', '"dimension": "x:nowhere", "cite": "t"}')
+    assert text != GOOD
+    with pytest.raises(RouteSourceError, match=r"line 11: unknown dimension x:nowhere"):
+        parse(text)
